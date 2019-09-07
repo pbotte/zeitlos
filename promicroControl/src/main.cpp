@@ -2,6 +2,7 @@
 #include <epd2in9.h>
 #include <epdpaint.h>
 #include "imagedata.h"
+#include <qrcode.h>
 
 #define COLORED     0
 #define UNCOLORED   1
@@ -18,9 +19,34 @@ Epd epd;
 unsigned long time_start_ms;
 unsigned long time_now_s;
 
+
+
+
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(9600);
+  while (!Serial); //https://www.arduino.cc/en/Guide/ArduinoLeonardoMicro
+  Serial.begin(115200);
+  Serial.print("Beginn");
+  delay(200);
+
+
+
+    // Start time
+    uint32_t dt = millis();
+
+    // Create the QR code
+    QRCode qrcode;
+    uint8_t qrcodeData[qrcode_getBufferSize(3)];
+    qrcode_initText(&qrcode, qrcodeData, 3, 0, "http://www.tusoi.de");
+
+    // Delta time
+    dt = millis() - dt;
+    Serial.print("QR Code Generation Time: ");
+    Serial.print(dt);
+    Serial.print("\n");
+
+
+
   if (epd.Init(lut_full_update) != 0) {
       Serial.print("e-Paper init failed");
       return;
@@ -48,7 +74,7 @@ void setup() {
 
   /* For simplicity, the arguments are explicit numerical coordinates */
   paint.Clear(UNCOLORED);
-  paint.DrawStringAt(5, 0, "Karotten (eig. Anbau)", &Font24, COLORED);
+  paint.DrawStringAt(5, 0, "Karotten", &Font24, COLORED);
   for (int x=0;x<296;x++){
     paint.DrawPixel(x,22,COLORED);
     paint.DrawPixel(x,23,COLORED);
@@ -82,19 +108,36 @@ void setup() {
 
 
 
-/*  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(0, 4, "e-Paper Demo", &Font16, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 0, 30, paint.GetWidth(), paint.GetHeight());
+//  paint.Clear(UNCOLORED);
+//  paint.DrawStringAt(0, 4, "e-Paper Demo", &Font16, COLORED);
+//  epd.SetFrameMemory(paint.GetImage(), 0, 30, paint.GetWidth(), paint.GetHeight());
 
   paint.SetWidth(64);
   paint.SetHeight(64);
 
   paint.Clear(UNCOLORED);
-  paint.DrawRectangle(0, 0, 40, 50, COLORED);
-  paint.DrawLine(0, 0, 40, 50, COLORED);
-  paint.DrawLine(40, 0, 0, 50, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 16, 60, paint.GetWidth(), paint.GetHeight());
+//  paint.DrawRectangle(1, 1, 40, 50, COLORED);
+//  paint.DrawLine(0, 0, 40, 50, COLORED);
+//  paint.DrawLine(40, 0, 0, 50, COLORED);
 
+  for (uint8_t y = 0; y < qrcode.size; y++) {
+        // Each horizontal module
+        for (uint8_t x = 0; x < qrcode.size; x++) {
+            if (qrcode_getModule(&qrcode, x, y)) {
+			paint.DrawPixel(x*2+5,  y*2+5,COLORED);
+			paint.DrawPixel(x*2+1+5,y*2+5,COLORED);
+			paint.DrawPixel(x*2+5,  y*2+5+1,COLORED);
+			paint.DrawPixel(x*2+1+5,y*2+5+1,COLORED);
+		}
+        }
+    }
+
+
+  epd.SetFrameMemory(paint.GetImage(), 10/*x*/, 100/**/, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+  epd.SetFrameMemory(paint.GetImage(), 10, 100, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+/*
   paint.Clear(UNCOLORED);
   paint.DrawCircle(32, 32, 30, COLORED);
   epd.SetFrameMemory(paint.GetImage(), 10, 220, paint.GetWidth(), paint.GetHeight());
