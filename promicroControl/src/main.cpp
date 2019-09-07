@@ -21,7 +21,7 @@ unsigned long time_now_s;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-/*  if (epd.Init(lut_full_update) != 0) {
+  if (epd.Init(lut_full_update) != 0) {
       Serial.print("e-Paper init failed");
       return;
   }
@@ -32,11 +32,11 @@ void setup() {
    *  i.e. the next action of SetFrameMemory will set the other memory area
    *  therefore you have to clear the frame memory twice.
    */
-/*  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
   epd.DisplayFrame();
   epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
   epd.DisplayFrame();
-*/
+
   if (epd.Init(lut_partial_update) != 0) {
       Serial.print("e-Paper init failed");
       return;
