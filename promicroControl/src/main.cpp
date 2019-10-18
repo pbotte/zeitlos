@@ -21,7 +21,7 @@ unsigned long time_now_s;
 
 
 void setup() {
-//  while (!Serial); //https://www.arduino.cc/en/Guide/ArduinoLeonardoMicro
+  while (!Serial); //https://www.arduino.cc/en/Guide/ArduinoLeonardoMicro
   Serial.begin(115200);
   Serial.print("Beginn");
   delay(200);
@@ -164,7 +164,9 @@ void setup() {
 }
 
 void loop() {
-/*  time_now_s = (millis() - time_start_ms) / 1000;
+
+  /*
+  time_now_s = (millis() - time_start_ms) / 1000;
   char time_string[] = {'0', '0', ':', '0', '0', '\0'};
   time_string[0] = time_now_s / 60 / 10 + '0';
   time_string[1] = time_now_s / 60 % 10 + '0';
@@ -173,14 +175,33 @@ void loop() {
 
   paint.SetWidth(32);
   paint.SetHeight(96);
-  paint.SetRotate(ROTATE_90);
+  paint.SetRotate(ROTATE_270);
 
   paint.Clear(UNCOLORED);
-  paint.DrawStringAt(0, 4, time_string, &Font24, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 40, 180, paint.GetWidth(), paint.GetHeight());
+  paint.DrawStringAt(0, 0, time_string, &Font24, COLORED);
+  epd.SetFrameMemory(paint.GetImage(), 70, 80, paint.GetWidth(), paint.GetHeight());
   epd.DisplayFrame();
 
   delay(500);
 */
-}
 
+  char ib;
+  if (Serial.available() > 0) {
+    ib = Serial.read();
+    
+    char time_string[] = {'E', 'm', 'p', ':', '0', '\0'};
+    time_string[4] = ib;
+
+    Serial.print("Empfangen: #");
+    Serial.println(ib, DEC);
+
+    paint.SetWidth(32);
+    paint.SetHeight(96);
+    paint.SetRotate(ROTATE_270);
+
+    paint.Clear(UNCOLORED);
+    paint.DrawStringAt(0, 0, time_string, &Font24, COLORED);
+    epd.SetFrameMemory(paint.GetImage(), 70, 80, paint.GetWidth(), paint.GetHeight());
+    epd.DisplayFrame();
+  }
+}
