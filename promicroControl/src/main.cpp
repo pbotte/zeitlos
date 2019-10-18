@@ -14,21 +14,17 @@
   * 1 byte = 8 pixels, therefore you have to set 8*N pixels at a time.
   */
 unsigned char image[1024];
-Paint paint(image, 0, 0);    // width should be the multiple of 8 
+Paint paint(image, 0, 0);    // width should be the multiple of 8
 Epd epd;
 unsigned long time_start_ms;
 unsigned long time_now_s;
 
 
-
-
 void setup() {
-  // put your setup code here, to run once:
-  while (!Serial); //https://www.arduino.cc/en/Guide/ArduinoLeonardoMicro
+//  while (!Serial); //https://www.arduino.cc/en/Guide/ArduinoLeonardoMicro
   Serial.begin(115200);
   Serial.print("Beginn");
   delay(200);
-
 
 
     // Start time
@@ -46,13 +42,12 @@ void setup() {
     Serial.print("\n");
 
 
-
   if (epd.Init(lut_full_update) != 0) {
       Serial.print("e-Paper init failed");
       return;
   }
 
-  /** 
+  /**
    *  there are 2 memory areas embedded in the e-paper display
    *  and once the display is refreshed, the memory area will be auto-toggled,
    *  i.e. the next action of SetFrameMemory will set the other memory area
@@ -68,58 +63,53 @@ void setup() {
       return;
   }
 
-  paint.SetRotate(ROTATE_90);
-  paint.SetWidth(24);
-  paint.SetHeight(296);
+  paint.SetRotate(ROTATE_270);
+  paint.SetWidth(24); //Effektiv: Höhe des Kastens
+  paint.SetHeight(296); //Effektiv: Breite des Kastens
 
   /* For simplicity, the arguments are explicit numerical coordinates */
   paint.Clear(UNCOLORED);
-  paint.DrawStringAt(5, 0, "Karotten", &Font24, COLORED);
+  paint.DrawStringAt(5/*x*/, 0/*y*/, "Karotten", &Font24, COLORED);
   for (int x=0;x<296;x++){
     paint.DrawPixel(x,22,COLORED);
     paint.DrawPixel(x,23,COLORED);
   }
   //paint.DrawLine(296, 20, 1, 18, COLORED);
+  epd.SetFrameMemory(paint.GetImage(), 5/*y-Koordinate, oben=0*/, 0 /*x-Koordinate, rechts=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+  epd.SetFrameMemory(paint.GetImage(), 5, 0, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(0, 0, "Aus dem eigenen Anbau.", &Font16, COLORED);
+  epd.SetFrameMemory(paint.GetImage(), 30, 0, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+  epd.SetFrameMemory(paint.GetImage(), 30, 0, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(0, 0, "Schriftgroesse 12", &Font12, COLORED);
+  epd.SetFrameMemory(paint.GetImage(), 50, 0, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+  epd.SetFrameMemory(paint.GetImage(), 50, 0, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(0, 0, "Schriftgroesse 8", &Font8, COLORED);
   epd.SetFrameMemory(paint.GetImage(), 95, 0, paint.GetWidth(), paint.GetHeight());
   epd.DisplayFrame();
   epd.SetFrameMemory(paint.GetImage(), 95, 0, paint.GetWidth(), paint.GetHeight());
   epd.DisplayFrame();
 
-  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(5, 4, "Aus dem eigenen Anbau.", &Font16, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 65, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-  epd.SetFrameMemory(paint.GetImage(), 65, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-
-  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(5, 0, "Schriftgroesse 12", &Font12, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 40, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-  epd.SetFrameMemory(paint.GetImage(), 40, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-
-  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(5, 0, "Schriftgroesse 8", &Font8, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 15, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-  epd.SetFrameMemory(paint.GetImage(), 15, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-
-
-
-//  paint.Clear(UNCOLORED);
-//  paint.DrawStringAt(0, 4, "e-Paper Demo", &Font16, COLORED);
-//  epd.SetFrameMemory(paint.GetImage(), 0, 30, paint.GetWidth(), paint.GetHeight());
 
   paint.SetWidth(64);
   paint.SetHeight(64);
 
   paint.Clear(UNCOLORED);
-//  paint.DrawRectangle(1, 1, 40, 50, COLORED);
-//  paint.DrawLine(0, 0, 40, 50, COLORED);
-//  paint.DrawLine(40, 0, 0, 50, COLORED);
-
+/*  paint.DrawRectangle(1, 1, 40, 50, COLORED);
+  paint.DrawLine(0, 0, 40, 50, COLORED);
+  paint.DrawLine(40, 0, 0, 50, COLORED);
+*/
   for (uint8_t y = 0; y < qrcode.size; y++) {
         // Each horizontal module
         for (uint8_t x = 0; x < qrcode.size; x++) {
@@ -133,9 +123,9 @@ void setup() {
     }
 
 
-  epd.SetFrameMemory(paint.GetImage(), 10/*x*/, 100/**/, paint.GetWidth(), paint.GetHeight());
+  epd.SetFrameMemory(paint.GetImage(), 50/*y*/, 5/*x*/, paint.GetWidth(), paint.GetHeight());
   epd.DisplayFrame();
-  epd.SetFrameMemory(paint.GetImage(), 10, 100, paint.GetWidth(), paint.GetHeight());
+  epd.SetFrameMemory(paint.GetImage(), 50, 5, paint.GetWidth(), paint.GetHeight());
   epd.DisplayFrame();
 /*
   paint.Clear(UNCOLORED);
@@ -174,8 +164,7 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-  time_now_s = (millis() - time_start_ms) / 1000;
+/*  time_now_s = (millis() - time_start_ms) / 1000;
   char time_string[] = {'0', '0', ':', '0', '0', '\0'};
   time_string[0] = time_now_s / 60 / 10 + '0';
   time_string[1] = time_now_s / 60 % 10 + '0';
@@ -192,5 +181,6 @@ void loop() {
   epd.DisplayFrame();
 
   delay(500);
+*/
 }
 
