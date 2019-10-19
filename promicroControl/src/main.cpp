@@ -3,6 +3,33 @@
 #include <epdpaint.h>
 #include "imagedata.h"
 #include <qrcode.h>
+#include <avr/boot.h>
+
+
+// Serial Number of 32U4 from
+// https://forum.pololu.com/t/a-star-adding-serial-numbers/7651
+char serialNumber[30]; //Serial number of ATMEGA32U4
+
+char nibbleToHex(uint8_t n)
+{
+  if (n <= 9) { return '0' + n; }
+  else { return 'a' + (n - 10); }
+}
+
+void readSerialNumber()
+{
+  char * p = serialNumber;
+  for(uint8_t i = 14; i < 24; i++)
+  {
+    uint8_t b = boot_signature_byte_get(i);
+    *p++ = nibbleToHex(b >> 4);
+    *p++ = nibbleToHex(b & 0xF);
+    *p++ = '-';
+  }
+  *--p = 0;
+}
+
+
 
 #define COLORED     0
 #define UNCOLORED   1
@@ -200,7 +227,27 @@ void setup() {
   epd.DisplayFrame();
 */
   time_start_ms = millis();
+
+    readSerialNumber();
+    Serial.print("Seriennummer ATMEGA32U4: ");
+    Serial.println(serialNumber); 
+
+
 }
+
+int sendSerialPacket(int fCmdType, byte fData=0) {
+  uint8_t c[]= {0x5a, 0xa5, 0, 1,  0, 1/*data bytes number*/, fData, 0};
+  c[3] = fCmdType&0xff;
+  c[2] = (fCmdType>>8) & 0xff;
+  byte checksum=0;
+  for (int i=0; i<sizeof(c)-1; i++) 
+    checksum += c[i];
+  c[sizeof(c)-1] = checksum;
+  Serial.write(c,sizeof(c));
+}
+
+byte receiveFSMState = 0;
+int receivedFSMCmd = 0;
 
 void loop() {
 
@@ -224,23 +271,51 @@ void loop() {
   delay(500);
 */
 
-  char ib;
+  int ib;
   #define pITypeLength 50
   char pIType[pITypeLength]; //Product Info: Type
+    //0=Waiting for start sequence 1st byte
+    //1=Waiting for start sequence 2nd byte
+    //2=Waiting for Command Byte, 1st byte
+    //3=Waiting for Command Byte, 2nd byte
+    //4=Receiving data
 
   // data transfer protocoll
-  //  [Start Sequence] [Command Byte, 2bytes] [Number of data bytes, 2bytes] [Checksum byte] [Data bytes]
+  //  min. length: 7 bytes 
+  //  [Start Sequence] [Command Byte, 2bytes] [Number of data bytes, 2bytes] [Data bytes] [Checksum byte]
   //  Start Sequence: 0x5a a5 = 2 bytes, fixed
   //  Command Byte: 0x00 00 = Update Display
   //                0x00 01 = Update Product Info Type
   //  Number of data bytes: 2 bytes
-  //  Cheksum byte: Sum of all (also start bytes) bytes except checksum byte modulo 256
   //  Data bytes: up to the number advertised in [Number of data bytes]
+  //  Checksum byte: Sum of all (also start bytes) bytes except checksum byte modulo 256
 
   if (Serial.available() > 0) {
     ib = Serial.read();
+    if ((receiveFSMState==0) && (ib == 0x5a)) {//Wait for start sequence 1st byte
+      receiveFSMState=1;
+      sendSerialPacket(10, receiveFSMState);
+    } else if ((receiveFSMState==1) && (ib == 0xa5)) { //Wait for start sequence 2nd byte
+      receiveFSMState=2;
+      sendSerialPacket(2, receiveFSMState);
+    } else if (receiveFSMState==2) {//Wait for cmd byte 1st byte
+      receivedFSMCmd = (ib<<8);
+      receiveFSMState=3;
+      sendSerialPacket(3);
+    } else if (receiveFSMState==3) {//Wait for cmd byte 2nd byte
+      receivedFSMCmd += ib;
+      receiveFSMState=4;
+      sendSerialPacket(4);
+    } else if (receiveFSMState==4) {
+      receiveFSMState=0;
+      sendSerialPacket(5);
+    } else {
+      sendSerialPacket((byte)ib, receiveFSMState);
+      receiveFSMState=0;
+    }
+  }
     
-    char time_string[] = {'E', 'm', 'p', ':', '0', '\0'};
+/*    char time_string[] = {'E', 'm', 'p', ':', '0', '\0'};
     time_string[4] = ib;
 
     Serial.print("Empfangen: #");
@@ -257,6 +332,13 @@ void loop() {
 
     if (ib == 'u') {
       updateDisplayFull();
-    }
-  }
+    }*/
+
+/*  uint8_t b[]= {0x5a, 0xa5, 1, 1,  0, 0, (0x5a+0xa5+1+1)%256};
+
+  if (millis()%1000 == 0) {
+    Serial.write(b,sizeof(b));
+    delay(2);
+  }*/
 }
+
