@@ -19,6 +19,44 @@ Epd epd;
 unsigned long time_start_ms;
 unsigned long time_now_s;
 
+void updateDisplayFull() {
+    if (epd.Init(lut_full_update) != 0) {
+      Serial.print("e-Paper init failed");
+      return;
+  }
+
+  /**
+   *  there are 2 memory areas embedded in the e-paper display
+   *  and once the display is refreshed, the memory area will be auto-toggled,
+   *  i.e. the next action of SetFrameMemory will set the other memory area
+   *  therefore you have to clear the frame memory twice.
+   */
+  paint.SetRotate(ROTATE_270);
+  paint.SetWidth(24); //Effektiv: Höhe des Kastens
+  paint.SetHeight(296); //Effektiv: Breite des Kastens
+
+  /* For simplicity, the arguments are explicit numerical coordinates */
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(5/*x*/, 0/*y*/, "Karotten", &Font24, COLORED);
+  for (int x=0;x<296;x++){
+    paint.DrawPixel(x,22,COLORED);
+    paint.DrawPixel(x,23,COLORED);
+  }
+  //paint.DrawLine(296, 20, 1, 18, COLORED);
+  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+  epd.SetFrameMemory(paint.GetImage(), 5/*y-Koordinate, oben=0*/, 0 /*x-Koordinate, rechts=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
+  epd.DisplayFrame();
+
+  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+  epd.SetFrameMemory(paint.GetImage(), 5, 0, paint.GetWidth(), paint.GetHeight());
+//  epd.DisplayFrame();
+
+  if (epd.Init(lut_partial_update) != 0) {
+      Serial.print("e-Paper init failed");
+      return;
+  }
+
+}
 
 void setup() {
   while (!Serial); //https://www.arduino.cc/en/Guide/ArduinoLeonardoMicro
@@ -106,6 +144,7 @@ void setup() {
   paint.SetHeight(64);
 
   paint.Clear(UNCOLORED);
+
 /*  paint.DrawRectangle(1, 1, 40, 50, COLORED);
   paint.DrawLine(0, 0, 40, 50, COLORED);
   paint.DrawLine(40, 0, 0, 50, COLORED);
@@ -186,6 +225,18 @@ void loop() {
 */
 
   char ib;
+  #define pITypeLength 50
+  char pIType[pITypeLength]; //Product Info: Type
+
+  // data transfer protocoll
+  //  [Start Sequence] [Command Byte, 2bytes] [Number of data bytes, 2bytes] [Checksum byte] [Data bytes]
+  //  Start Sequence: 0x5a a5 = 2 bytes, fixed
+  //  Command Byte: 0x00 00 = Update Display
+  //                0x00 01 = Update Product Info Type
+  //  Number of data bytes: 2 bytes
+  //  Cheksum byte: Sum of all (also start bytes) bytes except checksum byte modulo 256
+  //  Data bytes: up to the number advertised in [Number of data bytes]
+
   if (Serial.available() > 0) {
     ib = Serial.read();
     
@@ -203,5 +254,9 @@ void loop() {
     paint.DrawStringAt(0, 0, time_string, &Font24, COLORED);
     epd.SetFrameMemory(paint.GetImage(), 70, 80, paint.GetWidth(), paint.GetHeight());
     epd.DisplayFrame();
+
+    if (ib == 'u') {
+      updateDisplayFull();
+    }
   }
 }
