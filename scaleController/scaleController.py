@@ -35,34 +35,49 @@ logger.info("Watchdog timeout (seconds): "+str(args.watchdog_timeout))
 logger.info('Use the following Serial-Device: '+str(args.serial_device_name))
 
 
+def SendMsgToController(fCmdType, fDataList=None):
+    if fDataList is None:
+        fDataList = []
+    if isinstance(fDataList, str):
+        fDataList = [ord(x) for x in list(fDataList)]
+    if not isinstance(fDataList, list):
+        logger.error("Serial.write(): Data is not in list form. Nothing send.")
+        return
+    myListLength = len(fDataList)
+    aList = [0x5a, 0xa5] # Start Sequence
+    aList.extend( [ (fCmdType>>8)&0xff, fCmdType&0xff ] ) #add cmd type bytes
+    aList.extend( [ (myListLength>>8)&0xff, myListLength&0xff ] ) #add data length bytes
+    aList.extend( fDataList )
+    aList.append( sum(aList)%256 ) # calculate checksum
+    logger.info("Serial.write(): Writing to following bytes {}".format(list(aList)))
+    ser.write(bytearray(aList))
+
+
 def on_connect(client, userdata, flags, rc):
-  if rc==0:
-    logger.info("MQTT connected OK. Return code "+str(rc) )
-    client.subscribe("homie/"+args.mqtt_client_name+"/+/set")
-    logger.debug("MQTT: Subscribed to all topics")
-  else:
-    logger.error("Bad connection. Return code="+str(rc))
+    if rc==0:
+        logger.info("MQTT connected OK. Return code "+str(rc) )
+        client.subscribe("homie/"+args.mqtt_client_name+"/+/set")
+        logger.debug("MQTT: Subscribed to all topics")
+    else:
+        logger.error("Bad connection. Return code="+str(rc))
 
 def on_disconnect(client, userdata, rc):
-  if rc != 0:
-    logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
+    if rc != 0:
+        logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
 
 def on_message(client, userdata, message):
-  t = datetime.now()
-  t = time.mktime(t.timetuple()) + t.microsecond / 1E6
-  m = message.payload.decode("utf-8")
+    t = datetime.now()
+    t = time.mktime(t.timetuple()) + t.microsecond / 1E6
+    m = message.payload.decode("utf-8")
 
-  j = json.loads(m)
-  logger.info("Topic: "+message.topic+" JSON:"+str(j))
-  ser.write(bytearray([0x5a,0xa5,1,1,0,0,1]))
-  msplit = re.split("/", message.topic)
-  if len(msplit) == 4 and msplit[3].lower() == "set" and msplit[2].isdigit() and int(msplit[2]) in range(128):
-    relaisID = int(msplit[2])
-    b = float(j) #brightness from 0..1
-    if (b<0 or b>1): b=0
-    logger.debug("RelaisID: "+str(relaisID)+" b: "+str(b) )
-
-
+    j = json.loads(m)
+    logger.info("Topic: "+message.topic+" JSON:"+str(j))
+    msplit = re.split("/", message.topic)
+    if len(msplit) == 4 and msplit[3].lower() == "set":
+        if (msplit[2]=="type"):
+          SendMsgToController(2,"Gemuese")
+        if (msplit[2]=="refresh"):
+          SendMsgToController(3)
 
 client = paho.Client(args.mqtt_client_name)
 client.on_message = on_message
@@ -92,7 +107,7 @@ while (WatchDogCounter > 0):
     while ser.inWaiting() > 0:
         charSet += ser.read()
     while len(charSet) > 0 and charSet[0] != 0x5a:
-        logger.warning("Received, but deleted (no 0x5a start): (int) "+str(charSet.pop(0)) )
+        logger.warning("Serial.read(): Deleted (no 0x5a start): (int) "+str(charSet.pop(0)) )
 
     # [Start Sequence] [Command Byte, 2bytes] [Number of data bytes, 2bytes] [Data bytes] [Checksum byte]
     if len(charSet) >= 7: #Paket with length of 0 data bytes
@@ -106,7 +121,7 @@ while (WatchDogCounter > 0):
                     t = time.mktime(t.timetuple()) + t.microsecond / 1E6
                     pData = charSet[6:6+pDataLength]
 
-                    logger.info("pCmd: "+str(pCmd)+" Data: "+bytearray_2_str(pData))
+                    logger.info("Serial.read(): pCmd: "+str(pCmd)+" Data: "+bytearray_2_str(pData))
                     # list() converts bytearray into array of int
                     t = datetime.now()
                     t = time.mktime(t.timetuple()) + t.microsecond / 1E6
@@ -114,7 +129,7 @@ while (WatchDogCounter > 0):
                         {"pCmd": pCmd, "data": list(pData), "time": t},
                         sort_keys=True), qos = 1)
                 else:
-                    logger.warning("Data CRC NOT ok. Read ({}), calculated ({})".format(
+                    logger.warning("Serial.read(): CRC NOT ok. Read ({}), calculated ({})".format(
                         pFullDataCRC, ESPCRC(charSet[0:5+pDataLength])))
                     logger.warning("  More Details: Cmd ({}) pDataLength ({})".format(
                         pCmd, pDataLength) )

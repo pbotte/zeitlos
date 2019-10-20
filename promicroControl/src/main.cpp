@@ -10,17 +10,14 @@
 // https://forum.pololu.com/t/a-star-adding-serial-numbers/7651
 char serialNumber[30]; //Serial number of ATMEGA32U4
 
-char nibbleToHex(uint8_t n)
-{
+char nibbleToHex(uint8_t n) {
   if (n <= 9) { return '0' + n; }
   else { return 'a' + (n - 10); }
 }
 
-void readSerialNumber()
-{
+void readSerialNumber() {
   char * p = serialNumber;
-  for(uint8_t i = 14; i < 24; i++)
-  {
+  for(uint8_t i = 14; i < 24; i++) {
     uint8_t b = boot_signature_byte_get(i);
     *p++ = nibbleToHex(b >> 4);
     *p++ = nibbleToHex(b & 0xF);
@@ -29,6 +26,9 @@ void readSerialNumber()
   *--p = 0;
 }
 
+#define pITypeLength 50
+char pIType[pITypeLength]; //Product Info: Type
+byte pITypeActLength = 0; //Length of actual String
 
 
 #define COLORED     0
@@ -64,7 +64,7 @@ void updateDisplayFull() {
 
   /* For simplicity, the arguments are explicit numerical coordinates */
   paint.Clear(UNCOLORED);
-  paint.DrawStringAt(5/*x*/, 0/*y*/, "Karotten", &Font24, COLORED);
+  paint.DrawStringAt(5/*x*/, 0/*y*/, pIType, &Font24, COLORED);
   for (int x=0;x<296;x++){
     paint.DrawPixel(x,22,COLORED);
     paint.DrawPixel(x,23,COLORED);
@@ -76,7 +76,7 @@ void updateDisplayFull() {
 
   epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
   epd.SetFrameMemory(paint.GetImage(), 5, 0, paint.GetWidth(), paint.GetHeight());
-//  epd.DisplayFrame();
+  // epd.DisplayFrame();
 
   if (epd.Init(lut_partial_update) != 0) {
       Serial.print("e-Paper init failed");
@@ -86,153 +86,17 @@ void updateDisplayFull() {
 }
 
 void setup() {
-  while (!Serial); //https://www.arduino.cc/en/Guide/ArduinoLeonardoMicro
+//  while (!Serial); //https://www.arduino.cc/en/Guide/ArduinoLeonardoMicro
   Serial.begin(115200);
-  Serial.print("Beginn");
-  delay(200);
 
+  // Create the QR code
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(3)];
+  qrcode_initText(&qrcode, qrcodeData, 3, 0, "http://www.tusoi.de");
 
-    // Start time
-    uint32_t dt = millis();
-
-    // Create the QR code
-    QRCode qrcode;
-    uint8_t qrcodeData[qrcode_getBufferSize(3)];
-    qrcode_initText(&qrcode, qrcodeData, 3, 0, "http://www.tusoi.de");
-
-    // Delta time
-    dt = millis() - dt;
-    Serial.print("QR Code Generation Time: ");
-    Serial.print(dt);
-    Serial.print("\n");
-
-
-  if (epd.Init(lut_full_update) != 0) {
-      Serial.print("e-Paper init failed");
-      return;
-  }
-
-  /**
-   *  there are 2 memory areas embedded in the e-paper display
-   *  and once the display is refreshed, the memory area will be auto-toggled,
-   *  i.e. the next action of SetFrameMemory will set the other memory area
-   *  therefore you have to clear the frame memory twice.
-   */
-  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
-  epd.DisplayFrame();
-  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
-  epd.DisplayFrame();
-
-  if (epd.Init(lut_partial_update) != 0) {
-      Serial.print("e-Paper init failed");
-      return;
-  }
-
-  paint.SetRotate(ROTATE_270);
-  paint.SetWidth(24); //Effektiv: Höhe des Kastens
-  paint.SetHeight(296); //Effektiv: Breite des Kastens
-
-  /* For simplicity, the arguments are explicit numerical coordinates */
-  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(5/*x*/, 0/*y*/, "Karotten", &Font24, COLORED);
-  for (int x=0;x<296;x++){
-    paint.DrawPixel(x,22,COLORED);
-    paint.DrawPixel(x,23,COLORED);
-  }
-  //paint.DrawLine(296, 20, 1, 18, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 5/*y-Koordinate, oben=0*/, 0 /*x-Koordinate, rechts=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-  epd.SetFrameMemory(paint.GetImage(), 5, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-
-  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(0, 0, "Aus dem eigenen Anbau.", &Font16, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 30, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-  epd.SetFrameMemory(paint.GetImage(), 30, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-
-  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(0, 0, "Schriftgroesse 12", &Font12, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 50, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-  epd.SetFrameMemory(paint.GetImage(), 50, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-
-  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(0, 0, "Schriftgroesse 8", &Font8, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 95, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-  epd.SetFrameMemory(paint.GetImage(), 95, 0, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-
-
-  paint.SetWidth(64);
-  paint.SetHeight(64);
-
-  paint.Clear(UNCOLORED);
-
-/*  paint.DrawRectangle(1, 1, 40, 50, COLORED);
-  paint.DrawLine(0, 0, 40, 50, COLORED);
-  paint.DrawLine(40, 0, 0, 50, COLORED);
-*/
-  for (uint8_t y = 0; y < qrcode.size; y++) {
-        // Each horizontal module
-        for (uint8_t x = 0; x < qrcode.size; x++) {
-            if (qrcode_getModule(&qrcode, x, y)) {
-			paint.DrawPixel(x*2+5,  y*2+5,COLORED);
-			paint.DrawPixel(x*2+1+5,y*2+5,COLORED);
-			paint.DrawPixel(x*2+5,  y*2+5+1,COLORED);
-			paint.DrawPixel(x*2+1+5,y*2+5+1,COLORED);
-		}
-        }
-    }
-
-
-  epd.SetFrameMemory(paint.GetImage(), 50/*y*/, 5/*x*/, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-  epd.SetFrameMemory(paint.GetImage(), 50, 5, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-/*
-  paint.Clear(UNCOLORED);
-  paint.DrawCircle(32, 32, 30, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 10, 220, paint.GetWidth(), paint.GetHeight());
-
-  paint.Clear(UNCOLORED);
-  paint.DrawFilledRectangle(0, 0, 40, 50, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 16, 130, paint.GetWidth(), paint.GetHeight());
-
-  paint.Clear(UNCOLORED);
-  paint.DrawFilledCircle(32, 32, 30, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 72, 130, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-*/  
-
-//  delay(10000);
-
-/*  if (epd.Init(lut_partial_update) != 0) {
-      Serial.print("e-Paper init failed");
-      return;
-  }
-*/
-  /** 
-   *  there are 2 memory areas embedded in the e-paper display
-   *  and once the display is refreshed, the memory area will be auto-toggled,
-   *  i.e. the next action of SetFrameMemory will set the other memory area
-   *  therefore you have to set the frame memory and refresh the display twice.
-   */
-/*  epd.SetFrameMemory(IMAGE_DATA);
-  epd.DisplayFrame();
-  epd.SetFrameMemory(IMAGE_DATA);
-  epd.DisplayFrame();
-*/
-  time_start_ms = millis();
-
-    readSerialNumber();
-    Serial.print("Seriennummer ATMEGA32U4: ");
-    Serial.println(serialNumber); 
-
-
+  readSerialNumber();
+//  Serial.print("Seriennummer ATMEGA32U4: ");
+//  Serial.println(serialNumber); 
 }
 
 int sendSerialPacket(int fCmdType, byte fData=0) {
@@ -246,40 +110,16 @@ int sendSerialPacket(int fCmdType, byte fData=0) {
   Serial.write(c,sizeof(c));
 }
 
-byte receiveFSMState = 0;
+byte receiveFSMState = 0; //FSM State for Serial Reception 
 int receivedFSMCmd = 0;
+int receivedFSMNData = 0;
+int receivedFSMNBytesReceived = 0;
+byte receivedFSMChecksum = 0;
+#define NMAXNBYTES 100
+byte receivedFSMData[NMAXNBYTES];
 
 void loop() {
-
-  /*
-  time_now_s = (millis() - time_start_ms) / 1000;
-  char time_string[] = {'0', '0', ':', '0', '0', '\0'};
-  time_string[0] = time_now_s / 60 / 10 + '0';
-  time_string[1] = time_now_s / 60 % 10 + '0';
-  time_string[3] = time_now_s % 60 / 10 + '0';
-  time_string[4] = time_now_s % 60 % 10 + '0';
-
-  paint.SetWidth(32);
-  paint.SetHeight(96);
-  paint.SetRotate(ROTATE_270);
-
-  paint.Clear(UNCOLORED);
-  paint.DrawStringAt(0, 0, time_string, &Font24, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 70, 80, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-
-  delay(500);
-*/
-
   int ib;
-  #define pITypeLength 50
-  char pIType[pITypeLength]; //Product Info: Type
-    //0=Waiting for start sequence 1st byte
-    //1=Waiting for start sequence 2nd byte
-    //2=Waiting for Command Byte, 1st byte
-    //3=Waiting for Command Byte, 2nd byte
-    //4=Receiving data
-
   // data transfer protocoll
   //  min. length: 7 bytes 
   //  [Start Sequence] [Command Byte, 2bytes] [Number of data bytes, 2bytes] [Data bytes] [Checksum byte]
@@ -292,53 +132,60 @@ void loop() {
 
   if (Serial.available() > 0) {
     ib = Serial.read();
+    receivedFSMChecksum += ib;
     if ((receiveFSMState==0) && (ib == 0x5a)) {//Wait for start sequence 1st byte
       receiveFSMState=1;
-      sendSerialPacket(10, receiveFSMState);
+      receivedFSMChecksum = ib; //Reset Checksum calculation
     } else if ((receiveFSMState==1) && (ib == 0xa5)) { //Wait for start sequence 2nd byte
       receiveFSMState=2;
-      sendSerialPacket(2, receiveFSMState);
     } else if (receiveFSMState==2) {//Wait for cmd byte 1st byte
       receivedFSMCmd = (ib<<8);
       receiveFSMState=3;
-      sendSerialPacket(3);
     } else if (receiveFSMState==3) {//Wait for cmd byte 2nd byte
       receivedFSMCmd += ib;
       receiveFSMState=4;
-      sendSerialPacket(4);
-    } else if (receiveFSMState==4) {
+    } else if (receiveFSMState==4) {//Wait for Number of data bytes 1st byte
+      receivedFSMNData = (ib<<8);
+      receiveFSMState=5;
+    } else if (receiveFSMState==5) {//Wait for Number of data bytes 2nd byte
+      receivedFSMNData += ib;
+      receivedFSMNBytesReceived=0;
+      if (receivedFSMNData==0) {
+        receiveFSMState=7;
+      } else {
+        receiveFSMState=6;
+      }
+    } else if (receiveFSMState==6) {//Wait for data bytes
+      receivedFSMData[receivedFSMNBytesReceived] = ib;
+      receivedFSMNBytesReceived++;
+      if (receivedFSMNBytesReceived>=receivedFSMNData) { //All Data Bytes received?
+        receiveFSMState=7;
+      }
+      if (receivedFSMNBytesReceived >= NMAXNBYTES) { //Too long for our current buffer
+        sendSerialPacket(12);
+        receiveFSMState=0;
+      }
+    } else if (receiveFSMState==7) {//Wait for checksum
+      receivedFSMChecksum -= ib;
       receiveFSMState=0;
-      sendSerialPacket(5);
+      if (receivedFSMChecksum == ib) { //Checksum ok?
+        sendSerialPacket(10, receivedFSMCmd&0xff);
+        sendSerialPacket(11, receivedFSMNData&0xff);
+        sendSerialPacket(12, receivedFSMData[0]);
+        if (receivedFSMCmd==2) {
+          pITypeActLength=1;
+          pIType[0] = receivedFSMData[0];
+          pIType[1] = receivedFSMData[1];
+          pIType[2] = receivedFSMData[2];
+          pIType[3] = receivedFSMData[3];
+          pIType[4] = receivedFSMData[4];
+          pIType[5] = 0;
+        }
+        if (receivedFSMCmd==3) updateDisplayFull();
+      }
     } else {
-      sendSerialPacket((byte)ib, receiveFSMState);
       receiveFSMState=0;
     }
   }
     
-/*    char time_string[] = {'E', 'm', 'p', ':', '0', '\0'};
-    time_string[4] = ib;
-
-    Serial.print("Empfangen: #");
-    Serial.println(ib, DEC);
-
-    paint.SetWidth(32);
-    paint.SetHeight(96);
-    paint.SetRotate(ROTATE_270);
-
-    paint.Clear(UNCOLORED);
-    paint.DrawStringAt(0, 0, time_string, &Font24, COLORED);
-    epd.SetFrameMemory(paint.GetImage(), 70, 80, paint.GetWidth(), paint.GetHeight());
-    epd.DisplayFrame();
-
-    if (ib == 'u') {
-      updateDisplayFull();
-    }*/
-
-/*  uint8_t b[]= {0x5a, 0xa5, 1, 1,  0, 0, (0x5a+0xa5+1+1)%256};
-
-  if (millis()%1000 == 0) {
-    Serial.write(b,sizeof(b));
-    delay(2);
-  }*/
 }
-
