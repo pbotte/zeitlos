@@ -78,6 +78,8 @@ def on_message(client, userdata, message):
           SendMsgToController(2,"Gemuese")
         if (msplit[2]=="refresh"):
           SendMsgToController(3)
+        if (msplit[2]=="nr"):
+          SendMsgToController(4)
 
 client = paho.Client(args.mqtt_client_name)
 client.on_message = on_message
@@ -115,11 +117,11 @@ while (WatchDogCounter > 0):
 
         if len(charSet) >= pDataLength+7: #Paket fully received
                 pFullDataCRC = charSet[6+pDataLength]
+                pData = charSet[6:6+pDataLength]
                 if ESPCRC(charSet[0:6+pDataLength]) == pFullDataCRC:  # Data CRC ok
                     WatchDogCounter = args.watchdog_timeout
                     t = datetime.now()
                     t = time.mktime(t.timetuple()) + t.microsecond / 1E6
-                    pData = charSet[6:6+pDataLength]
 
                     logger.info("Serial.read(): pCmd: "+str(pCmd)+" Data: "+bytearray_2_str(pData))
                     # list() converts bytearray into array of int
@@ -130,10 +132,10 @@ while (WatchDogCounter > 0):
                         sort_keys=True), qos = 1)
                 else:
                     logger.warning("Serial.read(): CRC NOT ok. Read ({}), calculated ({})".format(
-                        pFullDataCRC, ESPCRC(charSet[0:5+pDataLength])))
+                        pFullDataCRC, ESPCRC(charSet[0:6+pDataLength])))
                     logger.warning("  More Details: Cmd ({}) pDataLength ({})".format(
                         pCmd, pDataLength) )
-                    print(list(charSet[0:6+pDataLength]))
+                    print(list(pData))
                     print(charSet)
 
                 # Delete the processed data and propare for next paket to receive

@@ -15,7 +15,7 @@ char nibbleToHex(uint8_t n) {
   else { return 'a' + (n - 10); }
 }
 
-void readSerialNumber() {
+void readSerialNumberOld() {
   char * p = serialNumber;
   for(uint8_t i = 14; i < 24; i++) {
     uint8_t b = boot_signature_byte_get(i);
@@ -24,6 +24,14 @@ void readSerialNumber() {
     *p++ = '-';
   }
   *--p = 0;
+}
+void readSerialNumber() {
+  char * p = serialNumber;
+  for(uint8_t i = 14; i < 24; i++) {
+    uint8_t b = boot_signature_byte_get(i);
+    *p++ = b;
+  }
+  *p = 0;
 }
 
 #define pITypeLength 50
@@ -85,6 +93,32 @@ void updateDisplayFull() {
 
 }
 
+int sendSerialPacket(int fCmdType, byte fData=0) {
+  uint8_t c[]= {0x5a, 0xa5, 0, 1,  0, 1/*data bytes number*/, fData, 0};
+  c[3] = fCmdType&0xff;
+  c[2] = (fCmdType>>8) & 0xff;
+  byte checksum=0;
+  for (int i=0; i<sizeof(c)-1; i++) 
+    checksum += c[i];
+  c[sizeof(c)-1] = checksum;
+  Serial.write(c,sizeof(c));
+}
+int sendSerialPacket2(int fCmdType, byte fData[], int fNData) {
+  uint8_t c[]= {0x5a, 0xa5, 0, 1,  0, 1/*data bytes number*/};
+  c[3] = fCmdType&0xff;
+  c[2] = (fCmdType>>8) & 0xff;
+  c[5] = fNData & 0xff;
+  c[4] = (fNData>>8) & 0xff;
+  byte checksum=0;
+  for (int i=0; i<sizeof(c); i++)
+    checksum += c[i];
+  for (int i=0; i<fNData; i++)
+    checksum += fData[i];
+  Serial.write(c,sizeof(c));
+  Serial.write(fData, fNData);
+  Serial.write(checksum);
+}
+
 void setup() {
 //  while (!Serial); //https://www.arduino.cc/en/Guide/ArduinoLeonardoMicro
   Serial.begin(115200);
@@ -96,19 +130,11 @@ void setup() {
 
   readSerialNumber();
 //  Serial.print("Seriennummer ATMEGA32U4: ");
-//  Serial.println(serialNumber); 
+//  Serial.println(serialNumber);
+
+  sendSerialPacket2(111, serialNumber, 30);
 }
 
-int sendSerialPacket(int fCmdType, byte fData=0) {
-  uint8_t c[]= {0x5a, 0xa5, 0, 1,  0, 1/*data bytes number*/, fData, 0};
-  c[3] = fCmdType&0xff;
-  c[2] = (fCmdType>>8) & 0xff;
-  byte checksum=0;
-  for (int i=0; i<sizeof(c)-1; i++) 
-    checksum += c[i];
-  c[sizeof(c)-1] = checksum;
-  Serial.write(c,sizeof(c));
-}
 
 byte receiveFSMState = 0; //FSM State for Serial Reception 
 int receivedFSMCmd = 0;
@@ -182,6 +208,7 @@ void loop() {
           pIType[5] = 0;
         }
         if (receivedFSMCmd==3) updateDisplayFull();
+        if (receivedFSMCmd==4) sendSerialPacket2(111, serialNumber, 10);
       }
     } else {
       receiveFSMState=0;
