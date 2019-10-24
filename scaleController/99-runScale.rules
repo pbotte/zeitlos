@@ -1,0 +1,1 @@
+SUBSYSTEM=="tty", RUN+="/usr/bin/sudo -u pi /usr/bin/python3 /home/pi/zeitlos/scaleController/scaleController.py testName /dev/%k", ATTRS{idVendor}=="1b4f", ATTRS{idProduct}=="9203", ENV{ID_MM_DEVICE_IGNORE}="1"
