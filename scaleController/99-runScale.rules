@@ -1,1 +1,2 @@
-SUBSYSTEM=="tty", RUN+="/usr/bin/sudo -u pi /usr/bin/python3 /home/pi/zeitlos/scaleController/scaleController.py testName /dev/%k", ATTRS{idVendor}=="1b4f", ATTRS{idProduct}=="9203", ENV{ID_MM_DEVICE_IGNORE}="1"
+#SUBSYSTEM=="tty", RUN+="/usr/bin/sudo -u pi /bin/bash /home/pi/zeitlos/scaleController/startUp.sh %k", ATTRS{idVendor}=="1b4f", ATTRS{idProduct}=="9203", ENV{ID_MM_DEVICE_IGNORE}="1"
+SUBSYSTEM=="tty", ACTION=="add", ATTRS{idVendor}=="1b4f", ATTRS{idProduct}=="9203", ENV{ID_MM_DEVICE_IGNORE}="1", PROGRAM="/bin/systemd-escape -p --template=scale-controller@.service $env{DEVNAME}", ENV{SYSTEMD_WANTS}+="%c"

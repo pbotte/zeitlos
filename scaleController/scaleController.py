@@ -22,15 +22,12 @@ parser.add_argument("-b", "--mqtt-broker-host",
                     help="MQTT broker hostname. default=localhost", default="localhost")
 parser.add_argument("-t", "--watchdog-timeout",
                     help="timeout in seconds for the watchdog. default=1h", default=100*60*60, type=int)
-parser.add_argument("mqtt_client_name",
-                    help="MQTT client name. Needs to be unique in the MQTT namespace, eg enocean-eg.", type=str)
 parser.add_argument("serial_device_name",
                     help="Serial port used, eg /dev/ttyUSB0", type=str)
 args = parser.parse_args()
 logger.setLevel(logging.WARNING-(args.verbosity *
                                  10 if args.verbosity <= 2 else 20))
 
-logger.info("MQTT client name: "+args.mqtt_client_name)
 logger.info("Watchdog timeout (seconds): "+str(args.watchdog_timeout))
 logger.info('Use the following Serial-Device: '+str(args.serial_device_name))
 
@@ -56,7 +53,7 @@ def SendMsgToController(fCmdType, fDataList=None):
 def on_connect(client, userdata, flags, rc):
     if rc==0:
         logger.info("MQTT connected OK. Return code "+str(rc) )
-        client.subscribe("homie/"+args.mqtt_client_name+"/+/set")
+        client.subscribe("homie/"+mqtt_client_name+"/+/set")
         logger.debug("MQTT: Subscribed to all topics")
     else:
         logger.error("Bad connection. Return code="+str(rc))
@@ -81,7 +78,9 @@ def on_message(client, userdata, message):
         if (msplit[2]=="nr"):
           SendMsgToController(4)
 
-client = paho.Client(args.mqtt_client_name)
+mqtt_client_name = "test"
+
+client = paho.Client(mqtt_client_name)
 client.on_message = on_message
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
@@ -127,7 +126,7 @@ while (WatchDogCounter > 0):
                     # list() converts bytearray into array of int
                     t = datetime.now()
                     t = time.mktime(t.timetuple()) + t.microsecond / 1E6
-                    client.publish("homie/"+args.mqtt_client_name+"/messages", json.dumps(
+                    client.publish("homie/"+mqtt_client_name+"/messages", json.dumps(
                         {"pCmd": pCmd, "data": list(pData), "time": t},
                         sort_keys=True), qos = 1)
                 else:
