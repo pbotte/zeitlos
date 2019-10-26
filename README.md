@@ -33,14 +33,16 @@ Starten mit
 
 ### Kommunikationsprotokoll:
 
-````
-  data transfer protocoll
+```
    min. length: 7 bytes 
    [Start Sequence] [Command Byte, 2bytes] [Number of data bytes, 2bytes] [Data bytes] [Checksum byte]
    Start Sequence: 0x5a a5 = 2 bytes, fixed
-   Command Byte: 0x00 00 = Update Display
-                 0x00 01 = Update Product Info Type
    Number of data bytes: 2 bytes
    Data bytes: up to the number advertised in [Number of data bytes]
    Checksum byte: Sum of all (also start bytes) bytes except checksum byte modulo 256
 ```
+
+| Cmd Byte | Funktion |
+|----------|----------|
+| 0x00 00. | ??       |
+
