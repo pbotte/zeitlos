@@ -18,7 +18,6 @@ Some sample SN:
 ### eink Display
 
 Es gibt 2 Speicherbereich innerhalb des eink display. 
-Sobald die Anzeige aktualisiert wird, wird der aktuelle Speicherbereich auf den anderen gewechselt.
-Dieser Wechsel passiert nach dem Aufruf von `SetFrameMemory`.
+Sobald die Anzeige aktualisiert mit `DisplayFrame()` wird, wird der aktuelle Speicherbereich auf den anderen gewechselt.
 
-Dies bedingt, dass man z.B. auh den Speicher zweimal löschen muss.
+Dies bedingt, dass man z.B. auch den Speicher zweimal löschen muss.
