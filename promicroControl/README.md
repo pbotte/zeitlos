@@ -13,3 +13,12 @@ Some sample SN:
 0x5538333038391516070e
 ```
 
+## Hinweise
+
+### eink Display
+
+Es gibt 2 Speicherbereich innerhalb des eink display. 
+Sobald die Anzeige aktualisiert wird, wird der aktuelle Speicherbereich auf den anderen gewechselt.
+Dieser Wechsel passiert nach dem Aufruf von `SetFrameMemory`.
+
+Dies bedingt, dass man z.B. auh den Speicher zweimal löschen muss.
