@@ -24,13 +24,11 @@ Wird nun ein Pro Micro Arduino an den Computer angesteckt, so wird automatisch d
 ## Zustände des Scale Controllers
 
 Der Scale Controller kann folgende Zustände annehmen:
-1) Nicht initialisiert.
-
+1) Nicht initialisiert.  
    Dieser Zustand wird direkt nach dem Start angenommen. Die Waage muss noch mit Kalibrierungs- und Wareneigensschaften bespielt werden.
 2) Initialisierung
 3) Kundenmodus: Warten auf Kunden bzw. Ware entnommen.
-4) Verkäufermodus: Einrichtung durch Verkäufer.
-
+4) Verkäufermodus: Einrichtung durch Verkäufer.  
    Zuweisung der Waage mit Produkt aus Datenbank.
  
  
