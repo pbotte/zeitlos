@@ -13,3 +13,11 @@ Some sample SN:
 0x5538333038391516070e
 ```
 
+## Hinweise
+
+### eink Display
+
+Es gibt 2 Speicherbereich innerhalb des eink display. 
+Sobald die Anzeige aktualisiert mit `DisplayFrame()` wird, wird der aktuelle Speicherbereich auf den anderen gewechselt.
+
+Dies bedingt, dass man z.B. auch den Speicher zweimal löschen muss.
