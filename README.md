@@ -46,4 +46,9 @@ Starten mit
 |----------|----------------------------------------|----------------------------------------|
 | 0x00 00  | Reset Arduino                          |                                        |
 | 0x00 01  | Frage nach Seriennummer                | Sende Seriennummer                     |
+| 0x00 02  | Frage nach Firmware Version            | Sende Firmware Version (4 bytes)       |
+| 100(dec) | Update Display                         |                                        |
+| 102(dec) | Transfer: ProductName                  |                                        |
+| 103(dec) | Transfer:  ProductDescription.         |                                        |
+
 
