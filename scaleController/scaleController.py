@@ -9,6 +9,8 @@ import logging
 import argparse
 import sys
 import re
+import os
+import yaml #pip3 install pyyaml
 
 logging.basicConfig(level=logging.WARNING,
                     format='%(asctime)-6s %(levelname)-8s  %(message)s')
@@ -75,6 +77,8 @@ def on_message(client, userdata, message):
           SendMsgToController(2,"Gemuese")
         if (msplit[2]=="refresh"):
           SendMsgToController(3)
+        if (msplit[2]=="reset"):
+          SendMsgToController(0)
         if (msplit[2]=="nr"):
           SendMsgToController(4)
 
@@ -99,12 +103,62 @@ def ESPCRC(fDaten):
 def bytearray_2_str(fba) -> str:
     return '0x'+''.join("{:02x}".format(x) for x in fba)
 
+def resetArduino():
+  ser = serial.Serial(args.serial_device_name, 1200, timeout=0)
+  ser.close()
+  time.sleep(1)
+
+#Connect normally
 ser = serial.Serial(args.serial_device_name, 115200, timeout=0)
 
 WatchDogCounter = args.watchdog_timeout
 charSet = bytearray()
+scaleProperties = {'ProductName':None, 'SerialNumber':None, "FirmwareVersion":None}
+
+FSMState = 0 #0=start
+LastFSMStateChange = time.time() #change to time.time(), when FSMState updates
 
 while (WatchDogCounter > 0):
+    newFSMState=FSMState
+    if (FSMState == 0): # Start: Ask for serial number
+        newFSMState=1
+        SendMsgToController(1) #Ask for serial number
+    elif (FSMState == 1): #Wait for serial number return
+        #Receiving the value will set to FSMState==2
+        pass
+    elif (FSMState == 2): # Start: Ask for Firmware number
+        #Load configuration:
+        ConfigFile = "/home/pi/zeitlos/config/scaleCalibrations/{}.yml".format(scaleProperties["SerialNumber"])
+        if not os.path.exists(ConfigFile):
+            logger.warning("config file {} does not exist. Using default.".format(ConfigFile) )
+        else:
+            logger.info("Reading config file {}".format(ConfigFile) )
+            with open(ConfigFile, 'r') as ymlfile:
+                cfg = yaml.full_load(ymlfile) # see https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
+                print(cfg)
+
+        newFSMState=3
+        SendMsgToController(2) #Ask for Firmware Version
+    elif (FSMState == 3): #Wait for Firmware Version return
+        #Receiving the value will set to FSMState==10
+        pass
+    elif (FSMState == 10): #Transfer: ProductName
+        SendMsgToController(102, "Spinat") #ProductName
+        newFSMState=11
+    elif (FSMState == 11): #Transfer:  ProductDescription
+        SendMsgToController(103, "Aus dem eigenen Anbau.") #ProductDescription
+        newFSMState=100 #Set up complete
+    elif (FSMState==100):
+        SendMsgToController(100) #FullDisplay Update
+        logger.info("Initialisation complete.")
+        newFSMState=101
+    elif (FSMState==101):
+        newFSMState=101
+        pass
+    else:
+        newFSMState=0
+        logger.error("Invalid FSM State. Will reset.")
+
     while ser.inWaiting() > 0:
         charSet += ser.read()
     while len(charSet) > 0 and charSet[0] != 0x5a:
@@ -115,30 +169,44 @@ while (WatchDogCounter > 0):
         pCmd, pDataLength = charSet[2]*256+charSet[3], charSet[4]*256+charSet[5]
 
         if len(charSet) >= pDataLength+7: #Paket fully received
-                pFullDataCRC = charSet[6+pDataLength]
-                pData = charSet[6:6+pDataLength]
-                if ESPCRC(charSet[0:6+pDataLength]) == pFullDataCRC:  # Data CRC ok
-                    WatchDogCounter = args.watchdog_timeout
-                    t = datetime.now()
-                    t = time.mktime(t.timetuple()) + t.microsecond / 1E6
+            pFullDataCRC = charSet[6+pDataLength]
+            pData = charSet[6:6+pDataLength]
+            if ESPCRC(charSet[0:6+pDataLength]) == pFullDataCRC:  # Data CRC ok
+                WatchDogCounter = args.watchdog_timeout
+                t = datetime.now()
+                t = time.mktime(t.timetuple()) + t.microsecond / 1E6
 
-                    logger.info("Serial.read(): pCmd: "+str(pCmd)+" Data: "+bytearray_2_str(pData))
-                    # list() converts bytearray into array of int
-                    t = datetime.now()
-                    t = time.mktime(t.timetuple()) + t.microsecond / 1E6
-                    client.publish("homie/"+mqtt_client_name+"/messages", json.dumps(
-                        {"pCmd": pCmd, "data": list(pData), "time": t},
-                        sort_keys=True), qos = 1)
-                else:
-                    logger.warning("Serial.read(): CRC NOT ok. Read ({}), calculated ({})".format(
-                        pFullDataCRC, ESPCRC(charSet[0:6+pDataLength])))
-                    logger.warning("  More Details: Cmd ({}) pDataLength ({})".format(
-                        pCmd, pDataLength) )
-                    print(list(pData))
-                    print(charSet)
+                logger.debug("Serial.read(): pCmd: "+str(pCmd)+" Data: "+bytearray_2_str(pData))
+                # list() converts bytearray into array of int
+                t = datetime.now()
+                t = time.mktime(t.timetuple()) + t.microsecond / 1E6
+                client.publish("homie/"+mqtt_client_name+"/messages", json.dumps(
+                    {"pCmd": pCmd, "data": list(pData), "time": t},
+                    sort_keys=True), qos = 1)
+                if (pCmd==1) and (FSMState==1): # Serial number received
+                    scaleProperties['SerialNumber'] = bytearray_2_str(pData)
+                    logger.info("scaleProperties: {}".format(scaleProperties))
+                    newFSMState=2
+                if (pCmd==2) and (FSMState==3): #Firmware Version received
+                    scaleProperties['FirmwareVersion'] = bytearray_2_str(pData)
+                    logger.info("FirmwareVersion: {}".format(scaleProperties))
+                    newFSMState=10
+            else:
+                logger.warning("Serial.read(): CRC NOT ok. Read ({}), calculated ({}), Cmd ({}) pDataLength ({})".format(
+                    pFullDataCRC, ESPCRC(charSet[0:6+pDataLength]), pCmd, pDataLength) )
+                print(list(pData))
 
-                # Delete the processed data and propare for next paket to receive
-                charSet=charSet[pDataLength+7:]
+            # Delete the processed data and propare for next paket to receive
+            charSet=charSet[pDataLength+7:]
+    
+    if (time.time() - LastFSMStateChange > 5) and (FSMState != 101): # 101 is the ground state
+        newFSMState = 0
+        logger.error("No response from micro controller for more than 5 second. Last FSMState: {}. Reset FSM state.".format(FSMState))
+
+    if (newFSMState != FSMState):
+        FSMState = newFSMState
+        LastFSMStateChange=time.time()
+
 
     time.sleep(.01)
     WatchDogCounter -= 1

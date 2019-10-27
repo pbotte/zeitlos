@@ -61,32 +61,6 @@
   epd.DisplayFrame();
 
 
-  paint.SetWidth(64);
-  paint.SetHeight(64);
-
-  paint.Clear(UNCOLORED);
-
-/*  paint.DrawRectangle(1, 1, 40, 50, COLORED);
-  paint.DrawLine(0, 0, 40, 50, COLORED);
-  paint.DrawLine(40, 0, 0, 50, COLORED);
-*/
-  for (uint8_t y = 0; y < qrcode.size; y++) {
-        // Each horizontal module
-        for (uint8_t x = 0; x < qrcode.size; x++) {
-            if (qrcode_getModule(&qrcode, x, y)) {
-			paint.DrawPixel(x*2+5,  y*2+5,COLORED);
-			paint.DrawPixel(x*2+1+5,y*2+5,COLORED);
-			paint.DrawPixel(x*2+5,  y*2+5+1,COLORED);
-			paint.DrawPixel(x*2+1+5,y*2+5+1,COLORED);
-		}
-        }
-    }
-
-
-  epd.SetFrameMemory(paint.GetImage(), 50/*y*/, 5/*x*/, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
-  epd.SetFrameMemory(paint.GetImage(), 50, 5, paint.GetWidth(), paint.GetHeight());
-  epd.DisplayFrame();
 /*
   paint.Clear(UNCOLORED);
   paint.DrawCircle(32, 32, 30, COLORED);

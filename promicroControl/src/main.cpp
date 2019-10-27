@@ -8,31 +8,19 @@
 
 // Serial Number of 32U4 from
 // https://forum.pololu.com/t/a-star-adding-serial-numbers/7651
-char serialNumber[30]; //Serial number of ATMEGA32U4
+byte serialNumber[10];
+byte firmwareVersion[4] = {0,0,0,1};
 
-char nibbleToHex(uint8_t n) {
-  if (n <= 9) { return '0' + n; }
-  else { return 'a' + (n - 10); }
-}
-
-void readSerialNumberOld() {
-  char * p = serialNumber;
-  for(uint8_t i = 14; i < 24; i++) {
-    uint8_t b = boot_signature_byte_get(i);
-    *p++ = nibbleToHex(b >> 4);
-    *p++ = nibbleToHex(b & 0xF);
-    *p++ = '-';
-  }
-  *--p = 0;
-}
 void readSerialNumber() {
-  char * p = serialNumber;
   for(uint8_t i = 14; i < 24; i++) {
-    uint8_t b = boot_signature_byte_get(i);
-    *p++ = b;
+    serialNumber[i-14] = boot_signature_byte_get(i);
   }
-  *p = 0;
 }
+
+//Trigger Arduino reset via software
+//Alternative option to reset Arduino via Computer:
+//Open and Close the serial port at 1200 Baud
+void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
 #define pITypeLength 50
 char pIType[pITypeLength]; //Product Info: Type
@@ -54,18 +42,73 @@ Epd epd;
 unsigned long time_start_ms;
 unsigned long time_now_s;
 
+void einkShowUninitialised() {
+  if (epd.Init(lut_full_update) != 0) {
+    Serial.print("e-Paper init failed");
+    return;
+  }
+
+  //Clear screen
+  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+  epd.DisplayFrame();
+
+  //Draw something helpful
+  paint.SetRotate(ROTATE_270);
+  paint.SetWidth(24); //Effektiv: Höhe des Kastens
+  paint.SetHeight(296); //Effektiv: Breite des Kastens
+
+  /* For simplicity, the arguments are explicit numerical coordinates */
+  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(5/*x*/, 0/*y*/, "Fehlende", &Font24, COLORED);
+  epd.SetFrameMemory(paint.GetImage(), 10/*y-Koordinate, oben=0*/, 0 /*x-Koordinate, rechts=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
+
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(5/*x*/, 0/*y*/, "Konfiguration", &Font24, COLORED);
+  epd.SetFrameMemory(paint.GetImage(), 35, 0, paint.GetWidth(), paint.GetHeight());
+
+  //And now add the QR Code
+  if (epd.Init(lut_partial_update) != 0) {
+    Serial.print("e-Paper init failed");
+    return;
+  }
+
+  QRCode qrcode;
+  uint8_t qrcodeData[qrcode_getBufferSize(3)];
+  qrcode_initText(&qrcode, qrcodeData, 3, 0, "https://github.com/pbotte/zeitlos");
+
+  paint.SetWidth(64);
+  paint.SetHeight(64);
+
+  paint.Clear(UNCOLORED);
+  for (uint8_t y = 0; y < qrcode.size; y++) {
+    for (uint8_t x = 0; x < qrcode.size; x++) {
+      if (qrcode_getModule(&qrcode, x, y)) {
+        paint.DrawPixel(x*2+5,  y*2+5,COLORED);
+        paint.DrawPixel(x*2+1+5,y*2+5,COLORED);
+        paint.DrawPixel(x*2+5,  y*2+5+1,COLORED);
+        paint.DrawPixel(x*2+1+5,y*2+5+1,COLORED);
+      }
+    }
+  }
+  epd.SetFrameMemory(paint.GetImage(), 60/*y*/, 5/*x*/, paint.GetWidth(), paint.GetHeight());
+
+  paint.SetWidth(24); //Effektiv: Höhe des Kastens
+  paint.SetHeight(232); //Effektiv: Breite des Kastens
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(5/*x*/, 0/*y*/, "Einrichtungstipps:", &Font16, COLORED);
+  epd.SetFrameMemory(paint.GetImage(), 85/*y-Koordinate, oben=0*/, 64 /*x-Koordinate, rechts=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
+
+  epd.DisplayFrame();
+}
+
 void updateDisplayFull() {
     if (epd.Init(lut_full_update) != 0) {
       Serial.print("e-Paper init failed");
       return;
   }
 
-  /**
-   *  there are 2 memory areas embedded in the e-paper display
-   *  and once the display is refreshed, the memory area will be auto-toggled,
-   *  i.e. the next action of SetFrameMemory will set the other memory area
-   *  therefore you have to clear the frame memory twice.
-   */
   paint.SetRotate(ROTATE_270);
   paint.SetWidth(24); //Effektiv: Höhe des Kastens
   paint.SetHeight(296); //Effektiv: Breite des Kastens
@@ -93,46 +136,41 @@ void updateDisplayFull() {
 
 }
 
-int sendSerialPacket(int fCmdType, byte fData=0) {
+void sendSerialPacket(int fCmdType, byte fData=0) {
   uint8_t c[]= {0x5a, 0xa5, 0, 1,  0, 1/*data bytes number*/, fData, 0};
   c[3] = fCmdType&0xff;
   c[2] = (fCmdType>>8) & 0xff;
   byte checksum=0;
-  for (int i=0; i<sizeof(c)-1; i++) 
+  for (byte i=0; i<sizeof(c)-1; i++) 
     checksum += c[i];
   c[sizeof(c)-1] = checksum;
-  Serial.write(c,sizeof(c));
+  Serial.write(c, sizeof(c));
 }
-int sendSerialPacket2(int fCmdType, byte fData[], int fNData) {
+void sendSerialPacket2(int fCmdType, byte fData[], byte fNData) {
   uint8_t c[]= {0x5a, 0xa5, 0, 1,  0, 1/*data bytes number*/};
   c[3] = fCmdType&0xff;
   c[2] = (fCmdType>>8) & 0xff;
   c[5] = fNData & 0xff;
   c[4] = (fNData>>8) & 0xff;
   byte checksum=0;
-  for (int i=0; i<sizeof(c); i++)
+  for (byte i=0; i<sizeof(c); i++)
     checksum += c[i];
-  for (int i=0; i<fNData; i++)
+  for (byte i=0; i<fNData; i++)
     checksum += fData[i];
-  Serial.write(c,sizeof(c));
+  Serial.write(c, sizeof(c));
   Serial.write(fData, fNData);
   Serial.write(checksum);
 }
 
 void setup() {
-//  while (!Serial); //https://www.arduino.cc/en/Guide/ArduinoLeonardoMicro
-  Serial.begin(115200);
-
-  // Create the QR code
-  QRCode qrcode;
-  uint8_t qrcodeData[qrcode_getBufferSize(3)];
-  qrcode_initText(&qrcode, qrcodeData, 3, 0, "http://www.tusoi.de");
-
   readSerialNumber();
-//  Serial.print("Seriennummer ATMEGA32U4: ");
-//  Serial.println(serialNumber);
+  
+  delay(1000); //give computer some time, to launch the scale controller. 
+               //in case this is not successfull within 1sec, show hint
+  if (!Serial) einkShowUninitialised();
+  while (!Serial); //https://www.arduino.cc/en/Guide/ArduinoLeonardoMicro
 
-  sendSerialPacket2(111, serialNumber, 30);
+  Serial.begin(115200); //Baud rate not important, due to Serial over USB: See Arduino Leonardo manual
 }
 
 
@@ -145,16 +183,11 @@ byte receivedFSMChecksum = 0;
 byte receivedFSMData[NMAXNBYTES];
 
 void loop() {
+  //
+  //updateDisplayFull();
+
+
   int ib;
-  // data transfer protocoll
-  //  min. length: 7 bytes 
-  //  [Start Sequence] [Command Byte, 2bytes] [Number of data bytes, 2bytes] [Data bytes] [Checksum byte]
-  //  Start Sequence: 0x5a a5 = 2 bytes, fixed
-  //  Command Byte: 0x00 00 = Update Display
-  //                0x00 01 = Update Product Info Type
-  //  Number of data bytes: 2 bytes
-  //  Data bytes: up to the number advertised in [Number of data bytes]
-  //  Checksum byte: Sum of all (also start bytes) bytes except checksum byte modulo 256
 
   if (Serial.available() > 0) {
     ib = Serial.read();
@@ -188,17 +221,16 @@ void loop() {
         receiveFSMState=7;
       }
       if (receivedFSMNBytesReceived >= NMAXNBYTES) { //Too long for our current buffer
-        sendSerialPacket(12);
         receiveFSMState=0;
       }
     } else if (receiveFSMState==7) {//Wait for checksum
       receivedFSMChecksum -= ib;
       receiveFSMState=0;
       if (receivedFSMChecksum == ib) { //Checksum ok?
-        sendSerialPacket(10, receivedFSMCmd&0xff);
-        sendSerialPacket(11, receivedFSMNData&0xff);
-        sendSerialPacket(12, receivedFSMData[0]);
-        if (receivedFSMCmd==2) {
+        if (receivedFSMCmd==0) resetFunc(); //(Kindof) hardare resets the Arduino
+        if (receivedFSMCmd==1) sendSerialPacket2(1, serialNumber, sizeof(serialNumber));
+        if (receivedFSMCmd==2) sendSerialPacket2(2, firmwareVersion, sizeof(firmwareVersion));
+        if (receivedFSMCmd==102) {
           pITypeActLength=1;
           pIType[0] = receivedFSMData[0];
           pIType[1] = receivedFSMData[1];
@@ -207,8 +239,7 @@ void loop() {
           pIType[4] = receivedFSMData[4];
           pIType[5] = 0;
         }
-        if (receivedFSMCmd==3) updateDisplayFull();
-        if (receivedFSMCmd==4) sendSerialPacket2(111, serialNumber, 10);
+        if (receivedFSMCmd==100) updateDisplayFull();
       }
     } else {
       receiveFSMState=0;
