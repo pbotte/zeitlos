@@ -42,7 +42,8 @@ Starten mit
    Checksum byte: Sum of all (also start bytes) bytes except checksum byte modulo 256
 ```
 
-| Cmd Byte | Funktion |
-|----------|----------|
-| 0x00 00. | ??       |
+| Cmd Byte | Funktion (Scale Controller an Arduino) | Funktion (Arduino an Scale Controller) |
+|----------|----------------------------------------|----------------------------------------|
+| 0x00 00  | Reset Arduino                          |                                        |
+| 0x00 01  | Frage nach Seriennummer                | Sende Seriennummer                     |
 
