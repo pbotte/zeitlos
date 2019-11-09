@@ -48,7 +48,7 @@ def SendMsgToController(fCmdType, fDataList=None):
     aList.extend( [ (myListLength>>8)&0xff, myListLength&0xff ] ) #add data length bytes
     aList.extend( fDataList )
     aList.append( sum(aList)%256 ) # calculate checksum
-    logger.info("Serial.write(): Writing to following bytes {}".format(list(aList)))
+    logger.info("Serial.write(): Writing the following bytes {}".format(list(aList)))
     ser.write(bytearray(aList))
 
 
@@ -82,17 +82,14 @@ def on_message(client, userdata, message):
         if (msplit[2]=="nr"):
           SendMsgToController(4)
 
-mqtt_client_name = "test"
+mqtt_client_name = "unconfigured"
 
 client = paho.Client(mqtt_client_name)
 client.on_message = on_message
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.enable_logger(logger) # info: https://www.eclipse.org/paho/clients/python/docs/#callbacks
-logger.info("Conncting to broker "+args.mqtt_broker_host)
-client.connect(args.mqtt_broker_host)
-client.loop_start()
-logger.info("MQTT loop started.")
+logger.info("Connecting to broker "+args.mqtt_broker_host)
 
 def ESPCRC(fDaten):
     u8CRC = 0
@@ -113,7 +110,7 @@ ser = serial.Serial(args.serial_device_name, 115200, timeout=0)
 
 WatchDogCounter = args.watchdog_timeout
 charSet = bytearray()
-scaleProperties = {'ProductName':None, 'SerialNumber':None, "FirmwareVersion":None}
+scaleProperties = {'system':{'SerialNumber':None, "FirmwareVersion":None}, 'details':{}}
 
 FSMState = 0 #0=start
 LastFSMStateChange = time.time() #change to time.time(), when FSMState updates
@@ -127,15 +124,25 @@ while (WatchDogCounter > 0):
         #Receiving the value will set to FSMState==2
         pass
     elif (FSMState == 2): # Start: Ask for Firmware number
+        #start with MQTT connection and set last will
+        mqtt_client_name = "scale{}".format(scaleProperties['system']['SerialNumber'])
+        logger.info("mqtt_client_name: {}".format(mqtt_client_name))
+        client.will_set("homie/"+mqtt_client_name+"/state", 'offline', qos=1, retain=True)
+        client.connect(args.mqtt_broker_host)
+        client.loop_start()
+        logger.info("MQTT loop started.")
+        client.publish("homie/"+mqtt_client_name+"/state", 'online', qos=1, retain=True)
+
         #Load configuration:
-        ConfigFile = "/home/pi/zeitlos/config/scaleCalibrations/{}.yml".format(scaleProperties["SerialNumber"])
+        ConfigFile = "/home/pi/zeitlos/config/scaleCalibrations/{}.yml".format(scaleProperties['system']["SerialNumber"])
         if not os.path.exists(ConfigFile):
             logger.warning("config file {} does not exist. Using default.".format(ConfigFile) )
+            scaleProperties['details'] = {'Calibration': [1, 1, 1, 1], 'ProductName': 'Produktbeschreibung', 'ProductDescription': 'Keine Beschreibung.'}
         else:
             logger.info("Reading config file {}".format(ConfigFile) )
             with open(ConfigFile, 'r') as ymlfile:
-                cfg = yaml.full_load(ymlfile) # see https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
-                print(cfg)
+                scaleProperties['details'] = yaml.full_load(ymlfile) # see https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation
+                logger.info("Data read: {}".format(scaleProperties['details']))
 
         newFSMState=3
         SendMsgToController(2) #Ask for Firmware Version
@@ -143,10 +150,14 @@ while (WatchDogCounter > 0):
         #Receiving the value will set to FSMState==10
         pass
     elif (FSMState == 10): #Transfer: ProductName
-        SendMsgToController(102, "Spinat") #ProductName
+        #First display the status
+        client.publish("homie/"+mqtt_client_name+"/status", json.dumps(scaleProperties,
+            sort_keys=True), qos = 1, retain=True)
+
+        SendMsgToController(102, scaleProperties['details']['ProductName']) #ProductName
         newFSMState=11
     elif (FSMState == 11): #Transfer:  ProductDescription
-        SendMsgToController(103, "Aus dem eigenen Anbau.") #ProductDescription
+        SendMsgToController(103, scaleProperties['details']['ProductDescription']) #ProductDescription
         newFSMState=100 #Set up complete
     elif (FSMState==100):
         SendMsgToController(100) #FullDisplay Update
@@ -173,28 +184,23 @@ while (WatchDogCounter > 0):
             pData = charSet[6:6+pDataLength]
             if ESPCRC(charSet[0:6+pDataLength]) == pFullDataCRC:  # Data CRC ok
                 WatchDogCounter = args.watchdog_timeout
-                t = datetime.now()
-                t = time.mktime(t.timetuple()) + t.microsecond / 1E6
-
                 logger.debug("Serial.read(): pCmd: "+str(pCmd)+" Data: "+bytearray_2_str(pData))
                 # list() converts bytearray into array of int
-                t = datetime.now()
-                t = time.mktime(t.timetuple()) + t.microsecond / 1E6
-                client.publish("homie/"+mqtt_client_name+"/messages", json.dumps(
-                    {"pCmd": pCmd, "data": list(pData), "time": t},
-                    sort_keys=True), qos = 1)
+                #client.publish("homie/"+mqtt_client_name+"/messages", json.dumps(
+                #    {"pCmd": pCmd, "data": list(pData), "time": time.time()},
+                #    sort_keys=True), qos = 1)
                 if (pCmd==1) and (FSMState==1): # Serial number received
-                    scaleProperties['SerialNumber'] = bytearray_2_str(pData)
-                    logger.info("scaleProperties: {}".format(scaleProperties))
+                    scaleProperties['system']['SerialNumber'] = bytearray_2_str(pData)
+                    logger.info("scaleProperties: {}".format(scaleProperties['system']['SerialNumber']))
                     newFSMState=2
                 if (pCmd==2) and (FSMState==3): #Firmware Version received
-                    scaleProperties['FirmwareVersion'] = bytearray_2_str(pData)
-                    logger.info("FirmwareVersion: {}".format(scaleProperties))
+                    scaleProperties['system']['FirmwareVersion'] = bytearray_2_str(pData)
+                    logger.info("FirmwareVersion: {}".format(scaleProperties['system']['FirmwareVersion']))
                     newFSMState=10
             else:
                 logger.warning("Serial.read(): CRC NOT ok. Read ({}), calculated ({}), Cmd ({}) pDataLength ({})".format(
                     pFullDataCRC, ESPCRC(charSet[0:6+pDataLength]), pCmd, pDataLength) )
-                print(list(pData))
+                logger.warning("Full pData: {}".format(list(pData)))
 
             # Delete the processed data and propare for next paket to receive
             charSet=charSet[pDataLength+7:]

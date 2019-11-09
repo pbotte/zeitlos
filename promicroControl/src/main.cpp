@@ -24,7 +24,8 @@ void(* resetFunc) (void) = 0; //declare reset function @ address 0
 
 #define pITypeLength 50
 char pIType[pITypeLength]; //Product Info: Type
-byte pITypeActLength = 0; //Length of actual String
+#define pIDescriptionLength 50
+char pIDescription[pIDescriptionLength]; //Product Info: Description
 
 
 #define COLORED     0
@@ -113,6 +114,9 @@ void updateDisplayFull() {
   paint.SetWidth(24); //Effektiv: Höhe des Kastens
   paint.SetHeight(296); //Effektiv: Breite des Kastens
 
+  //paint.DrawLine(296, 20, 1, 18, COLORED);
+  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
+
   /* For simplicity, the arguments are explicit numerical coordinates */
   paint.Clear(UNCOLORED);
   paint.DrawStringAt(5/*x*/, 0/*y*/, pIType, &Font24, COLORED);
@@ -120,9 +124,13 @@ void updateDisplayFull() {
     paint.DrawPixel(x,22,COLORED);
     paint.DrawPixel(x,23,COLORED);
   }
-  //paint.DrawLine(296, 20, 1, 18, COLORED);
-  epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
   epd.SetFrameMemory(paint.GetImage(), 5/*y-Koordinate, oben=0*/, 0 /*x-Koordinate, rechts=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
+
+  paint.Clear(UNCOLORED);
+  paint.DrawStringAt(5/*x*/, 0/*y*/, pIDescription, &Font16, COLORED);
+  epd.SetFrameMemory(paint.GetImage(), 35/*y-Koordinate, oben=0*/, 0 /*x-Koordinate, rechts=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
+
+
   epd.DisplayFrame();
 
   epd.ClearFrameMemory(0xFF);   // bit set = white, bit reset = black
@@ -230,14 +238,17 @@ void loop() {
         if (receivedFSMCmd==0) resetFunc(); //(Kindof) hardare resets the Arduino
         if (receivedFSMCmd==1) sendSerialPacket2(1, serialNumber, sizeof(serialNumber));
         if (receivedFSMCmd==2) sendSerialPacket2(2, firmwareVersion, sizeof(firmwareVersion));
-        if (receivedFSMCmd==102) {
-          pITypeActLength=1;
-          pIType[0] = receivedFSMData[0];
-          pIType[1] = receivedFSMData[1];
-          pIType[2] = receivedFSMData[2];
-          pIType[3] = receivedFSMData[3];
-          pIType[4] = receivedFSMData[4];
-          pIType[5] = 0;
+        if (receivedFSMCmd==102) { //Received Type
+          byte i;
+          for (i=0; (i<pITypeLength-1) && (i<receivedFSMNData); i++)
+            pIType[i] = receivedFSMData[i];
+          pIType[i] = 0;
+        }
+        if (receivedFSMCmd==103) { //Received Description
+          byte i;
+          for (i=0; (i<pIDescriptionLength-1) && (i<receivedFSMNData); i++)
+            pIDescription[i] = receivedFSMData[i];
+          pIDescription[i] = 0;
         }
         if (receivedFSMCmd==100) updateDisplayFull();
       }
