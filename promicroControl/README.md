@@ -1,7 +1,7 @@
 # Hardware
 ## Pinbelegung
 
-> Ein vollumfängliche Einführung gibt es hier: https://learn.sparkfun.com/tutorials/pro-micro--fio-v3-hookup-guide/all#hardware-overview-pro-micro
+> Eine vollumfängliche Einführung gibt es hier: https://learn.sparkfun.com/tutorials/pro-micro--fio-v3-hookup-guide/all#hardware-overview-pro-micro
 
 ![Pinout Pro Micro](https://cdn.sparkfun.com/assets/9/c/3/c/4/523a1765757b7f5c6e8b4567.png)
 
