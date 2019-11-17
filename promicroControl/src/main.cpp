@@ -1,7 +1,6 @@
 #include <SPI.h>
 #include <epd2in9.h>
 #include <epdpaint.h>
-#include "imagedata.h"
 #include <qrcode.h>
 #include <avr/boot.h>
 #include <Q4HX711.h>
