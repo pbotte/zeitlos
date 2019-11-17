@@ -4,6 +4,7 @@
 #include "imagedata.h"
 #include <qrcode.h>
 #include <avr/boot.h>
+#include <Q4HX711.h>
 
 
 // Serial Number of 32U4 from
