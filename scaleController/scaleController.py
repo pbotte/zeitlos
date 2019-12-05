@@ -168,7 +168,7 @@ while (WatchDogCounter > 0):
         pass
     else:
         newFSMState=0
-        logger.error("Invalid FSM State. Will reset.")
+        logger.error("Invalid FSM State. Reset FSM state to 0.")
 
     while ser.inWaiting() > 0:
         charSet += ser.read()
