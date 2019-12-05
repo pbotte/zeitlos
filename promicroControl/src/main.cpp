@@ -54,7 +54,7 @@ void einkShowUninitialised() {
   epd.DisplayFrame();
 
   //Draw something helpful
-  paint.SetRotate(ROTATE_270);
+  paint.SetRotate(ROTATE_90);
   paint.SetWidth(24); //Effektiv: Höhe des Kastens
   paint.SetHeight(296); //Effektiv: Breite des Kastens
 
@@ -63,11 +63,11 @@ void einkShowUninitialised() {
 
   paint.Clear(UNCOLORED);
   paint.DrawStringAt(5/*x*/, 0/*y*/, "Fehlende", &Font24, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 10/*y-Koordinate, oben=0*/, 0 /*x-Koordinate, rechts=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
+  epd.SetFrameMemory(paint.GetImage(), 128-10-20/*vertikal, unten=0*/, 0 /*horizontal, links=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
 
   paint.Clear(UNCOLORED);
   paint.DrawStringAt(5/*x*/, 0/*y*/, "Konfiguration", &Font24, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 35, 0, paint.GetWidth(), paint.GetHeight());
+  epd.SetFrameMemory(paint.GetImage(), 128-35-20/*vertikal, unten=0*/, 0 /*horizontal, links=0*/, paint.GetWidth(), paint.GetHeight());
 
   //And now add the QR Code
   if (epd.Init(lut_partial_update) != 0) {
@@ -93,13 +93,13 @@ void einkShowUninitialised() {
       }
     }
   }
-  epd.SetFrameMemory(paint.GetImage(), 60/*y*/, 5/*x*/, paint.GetWidth(), paint.GetHeight());
+  epd.SetFrameMemory(paint.GetImage(), 128-50-64/*vertikal*/, 296-5-64/*horizontal*/, paint.GetWidth(), paint.GetHeight());
 
   paint.SetWidth(24); //Effektiv: Höhe des Kastens
   paint.SetHeight(232); //Effektiv: Breite des Kastens
   paint.Clear(UNCOLORED);
   paint.DrawStringAt(5/*x*/, 0/*y*/, "Einrichtungstipps:", &Font16, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 85/*y-Koordinate, oben=0*/, 64 /*x-Koordinate, rechts=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
+  epd.SetFrameMemory(paint.GetImage(), 10 /*vertikal, unten=0*/, 0 /*horizontal, links=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
 
   epd.DisplayFrame();
 }
@@ -110,7 +110,7 @@ void updateDisplayFull() {
       return;
   }
 
-  paint.SetRotate(ROTATE_270);
+  paint.SetRotate(ROTATE_90);
   paint.SetWidth(24); //Effektiv: Höhe des Kastens
   paint.SetHeight(296); //Effektiv: Breite des Kastens
 
@@ -124,11 +124,11 @@ void updateDisplayFull() {
     paint.DrawPixel(x,22,COLORED);
     paint.DrawPixel(x,23,COLORED);
   }
-  epd.SetFrameMemory(paint.GetImage(), 5/*y-Koordinate, oben=0*/, 0 /*x-Koordinate, rechts=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
+  epd.SetFrameMemory(paint.GetImage(), 128-21/*vertikal, unten=0*/, 0 /*horizontal, links=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
 
   paint.Clear(UNCOLORED);
   paint.DrawStringAt(5/*x*/, 0/*y*/, pIDescription, &Font16, COLORED);
-  epd.SetFrameMemory(paint.GetImage(), 35/*y-Koordinate, oben=0*/, 0 /*x-Koordinate, rechts=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
+  epd.SetFrameMemory(paint.GetImage(), 128-20-35/*vertikal, unten=0*/, 0 /*horizontal, links=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
 
 
   epd.DisplayFrame();
