@@ -5,7 +5,6 @@
 #include <avr/boot.h>
 #include <Q4HX711.h>
 
-
 // Serial Number of 32U4 from
 // https://forum.pololu.com/t/a-star-adding-serial-numbers/7651
 byte serialNumber[10];
@@ -42,6 +41,8 @@ Paint paint(image, 0, 0);    // width should be the multiple of 8
 Epd epd;
 unsigned long time_start_ms;
 unsigned long time_now_s;
+
+Q4HX711 hx711Readout(6); //Provide Clock Pin
 
 void einkShowUninitialised() {
   if (epd.Init(lut_full_update) != 0) {
@@ -190,15 +191,30 @@ byte receivedFSMChecksum = 0;
 #define NMAXNBYTES 100
 byte receivedFSMData[NMAXNBYTES];
 
+unsigned long lastMillisScaleRead = 0; // To check, whether there are read problems. should work with 10Hz
+
 void loop() {
-  //
   //updateDisplayFull();
 
-
-  int ib;
-
-  if (Serial.available() > 0) {
-    ib = Serial.read();
+  if (hx711Readout.readyToSend()) {
+    hx711Readout.read();
+    lastMillisScaleRead = millis();
+    Serial.print("HX711 reading: ");
+    for (int i=0; i<NHX711INSTANCES; i++) {
+      Serial.print(hx711Readout.dataRead[i]);
+      Serial.print("\t");
+    }
+    Serial.println();
+//    sendSerialPacket2(201, hx711Readout.dataRead, NHX711INSTANCES*sizeof(hx711Readout.dataRead));
+  }
+  if ((millis() - lastMillisScaleRead) > 200) {
+    //a scale readout problem occured
+    //the scale should provide some data every 100ms
+  }
+  
+  if (false) {
+//  if (Serial.available() > 0) {
+    int ib = Serial.read();
     receivedFSMChecksum += ib;
     if ((receiveFSMState==0) && (ib == 0x5a)) {//Wait for start sequence 1st byte
       receiveFSMState=1;

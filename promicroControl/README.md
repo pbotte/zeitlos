@@ -14,9 +14,9 @@
 | GND | GND |
 | | D2 (SDA) |
 | | D3 (SCL) (PWM) |
-| | D4 (A6) |  |  | | DAT | 
-| | D5 (PWM) | | | DAT
-| | D6 (A7) (PWM) |
+| | D4 (A6) |  |  |  | 
+| | D5 (PWM) | | | | 
+| | D6 (A7) (PWM) | CLK | CLK | CLK | CLK |
 | BUSY | D7 |
 | RST | D8 (A8) | 
 | DC | D9 (A9) (PWM) |
@@ -24,10 +24,10 @@
 | | D14 (MISO) |
 | CLK | D15 (SPI CLK) |
 | DIN | D16 (MOSI) |
-| | D18 (A0) | CLK | CLK | CLK | CLK |
-| | D19 (A1) | DAT | 
-| | D20 (A2) | | DAT | 
-| | D21 (A3) | | | | 
+| | D18 (A0) | DAT
+| | D19 (A1) | | DAT | 
+| | D20 (A2) | | | DAT | 
+| | D21 (A3) | | | | DAT | 
 | VCC | VCC (3.3V) | VCC/VDD | VCC/VDD | VCC/VDD | VCC/VDD | 
 |  | RST |
 |  | GND | GND | GND |

@@ -197,6 +197,9 @@ while (WatchDogCounter > 0):
                     scaleProperties['system']['FirmwareVersion'] = bytearray_2_str(pData)
                     logger.info("FirmwareVersion: {}".format(scaleProperties['system']['FirmwareVersion']))
                     newFSMState=10
+                logger.warning("Serial.read(): CRC OK. Read ({}), calculated ({}), Cmd ({}) pDataLength ({})".format(
+                    pFullDataCRC, ESPCRC(charSet[0:6+pDataLength]), pCmd, pDataLength) )
+                logger.warning("Full pData: {}".format(list(pData)))
             else:
                 logger.warning("Serial.read(): CRC NOT ok. Read ({}), calculated ({}), Cmd ({}) pDataLength ({})".format(
                     pFullDataCRC, ESPCRC(charSet[0:6+pDataLength]), pCmd, pDataLength) )
