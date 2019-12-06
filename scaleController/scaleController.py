@@ -11,6 +11,8 @@ import sys
 import re
 import os
 import yaml #pip3 install pyyaml
+import struct #to unpack 4 bytes to int
+import numpy as np # for variance
 
 logging.basicConfig(level=logging.WARNING,
                     format='%(asctime)-6s %(levelname)-8s  %(message)s')
@@ -33,6 +35,19 @@ logger.setLevel(logging.WARNING-(args.verbosity *
 logger.info("Watchdog timeout (seconds): "+str(args.watchdog_timeout))
 logger.info('Use the following Serial-Device: '+str(args.serial_device_name))
 
+class measurementValue:
+    def __init__(self, maxLength=1):
+        self.data = []
+        self.maxLength = maxLength
+    def add(self, data):
+        self.data.append(data)
+        if len(self.data) > self.maxLength:
+            del(self.data[0])
+    def avg(self):
+        return sum(self.data)/len(self.data)
+
+scaleReadings = [measurementValue(10) for i in range(4)]
+
 
 def SendMsgToController(fCmdType, fDataList=None):
     if fDataList is None:
@@ -48,9 +63,8 @@ def SendMsgToController(fCmdType, fDataList=None):
     aList.extend( [ (myListLength>>8)&0xff, myListLength&0xff ] ) #add data length bytes
     aList.extend( fDataList )
     aList.append( sum(aList)%256 ) # calculate checksum
-    logger.info("Serial.write(): Writing the following bytes {}".format(list(aList)))
+    logger.debug("Serial.write(): Writing the following bytes {}".format(list(aList)))
     ser.write(bytearray(aList))
-
 
 def on_connect(client, userdata, flags, rc):
     if rc==0:
@@ -76,7 +90,10 @@ def on_message(client, userdata, message):
         if (msplit[2]=="type"):
           SendMsgToController(2,"Gemuese")
         if (msplit[2]=="refresh"):
-          SendMsgToController(3)
+          #SendMsgToController(100) # FullUpdate
+          SendMsgToController(101) #Partial Update
+        if (msplit[2]=="stop"):
+          SendMsgToController(10000) #Please Log In Msg
         if (msplit[2]=="reset"):
           SendMsgToController(0)
         if (msplit[2]=="nr"):
@@ -110,10 +127,23 @@ ser = serial.Serial(args.serial_device_name, 115200, timeout=0)
 
 WatchDogCounter = args.watchdog_timeout
 charSet = bytearray()
-scaleProperties = {'system':{'SerialNumber':None, "FirmwareVersion":None}, 'details':{}}
+scaleProperties = {'system':{'SerialNumber':None, "FirmwareVersion":None}, 
+                   'details':{
+                       'ProductName': 'Produktbeschreibung', 
+                       'ProductDescription': 'Keine Beschreibung.',
+                       'Pricing':{ 'Type': 0, 'GrammsPerUnit':100, 'PricePerUnit': 1.0  },
+                       'Calibration': {'Offset': [41308, -239592, -8747, 26511],
+                        'Slope':[-0.004746168, 0.004798805, -0.004741381, 0.004679427],
+                        'GlobalOffset':1920.2
+                       }
+                   } }
 
 FSMState = 0 #0=start
 LastFSMStateChange = time.time() #change to time.time(), when FSMState updates
+
+numberMessagesRecv = 0
+timeLastPriceUpdate = time.time()
+lastMassDisplayed = None
 
 while (WatchDogCounter > 0):
     newFSMState=FSMState
@@ -137,7 +167,6 @@ while (WatchDogCounter > 0):
         ConfigFile = "/home/pi/zeitlos/config/scaleCalibrations/{}.yml".format(scaleProperties['system']["SerialNumber"])
         if not os.path.exists(ConfigFile):
             logger.warning("config file {} does not exist. Using default.".format(ConfigFile) )
-            scaleProperties['details'] = {'Calibration': [1, 1, 1, 1], 'ProductName': 'Produktbeschreibung', 'ProductDescription': 'Keine Beschreibung.'}
         else:
             logger.info("Reading config file {}".format(ConfigFile) )
             with open(ConfigFile, 'r') as ymlfile:
@@ -158,6 +187,16 @@ while (WatchDogCounter > 0):
         newFSMState=11
     elif (FSMState == 11): #Transfer:  ProductDescription
         SendMsgToController(103, scaleProperties['details']['ProductDescription']) #ProductDescription
+        newFSMState=12
+    elif (FSMState == 12): #Transfer:  PricePerUnit
+        tempStr = "{:d}g".format(scaleProperties['details']['Pricing']['GrammsPerUnit'])
+        if (scaleProperties['details']['Pricing']['Type'] == 1):
+            tempStr = "Stk"
+        elif (scaleProperties['details']['Pricing']['GrammsPerUnit'] == 1):
+            tempStr = "g"
+        elif (scaleProperties['details']['Pricing']['GrammsPerUnit'] == 1000):
+            tempStr = "kg"
+        SendMsgToController(106, "{:.2f}EUR/{}".format(scaleProperties['details']['Pricing']['PricePerUnit'], tempStr)) #PricePerUnit
         newFSMState=100 #Set up complete
     elif (FSMState==100):
         SendMsgToController(100) #FullDisplay Update
@@ -184,6 +223,7 @@ while (WatchDogCounter > 0):
             pData = charSet[6:6+pDataLength]
             if ESPCRC(charSet[0:6+pDataLength]) == pFullDataCRC:  # Data CRC ok
                 WatchDogCounter = args.watchdog_timeout
+                numberMessagesRecv += 1
                 logger.debug("Serial.read(): pCmd: "+str(pCmd)+" Data: "+bytearray_2_str(pData))
                 # list() converts bytearray into array of int
                 #client.publish("homie/"+mqtt_client_name+"/messages", json.dumps(
@@ -193,13 +233,60 @@ while (WatchDogCounter > 0):
                     scaleProperties['system']['SerialNumber'] = bytearray_2_str(pData)
                     logger.info("scaleProperties: {}".format(scaleProperties['system']['SerialNumber']))
                     newFSMState=2
-                if (pCmd==2) and (FSMState==3): #Firmware Version received
+                elif (pCmd==2) and (FSMState==3): #Firmware Version received
                     scaleProperties['system']['FirmwareVersion'] = bytearray_2_str(pData)
                     logger.info("FirmwareVersion: {}".format(scaleProperties['system']['FirmwareVersion']))
                     newFSMState=10
-                logger.warning("Serial.read(): CRC OK. Read ({}), calculated ({}), Cmd ({}) pDataLength ({})".format(
-                    pFullDataCRC, ESPCRC(charSet[0:6+pDataLength]), pCmd, pDataLength) )
-                logger.warning("Full pData: {}".format(list(pData)))
+                elif (pCmd==200):
+                    logger.error("Scale reported scale read error.")
+                elif (pCmd==1000):
+                    logger.error("eink paper init failed.")
+                elif (pCmd==201):
+                    for i in range(4): #for all 4 gauges
+                        data = pData[0+4*i:4+4*i]
+                        #print(list('%02x' % b for b in data)) # Show hex values of data.
+                        # Convert to 4 byte signed integer data interpreting data as being in 
+                        # little-endian byte order.
+                        value=struct.unpack("<i", bytearray(data))[0]
+                        #print(hex(value))
+                        valueCalibrated = (value-scaleProperties['details']['Calibration']['Offset'][i])* \
+                            scaleProperties['details']['Calibration']['Slope'][i]
+                        scaleReadings[i].add(valueCalibrated)
+                    scaleSum = sum([i.avg() for i in scaleReadings])-scaleProperties['details']['Calibration']['GlobalOffset']
+                    scaleVar = np.std( [sum([i.data[j] for i in scaleReadings]) for j in range(len(scaleReadings[0].data)) ] ) #std deriv. of last 10 sums
+
+                    #Perform Partial Display Update
+                    if (scaleVar < 10) and (time.time()-timeLastPriceUpdate>=2):
+                        if ( (lastMassDisplayed is None) or (abs(round(scaleSum-lastMassDisplayed)) > 0) ):
+                            lastMassDisplayed = scaleSum
+                            tempMass = 0 #can be gramms or pieces
+                            tempMassStr = "?"
+                            tempPrice = 0
+                            tempPriceStr = "?"
+                            if (scaleProperties['details']['Pricing']['Type'] == 0): #price per gramm
+                                tempMass = scaleSum
+                                tempMassStr = "{:7.0f}g".format(scaleSum)
+                                tempPrice = round(scaleSum)/scaleProperties['details']['Pricing']['GrammsPerUnit']*scaleProperties['details']['Pricing']['PricePerUnit']
+                                tempPriceStr = "{:7.2f}".format(tempPrice)
+                            elif (scaleProperties['details']['Pricing']['Type'] == 1): #price per piece
+                                tempMass = round(scaleSum / scaleProperties['details']['Pricing']['GrammsPerUnit'])
+                                tempMassStr = "{:5d}Stk".format(tempMass)
+                                tempPrice = tempMass*scaleProperties['details']['Pricing']['PricePerUnit']
+                                tempPriceStr = "{:7.2f}".format(tempPrice)
+                            SendMsgToController(104, tempMassStr)
+                            SendMsgToController(105, "{}E".format(tempPriceStr))
+                            timeLastPriceUpdate = time.time()
+                            SendMsgToController(101) #Partial Update
+
+                            client.publish("homie/"+mqtt_client_name+"/withdrawal", json.dumps({'pricingType': scaleProperties['details']['Pricing']['Type'], 
+                                'mass': tempMass, 'price': tempPrice},
+                                        sort_keys=True), qos = 1, retain=True)
+
+                    #logger.debug("Gauge values: {}".format([i.data[0] for i in scaleReadings]))
+                    logger.debug("Gauge Avg: {} ({}) individual: {}".format(scaleSum, scaleVar, [i.avg() for i in scaleReadings]))
+                else:
+                    logger.warning("Serial.read(): Cmd ({}) pDataLength ({}) Data {}".format(
+                        pCmd, pDataLength, list(pData)))
             else:
                 logger.warning("Serial.read(): CRC NOT ok. Read ({}), calculated ({}), Cmd ({}) pDataLength ({})".format(
                     pFullDataCRC, ESPCRC(charSet[0:6+pDataLength]), pCmd, pDataLength) )

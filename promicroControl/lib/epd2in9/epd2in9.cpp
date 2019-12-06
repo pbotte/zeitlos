@@ -92,6 +92,12 @@ void Epd::WaitUntilIdle(void) {
         DelayMs(100);
     }      
 }
+/**
+ *  @brief: Returns, whether the display is read again after DisplayFrame has been called
+ */
+byte Epd::ReadyAfterDisplayFrame(void) {
+    return (DigitalRead(busy_pin) == LOW);      //LOW: idle, HIGH: busy
+}
 
 /**
  *  @brief: module reset.
@@ -210,12 +216,14 @@ void Epd::ClearFrameMemory(unsigned char color) {
  *          the the next action of SetFrameMemory or ClearFrame will 
  *          set the other memory area.
  */
-void Epd::DisplayFrame(void) {
+void Epd::DisplayFrame(byte doWaitForBusy) {
     SendCommand(DISPLAY_UPDATE_CONTROL_2);
     SendData(0xC4);
     SendCommand(MASTER_ACTIVATION);
     SendCommand(TERMINATE_FRAME_READ_WRITE);
-    WaitUntilIdle();
+    //in the original code, WaitUntilIdle() was always called
+    //Make this optional and wait in a seperate call in main loop
+    if (doWaitForBusy) WaitUntilIdle();
 }
 
 /**

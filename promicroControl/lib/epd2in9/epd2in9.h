@@ -80,7 +80,8 @@ public:
     );
     void SetFrameMemory(const unsigned char* image_buffer);
     void ClearFrameMemory(unsigned char color);
-    void DisplayFrame(void);
+    void DisplayFrame(byte doWaitForBusy=true);
+    byte ReadyAfterDisplayFrame(void);
     void Sleep(void);
 
 private:

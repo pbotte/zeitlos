@@ -57,6 +57,9 @@ Sobald die Anzeige aktualisiert mit `DisplayFrame()` wird, wird der aktuelle Spe
 
 Dies bedingt, dass man z.B. auch den Speicher zweimal löschen muss.
 
+Die Funktion `DisplayFrame()` verbraucht die Zeit von ca. 500ms für ein Update. Übergibt man `DisplayFrame(false)` so wartet die
+Funktion nicht darauf, dass das Display ein busy=Low zurück gibt (Standard = true).
+
 #### Versorgungsspannung
 Sollte das Display einmalig mit einer zu großen Spannung angesprochen werden (Daten oder VCC), so ist es irreparabel defekt. Darauf achten, dass der Arduino nicht fälschlicherweise auf 5V eingestellt ist.
 
