@@ -1,3 +1,6 @@
 [submodule "promicroControl/promicroControl/lib/qrcode"]
 	path = promicroControl/lib/qrcode
 	url = https://github.com/ricmoo/QRCode
+[submodule "nfc2mqtt/pn532/lib"]
+	path = nfc2mqtt/pn532/lib
+	url = https://github.com/elechouse/PN532

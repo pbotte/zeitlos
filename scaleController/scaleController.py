@@ -16,10 +16,10 @@ import numpy as np # for variance
 
 logging.basicConfig(level=logging.WARNING,
                     format='%(asctime)-6s %(levelname)-8s  %(message)s')
-logger = logging.getLogger("enocean receiver")
+logger = logging.getLogger("scale controller")
 
 parser = argparse.ArgumentParser(
-    description='MQTT EnOcean Receiver from serial devices.')
+    description='MQTT scale controller.')
 parser.add_argument("-v", "--verbosity",
                     help="increase output verbosity", default=0, action="count")
 parser.add_argument("-b", "--mqtt-broker-host",
