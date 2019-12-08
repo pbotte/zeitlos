@@ -1,4 +1,12 @@
 # Hardware
+## Übersicht
+- Arduino Pro Micro
+- eink-Display von Waveshare: [Wiki](https://www.waveshare.com/wiki/2.9inch_e-Paper_Module)
+- 4x Wägezelle
+- 4x HX711 ADC
+- USB-Kabel: Micro-USB und A-Stecker
+- Metall: Wägeschale aus VA und Teile aus Aluminium, [Spezielkleber für Edelstahl von Reinhartz](https://www.shop.kleinteileversand.de/spezialkleber-fuer-edelstahl.html)
+
 ## Pinbelegung
 
 > Eine vollumfängliche Einführung gibt es hier: https://learn.sparkfun.com/tutorials/pro-micro--fio-v3-hookup-guide/all#hardware-overview-pro-micro
