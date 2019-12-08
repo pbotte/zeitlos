@@ -260,6 +260,7 @@ void loop() {
     //a scale readout problem occured
     //the scale should provide some data every 100ms
     sendSerialPacket(200);
+    lastMillisScaleRead = millis();
   }
 
   if (Serial.available() > 0) {

@@ -7,9 +7,10 @@ from datetime import datetime
 import serial
 import logging
 import argparse
+import math
 import sys
 import re
-import os
+import os #for replace the output file
 import yaml #pip3 install pyyaml
 
 logging.basicConfig(level=logging.WARNING,
@@ -48,20 +49,25 @@ def on_disconnect(client, userdata, rc):
         logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
 
 def on_message(client, userdata, message):
-    t = datetime.now()
-    t = time.mktime(t.timetuple()) + t.microsecond / 1E6
+    global WatchDogCounter
     m = message.payload.decode("utf-8")
-
-    j = json.loads(m)
-    logger.info("Topic: "+message.topic+" JSON:"+str(j))
-    msplit = re.split("/", message.topic)
-    if len(msplit) == 4 and msplit[3].lower() == "set":
-        if (msplit[2]=="cardread"):
-            #Do something
-            pass
-        if (msplit[2]=="status"):
-            #Do something
-            pass
+    try:
+        j = json.loads(m)
+        logger.info("Topic: "+message.topic+" JSON:"+str(j))
+        try:
+            msplit = re.split("/", message.topic)
+            if len(msplit) == 4 and msplit[3].lower() == "set":
+                if (msplit[2]=="cardread"):
+                    #Do something
+                    WatchDogCounter = args.watchdog_timeout
+                    pass
+                if (msplit[2]=="status"):
+                    #Do something
+                    pass
+        except:
+            logger.error("error in processing JSON message.")
+    except:
+        logger.error("error on converting MQTT message to JSON.")
 
 client = paho.Client(mqtt_client_name)
 client.on_connect = on_connect
@@ -80,17 +86,16 @@ client.publish("homie/"+mqtt_client_name+"/state", 'online', qos=1, retain=True)
 
 
 WatchDogCounter = args.watchdog_timeout
-numberMessagesRecv = 0
-
-with open('skeleton.html', 'r') as file:
-    with open(args.html_output_filepath+'/index.html', 'w+') as output_file:
-        output_file.write(file.read().replace('{{{ZEIT}}}', str(time.time())))
 
 while (WatchDogCounter > 0):
-    
-    sys.exit()
+    filename = args.html_output_filepath+'/index.html'
+    with open('skeleton.html', 'r') as file:
+        with open(filename+'_temp', 'w+') as output_file:
+            output_file.write(file.read().replace('{{{ZEIT}}}', datetime.now().strftime("%Y-%m-%d %H:%M:%S") ))
+    os.replace(filename+'_temp', filename)
+    logger.info("New file written to "+filename)
 
-    time.sleep(.01)
+    time.sleep(1-math.modf(time.time())[0])
     WatchDogCounter -= 1
 
 client.disconnect()
