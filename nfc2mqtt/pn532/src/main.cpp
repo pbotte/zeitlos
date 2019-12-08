@@ -3,7 +3,7 @@
 #include <PN532_SWHSU.h>
 #include <PN532.h>
 
-SoftwareSerial SWSerial( 10, 11 ); // RX, TX
+SoftwareSerial SWSerial( 10, 11 ); // RX, TX (=TX, RX from module)
 PN532_SWHSU pn532swhsu( SWSerial );
 PN532 nfc( pn532swhsu );
 
@@ -46,7 +46,6 @@ void loop(void) {
   uint8_t uidLength;                       // Length of the UID (4 or 7 bytes depending on ISO14443A card type)
   success = nfc.readPassiveTargetID(PN532_MIFARE_ISO14443A, &uid[0], &uidLength);
   if (success) {
-//    Serial.println("Found A Card!");
 //    Serial.print("UID Length: ");Serial.print(uidLength, DEC);Serial.println(" bytes");
     Serial.print("{\"cardUID\": \"0x");
     for (uint8_t i=0; i < uidLength; i++) {
