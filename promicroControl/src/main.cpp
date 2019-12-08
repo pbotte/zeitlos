@@ -8,7 +8,7 @@
 // Serial Number of 32U4 from
 // https://forum.pololu.com/t/a-star-adding-serial-numbers/7651
 byte serialNumber[10];
-byte firmwareVersion[4] = {0,0,0,4};
+byte firmwareVersion[4] = {0,0,0,5};
 long scaleOffset[4] = {41308, -239592, -8747, 26511};
 double scalefactor[4] = {-0.004746168, 0.004798805, -0.004741381, 0.004679427};
 

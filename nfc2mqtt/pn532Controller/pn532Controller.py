@@ -70,12 +70,14 @@ WatchDogCounter = args.watchdog_timeout
 charSet = bytearray()
 numberMessagesRecv = 0
 
+status = None
+
 while (WatchDogCounter > 0):
 
     if ser.inWaiting() > 0:
         line = ser.readline().decode("utf-8").strip()
         
-        logger.debug("Serial.readline(): {}".format(line) )
+        logger.info("Serial.readline(): {}".format(line) )
 
         t = None
         try:
@@ -87,10 +89,14 @@ while (WatchDogCounter > 0):
 
         if t is not None:
             try:
+                newStatus = 0
                 topicStr = "status"
                 if "cardUID" in t:
                     topicStr = "cardread"
-                client.publish("homie/"+mqtt_client_name+"/"+topicStr, json.dumps(t, sort_keys=True), qos = 1, retain=True)
+                    newStatus = 1
+                if newStatus != status:
+                    client.publish("homie/"+mqtt_client_name+"/"+topicStr, json.dumps(t, sort_keys=True), qos = 1, retain=True)
+                status = newStatus
                 WatchDogCounter = args.watchdog_timeout
                 numberMessagesRecv += 1
             except:

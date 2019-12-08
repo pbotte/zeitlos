@@ -99,9 +99,9 @@ def on_message(client, userdata, message):
         if (msplit[2]=="nr"):
           SendMsgToController(4)
 
-mqtt_client_name = "unconfigured"
+mqtt_client_name = "unconfiguredScale"
 
-client = paho.Client(mqtt_client_name)
+client = paho.Client() #mqtt_client_name)
 client.on_message = on_message
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
@@ -132,9 +132,10 @@ scaleProperties = {'system':{'SerialNumber':None, "FirmwareVersion":None},
                        'ProductName': 'Produktbeschreibung', 
                        'ProductDescription': 'Keine Beschreibung.',
                        'Pricing':{ 'Type': 0, 'GrammsPerUnit':100, 'PricePerUnit': 1.0  },
-                       'Calibration': {'Offset': [41308, -239592, -8747, 26511],
-                        'Slope':[-0.004746168, 0.004798805, -0.004741381, 0.004679427],
-                        'GlobalOffset':1920.2
+                       'Calibration': {'Offset': [0, 0, 0, 0],
+                        'Slope':[1, 1, 1, 1],
+                        'GlobalOffset': 0,
+                        'DisplayRounding': 1
                        }
                    } }
 
@@ -253,6 +254,9 @@ while (WatchDogCounter > 0):
                             scaleProperties['details']['Calibration']['Slope'][i]
                         scaleReadings[i].add(valueCalibrated)
                     scaleSum = sum([i.avg() for i in scaleReadings])-scaleProperties['details']['Calibration']['GlobalOffset']
+                    # Hide some accuracy which isnt in the hardware:
+                    scaleSum = round(scaleSum/scaleProperties['details']['Calibration']['DisplayRounding'])*scaleProperties['details']['Calibration']['DisplayRounding']
+
                     scaleVar = np.std( [sum([i.data[j] for i in scaleReadings]) for j in range(len(scaleReadings[0].data)) ] ) #std deriv. of last 10 sums
 
                     #Perform Partial Display Update
@@ -283,7 +287,7 @@ while (WatchDogCounter > 0):
                                         sort_keys=True), qos = 1, retain=True)
 
                     #logger.debug("Gauge values: {}".format([i.data[0] for i in scaleReadings]))
-                    logger.debug("Gauge Avg: {} ({}) individual: {}".format(scaleSum, scaleVar, [i.avg() for i in scaleReadings]))
+                    logger.debug("Gauge Avg: {} ({:.3f} +- {:.3f}) individual: {}".format(scaleSum, sum([i.avg() for i in scaleReadings]), scaleVar, [round(i.avg(),3) for i in scaleReadings]))
                 else:
                     logger.warning("Serial.read(): Cmd ({}) pDataLength ({}) Data {}".format(
                         pCmd, pDataLength, list(pData)))

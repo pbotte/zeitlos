@@ -1,4 +1,4 @@
-ProductName: "Trauben2"
+ProductName: "Trauben3"
 ProductDescription: "Aus dem eigenen Anbau."
 Pricing:
   #0 = pro Gramm, 1 = pro Stück
@@ -6,7 +6,7 @@ Pricing:
   GrammsPerUnit: 100
   PricePerUnit: 1.49
 Calibration: 
-  Offset: [-63214.1, 186820.6, 475.1, 8388607.0]
-  Slope: [-1.20699E-03, 1.06272E-03, -1.10287E-03, 0]
-  GlobalOffset: 1828.110
+  Offset: [54148.9, 140098.6, -147084.4, 155639.7]
+  Slope: [-4.463E-03, 4.501E-03, -4.461E-03, 4.465E-03]
+  GlobalOffset: 1913.963
   DisplayRounding: 1
