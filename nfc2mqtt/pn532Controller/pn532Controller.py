@@ -95,7 +95,7 @@ while (WatchDogCounter > 0):
                     topicStr = "cardread"
                     newStatus = 1
                 if newStatus != status:
-                    client.publish("homie/"+mqtt_client_name+"/"+topicStr, json.dumps(t, sort_keys=True), qos = 1, retain=True)
+                    client.publish("homie/"+mqtt_client_name+"/"+topicStr, json.dumps(t, sort_keys=True), qos = 1, retain=False)
                 status = newStatus
                 WatchDogCounter = args.watchdog_timeout
                 numberMessagesRecv += 1

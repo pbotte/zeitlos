@@ -19,24 +19,24 @@
 | | D0 (RX) | 
 | | D1 (TX) |
 |  | GND |  |  | GND | GND | 
-| GND | GND |
+| GND (schwarz) | GND |
 | | D2 (SDA) |
 | | D3 (SCL) (PWM) |
 | | D4 (A6) |  |  |  | 
 | | D5 (PWM) | | | | 
 | | D6 (A7) (PWM) | CLK | CLK | CLK | CLK |
-| BUSY | D7 |
-| RST | D8 (A8) | 
-| DC | D9 (A9) (PWM) |
-| CS | D10 (A10) (PWM) |
+| BUSY (lila) | D7 |
+| RST (weiß) | D8 (A8) | 
+| DC (grün) | D9 (A9) (PWM) |
+| CS (orange) | D10 (A10) (PWM) |
 | | D14 (MISO) |
-| CLK | D15 (SPI CLK) |
-| DIN | D16 (MOSI) |
+| CLK (gelb) | D15 (SPI CLK) |
+| DIN (blau) | D16 (MOSI) |
 | | D18 (A0) | DAT
 | | D19 (A1) | | DAT | 
 | | D20 (A2) | | | DAT | 
 | | D21 (A3) | | | | DAT | 
-| VCC | VCC (3.3V) | VCC/VDD | VCC/VDD | VCC/VDD | VCC/VDD | 
+| VCC (rot) | VCC (3.3V) | VCC/VDD | VCC/VDD | VCC/VDD | VCC/VDD | 
 |  | RST |
 |  | GND | GND | GND |
 |  | RAW (USB Vin) |
