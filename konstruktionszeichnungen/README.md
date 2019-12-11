@@ -23,6 +23,7 @@ Tiefe | Breite | Höhe
 ## Einfache Waage ohne Display
 
 Maße des Wiegebereichs:
+
 Tiefe | Breite | Höhe
 --------|----|---
 400 | 330 | 0
