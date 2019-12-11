@@ -2,7 +2,7 @@
 
 ## Waage mit RFID
 
-Maaße das Wiegebereichs: 
+Maße das Wiegebereichs: 
 
 Tiefe | Breite | Höhe
 --------|----|---
@@ -12,7 +12,7 @@ Tiefe | Breite | Höhe
 
 ## Waage ohne RFID
 
-Maaße das Wiegebereichs: 
+Maße das Wiegebereichs: 
 
 Tiefe | Breite | Höhe
 --------|----|---
@@ -20,3 +20,11 @@ Tiefe | Breite | Höhe
 
 [Zeichnungen](Zeichnungen%20Schale%20385x250x50mm.pdf)
 
+## Einfache Waage ohne Display
+
+Maße des Wiegebereichs:
+Tiefe | Breite | Höhe
+--------|----|---
+400 | 330 | 0
+
+[Zeichnungen](Zeichnungen Einfache Waage 330x400.pdf)
