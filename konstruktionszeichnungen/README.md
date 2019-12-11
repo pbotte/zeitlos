@@ -27,4 +27,4 @@ Tiefe | Breite | Höhe
 --------|----|---
 400 | 330 | 0
 
-[Zeichnungen](Zeichnungen Einfache Waage 330x400.pdf)
+[Zeichnungen](Zeichnungen%20Einfache%20Waage%20330x400.pdf)
