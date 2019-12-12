@@ -9,6 +9,8 @@ Tiefe | Breite | Höhe
 365 | 250 | 50 
 
 [Zeichnungen](Zeichnungen%20Schale%20365x250x50mm%20RFID.pdf)
+![](Ansicht%20Schale%20365x250x50mm%20RFID.png)
+
 
 ## Waage ohne RFID
 
@@ -19,6 +21,7 @@ Tiefe | Breite | Höhe
 385 | 250 | 50 
 
 [Zeichnungen](Zeichnungen%20Schale%20385x250x50mm.pdf)
+![](Ansicht%20Schale%20385x250x50mm.png)
 
 ## Einfache Waage ohne Display
 
@@ -29,3 +32,4 @@ Tiefe | Breite | Höhe
 400 | 330 | 0
 
 [Zeichnungen](Zeichnungen%20Einfache%20Waage%20330x400.pdf)
+![](Ansicht%20Einfache%20Waage%20330x400.png)
