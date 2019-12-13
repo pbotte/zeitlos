@@ -1,0 +1,29 @@
+Die Ausgangssituation:
+Kleine ländliche Betriebe erzeugen qualitativ hochwertige Lebensmittel des täglichen Bedarfs (Brot, Obst, Gemüse, Fleisch) zu einem guten Preis/Leistungsverhältnis, haben jedoch zunehmen Probleme diese auch direkt zu guten Preisen zu verkaufen. 
+Auf der anderen Seite sind die Verbraucher zunehmend an lokal erzeugten Produkten interessiert, zumal der Preis im Supermarkt bei gleicher Qualität oftmals über denen beim Erzeuger im Direktvertrieb liegt. Zusätzlich entsteht vermehrt der Wunsch nach plastikfreien Einkaufen. 
+Aus vierlei Gründen kommt es nur schwerlich zu einem Einkauf direkt beim Erzeuger. Dies liegt meist an dem für den Einkauf zur Verfügung stehenden knappen Zeitbudget des Kundens.
+
+
+Die Gründe für das schlechtere Abschneiden der Direktverkäufer im Vergleich zu  den Supermärken sind:
+- Jeder Erzeuger verkäuft nur wenige Produkte, d.h. ein umfassender Wocheneinkauf bedarf den Besuch vieler Erzeuger
+- Die Öffnungszeiten der Erzeuger untereinander sind nicht abgestimmt ebenso ist es für kleine Läden schwierig lange Öffnugnszeiten zu ermöglichen
+- Die Lage inkl. Parkplätzen ist oftmals nicht zu den zentral gelegenen Einkaufsmärkten konkurrenzfähig.
+
+Die Ziele:
+- Direktbelieferung von Produkten mehrerer Erzeuger zum Kunden
+- Dies passiert an festgelegten Wochentagen
+- Durch beim Kunden installierte Waagen muss dieser keine Bestellung aufgeben, dies passiert automatisch
+- Diese Waagen erlauben - je nach Modell - auch eine Anpassung der Bestellung ohne Computer oder andere Ablenkung. 
+- Eine Fehlbedienung ist ausgeschlossen. Die Nutzung ist denkbar einfach.
+
+Aufbau der Waagen:
+- Es wird Waagen in unterschiedlichen Größen und Farben geben, so dass diese sich an das Küchen-Design und das darauf platzierte Produkt angepasst sind.
+- Alle Waagen werden im Frontbereich die Möglichkeit bieten, eine kleine Werbeschablone aufzulegen, die das durch die Waage zu bestellende Produkt und den Erzeuger beschreibt (inkl. Preis).
+- In der einfachsten Version hat diese lediglich einen USB-Anschluss zwecks Übertragung der Daten an einen kleinen Zentral-Computer. 
+- In der Komfort-Version zeigt diese zusätzlich das Messergebnis (in kg) an, sowie das durch den Wahlschalter ausgewählte Produkt. Ebenso soll es einen Sollmengen-Schieber geben. Ist die Sollmenge unterschritten, wird der Kunde mit dem gewünschten Produkt beliefert.
+
+Durch den schnellen Wechsel auf Standard-Komponenten ab der USB-Schnittstelle der Waage ist der Einsatz günstiger Standard-Hardware möglich. Der zentrale Computer ist nur einmal pro Kunde notwendig, er überträgt die Daten an das Zentralsystem via Kunden-WLAN um die Bestellungen auslösen zu können. Hierfür reicht ein günstiger SoC-Computer, bspw. ein RaspberryPi.
+
+Mögliche Verknüpfung Waagen zu Produkt
+- Für Saft-Kisten könnten die einfachen Waagen zum Einsatz kommen
+- Für Brot, solche im Wahlschalter und Soll-Mengenschieber.
