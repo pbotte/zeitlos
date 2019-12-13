@@ -15,6 +15,10 @@ cd promicroControl
 pio run -t upload
 ```
 
+## Weitere Projekte, die Verwendung finden (werden)
+
+- USB Power Control: https://github.com/mvp/uhubctl 
+
 
 ## Waagen Steuerung
 Für jede Waage wird auf Computerseite eine Steuerung ausgeführt.
