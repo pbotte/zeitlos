@@ -1,5 +1,6 @@
-# zeitlos
-Werkzeuge für einen Bauern- oder Dorfladen
+# Dorfladen - Zeitlos
+Werkzeuge für einen Bauern- oder Dorfladen. Alle Soft- und Hardware stehen unter der GPL v3 frei zur Verfügung.
+![GPL v3](https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/GPLv3_Logo.svg/440px-GPLv3_Logo.svg.png)
 
 ## Installation
 
