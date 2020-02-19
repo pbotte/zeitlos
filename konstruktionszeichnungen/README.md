@@ -32,10 +32,10 @@ Tiefe | Breite | Höhe
 400 | 250 | 0
 
 Benötigte Teile:
-- 4 Regulierschrauben M8, z.B. [diese bei Amazon](https://www.amazon.de/BESTZY-Verstellbare-Möbelbeine-Einschlagmuttern-Verstellschraube/dp/B07Z62JFNG/)
+- 4 Regulierschrauben M8, z.B. [20 Stück M8x10mm bei Amazon](https://www.amazon.de/sourcing-map-Einschlagmutter-Nivellierfüße-Einstellbarer/dp/B07KGBTZMH/), [8Stück M8x10mm bei Amazon](https://www.amazon.de/sourcing-map-Nivellierfüße-Einstellbarer-Stuhlbein/dp/B07KGDQ52V/) oder [diese bei Amazon](https://www.amazon.de/BESTZY-Verstellbare-Möbelbeine-Einschlagmuttern-Verstellschraube/dp/B07Z62JFNG/)
+- Muttern: 4x M8 zum Kontern der Regulierschrauben ODER man verzichtet auf diese wenn [Schraubensicherung](https://www.hornbach.de/shop/Loctite-243-Schraubensicherung-mittelfest-5-ml/6526719/artikel.html) verwendet wird.
 - Grundplatte aus 5mm Alu
 - Wägeabdeckung aus 1mm Edelstahl
-- Muttern: 4x M8 zum Kontern der Regulierschrauben
 - Senkrschrauben: 8x M5 zum Festschrauben der Wägezellen
 - 4 Wägezellen
 - 1 oder 4 ADCs zur Digitalisierung
