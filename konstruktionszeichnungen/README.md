@@ -31,6 +31,17 @@ Tiefe | Breite | Höhe
 --------|----|---
 400 | 250 | 0
 
+Benötigte Teile:
+- 4 Regulierschrauben M8, z.B. [diese bei Amazon](https://www.amazon.de/BESTZY-Verstellbare-Möbelbeine-Einschlagmuttern-Verstellschraube/dp/B07Z62JFNG/)
+- Grundplatte aus 5mm Alu
+- Wägeabdeckung aus 1mm Edelstahl
+- Muttern: 4x M8 zum Kontern der Regulierschrauben
+- Senkrschrauben: 8x M5 zum Festschrauben der Wägezellen
+- 4 Wägezellen
+- 1 oder 4 ADCs zur Digitalisierung
+- Mikrocontroller (ATMega 328P oder AT32U4)
+- USB-Anschlusskabel
+
 [Zeichnungen](Zeichnungen%20Einfache%20Waage%20250x400.pdf)
 ![](Ansicht%20Einfache%20Waage%20250x400.png)
 
