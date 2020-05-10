@@ -18,7 +18,7 @@
 
 ## Software-Konfiguration
 
-- Netzwerkname: `shop-regal-01`
+- Netzwerkname: `shop-shelf-01`
 - Anzeige einer Webseite, Übermittlung des Hostnamens -> Weiterleitung zur angepassten Webseite
 - Anzeige [im Kiosk-Modus](https://itrig.de/index.php?/archives/2309-Raspberry-Pi-3-Kiosk-Chromium-Autostart-im-Vollbildmodus-einrichten.html):
   - Maus weg
