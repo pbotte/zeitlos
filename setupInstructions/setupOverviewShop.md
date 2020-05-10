@@ -44,3 +44,17 @@ VLANs:
 
 ## MQTT-Namensraum
 
+- Regal an Master:
+  - Aktuelle Massen auf Waagen
+  - Aktuelle Produkte auf Waagen
+- Master and Regale:
+  - Aktueller Einkauf auf allen Waagen
+- Master an `shop-doordisplay` und Regale:
+  - Belegung des Ladens
+
+`localshop/shelf-1/scale-1/mass` (aktuell)
+`localshop/shelf-1/scale-1/productNr`
+`localshop/master/shopbasket` (kompletter Einkauf als JSON)
+`localshop/master/shopmasket/lastchange` (letztes geändertes Produkt als JSON)
+`localshop/master/shopstatus/occupancy` (Ladenbelegung)
+
