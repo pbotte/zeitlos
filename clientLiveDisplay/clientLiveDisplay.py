@@ -58,7 +58,8 @@ clientsMQTTPrettyNames = {'scale0x57383735393215170b03': 'Waage 1',
     'unconfiguredClientLiveDisplay': 'Kundenanzeige', 
     'scale0x59363332393115051808': 'Waage 2', 
     'scale0x59363332393115171b11': 'Waage 3'}
-cardID2ClientDetails = {'0x492F7CC1': {'modus':0, 'name':'Max Mustermann'}}
+cardID2ClientDetails = {'0x492F7CC1': {'modus':1, 'name':'Kunde Mustermann'},
+    '0x2DD5FF9': {'modus':0, 'name':'erzeuger Mustermann'}}
 status = {'modus':0, 'cardID':''} #modus=0 Verkäufer, =1=Käufer-Modus
 scaleInfo = {}
 scaleWithdrawal = {}
@@ -80,6 +81,9 @@ def on_message(client, userdata, message):
         if len(msplit) == 3 and msplit[2].lower() == "cardread": #From RFID Card Reader
             status['modus'] = 1
             status['cardID'] = j['cardUID']
+            if status['cardID'] in cardID2ClientDetails:
+                status['modus'] = cardID2ClientDetails[status['cardID']]['modus']
+
             WatchDogCounter = args.watchdog_timeout
         if len(msplit) == 3 and msplit[2].lower() == "status":
             msplitScaleID = re.split("x", msplit[1])
