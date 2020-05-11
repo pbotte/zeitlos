@@ -2,6 +2,21 @@
 
 Dieses Programm übernimmt die Steuerung des Mikrocontrollers auf Computerseite. Es wird für jede Waage einmal auf dem Computer ausgeführt und kommuniziert weiter über MQTT.
 
+## Installation
+
+Installation aller Python-Pakete auf Computerseite:
+```bash
+cd scaleController
+pip3 install -r requirements.txt
+````
+installieren.
+
+Manuelles starten mit
+```bash
+./scaleController.py -vv Controller1 /dev/ttyACM0
+```
+
+
 ## Automatischer Start und Terminierung des Controllers
 
 Dies geschieht mittels udev und systemd über die beiden Dateien `99-runScale.rules` und `scale-controller-@.service`.

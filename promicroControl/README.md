@@ -1,4 +1,5 @@
 # Hardware
+
 ## Übersicht
 - Arduino Pro Micro
 - eink-Display von Waveshare: [Wiki](https://www.waveshare.com/wiki/2.9inch_e-Paper_Module)
@@ -54,6 +55,45 @@ Some sample SN:
 0x59363332393115051808
 0x5538333038391516070e
 ```
+
+## Kommunikationsprotokoll
+
+* min. length: 7 bytes 
+
+| # |                | length (in bytes) | comments |
+|---|----------------|-------------------|----------|
+| 0 | start sequence | 2      | Always: 0x5a 0xa5 |
+| 1 | command byte   | 2      | |
+| 2 | number of data bytes    | 2  | |
+| 3 | data bytes     | Number of data bytes | length = number prior advertised |
+| 4 | checksum byte  | Sum of all, incl. start bytes | except checksum byte modulo 256
+
+
+## Possible command bytes
+
+| Cmd Byte | Funktion (Scale Controller an Arduino) | Funktion (Arduino an Scale Controller) |
+|----------|----------------------------------------|----------------------------------------|
+| 0x00 00  | Reset Arduino                          |                                        |
+| 0x00 01  | Frage nach Seriennummer                | Sende Seriennummer                     |
+| 0x00 02  | Frage nach Firmware Version            | Sende Firmware Version (4 bytes)       |
+| 100(dec) | Update Display                         |                                        |
+| 102(dec) | Transfer: ProductName                  |                                        |
+| 103(dec) | Transfer:  ProductDescription.         |                                        |
+
+
+
+
+## Installation 
+
+- Installation von Platform IO
+
+- Compilieren und hochladen mit 
+  ```bash
+  cd promicroControl
+  pio run -t upload
+  ```
+
+
 
 ## Hinweise
 

@@ -1,54 +1,40 @@
-# zeitlos
-Werkzeuge für einen Bauern- oder Dorfladen
+# Ladensystem für einen automatischen Dorfladen
 
-## Installation
+Ein Paket aus Soft- und Hardware für ein automatisches Ladensystem, welches sich für kleine Läden, bis ca. 1000 Produkte, eignet. Das System basiert darauf, dass jedes Produkt durch eine eigene Waage gewogen wird, welche mit einem Computer verbunden ist.
 
-Da Submodule in GIT enthalten sind, sollte dieses Repro mit
-  ```bash
-  git clone --recurse-submodules  git@github.com:pbotte/zeitlos.git
-  ```
-installiert werden.
+### Beschreibung eines typischen Einkaufs:
+1. In der einfachen Ausbaustufe befindet sich immer nur ein Kunde im Laden. Der Einlass kann durch einen Türschließer auf Kundenkarteninhaber beschränkt werden. 
+2. Im weiteren Einkauf entnimmt der Kunde die Waren selbst aus den Regalen und Kisten. Die Anzeige der entnommen Waren und Massen erfolgt sofort und automatisch auf dem Kundendisplay.
+3. Zum Abschluss des Einkaufs verlässt der Kunde den Laden. Gibt es eine Kundenkarte, so erfolgt die Abrechnung im Nachinein per Rechnung oder Kreditkarte. Ohne eine Kundenkarte muss noch die Bezahlung per Bargeld an einem Terminal erfolgen.
 
-Compilieren und hochladen mit 
+In der erweiterten Ausbaustufe hält der Kunde seine Kundenkarte vor der Entnahme von Produkten an ein Lesegerät an der Waage. 
+
+
+## Übersicht:
+
+- [Konstruktionszeichnungen Waagen](https://github.com/pbotte/zeitlos/tree/master/konstruktionszeichnungen) (aktuell vier verschiedene Modelle)
+- [Firmware für Waagen](https://github.com/pbotte/zeitlos/tree/master/promicroControl)
+- Software auf dem zentralen Computer:
+  - [Auslese der Waagen](https://github.com/pbotte/zeitlos/tree/master/scaleController)
+  - [Kundenanzeige](https://github.com/pbotte/zeitlos/tree/master/clientLiveDisplay)
+
+
+
+## Lizenz
+Alle Soft- und Hardware stehen unter der [GPL v3](https://github.com/pbotte/zeitlos/blob/master/LICENSE) zur freien Verfügung.
+
+
+## Hinweise
+
+### Weitere Projekte, die Verwendung finden
+
+- [USB Power Control](https://github.com/mvp/uhubctl)
+
+### Hinweise zum Repository
+
+Zum gleichzeitigen Herunterladen der Submodule:
 ```bash
-cd promicroControl
-pio run -t upload
+git clone --recurse-submodules  git@github.com:pbotte/zeitlos.git
 ```
-
-
-## Waagen Steuerung
-Für jede Waage wird auf Computerseite eine Steuerung ausgeführt.
-
-Installation aller Python-Pakete auf Computerseite:
-```bash
-cd scaleController
-pip3 install -r requirements.txt
-````
-installieren.
-
-Starten mit
-```bash
-./scaleController.py -vv Controller1 /dev/ttyACM0
-```
-
-### Kommunikationsprotokoll:
-
-```
-   min. length: 7 bytes 
-   [Start Sequence] [Command Byte, 2bytes] [Number of data bytes, 2bytes] [Data bytes] [Checksum byte]
-   Start Sequence: 0x5a a5 = 2 bytes, fixed
-   Number of data bytes: 2 bytes
-   Data bytes: up to the number advertised in [Number of data bytes]
-   Checksum byte: Sum of all (also start bytes) bytes except checksum byte modulo 256
-```
-
-| Cmd Byte | Funktion (Scale Controller an Arduino) | Funktion (Arduino an Scale Controller) |
-|----------|----------------------------------------|----------------------------------------|
-| 0x00 00  | Reset Arduino                          |                                        |
-| 0x00 01  | Frage nach Seriennummer                | Sende Seriennummer                     |
-| 0x00 02  | Frage nach Firmware Version            | Sende Firmware Version (4 bytes)       |
-| 100(dec) | Update Display                         |                                        |
-| 102(dec) | Transfer: ProductName                  |                                        |
-| 103(dec) | Transfer:  ProductDescription.         |                                        |
 
 
