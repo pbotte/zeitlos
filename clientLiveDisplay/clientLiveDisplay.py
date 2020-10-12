@@ -4,7 +4,6 @@ import paho.mqtt.client as paho
 import json
 import time
 from datetime import datetime
-import serial
 import logging
 import argparse
 import math
