@@ -125,7 +125,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         <tr>
         <td id="qrCodeArea" colspan="3" style="width: 100%; height: 45%; text-align: center; background-color: red; vertical-align: top;">
             <p align="center">
-                <img src="/qr/?" id="myImage" height="800" />
+                <img src="/qr.php?" id="myImage" height="800" />
             </p>
             <p id="status">Connection Status: Not Connected</p>
         </td>
@@ -158,7 +158,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 
             var my_hash = forge_sha256('DasGeheimnis2020' + timestamp);
 
-            myImageElement.src = 'http://' + host + '/qr/?' +
+            myImageElement.src = 'http://' + host + '/qr.php?' +
                 'text=' + encodeURIComponent('http://dorfladen.imsteinert.de/eingang/' +
                     '?hash=' + my_hash);
             console.log(myImageElement.src);
