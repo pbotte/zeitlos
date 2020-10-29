@@ -39,13 +39,9 @@ mqtt_client_name = "shopController"
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logger.info("MQTT connected OK. Return code "+str(rc))
-#        client.subscribe("homie/"+mqtt_client_name+"/+/set")
         client.subscribe("homie/+/state")
-        client.subscribe("homie/+/cardread")
-        # eg homie/scale0x59363332393115051808/status
         client.subscribe("homie/+/status")
-        # eg homie/scale0x59363332393115051808/withdrawal
-        client.subscribe("homie/+/withdrawal")
+        client.subscribe("homie/+/+/withdrawal")
         client.subscribe("homie/"+mqtt_client_name+"/requestShopStatus")
 
         logger.debug("MQTT: Subscribed to all topics")
@@ -66,15 +62,80 @@ clientsMQTTPrettyNames = {'scale0x57383735393215170b03': 'Waage 1',
                           'scale0x59363332393115171b11': 'Waage 3'}
 cardID2ClientDetails = {'0x492F7CC1': {'modus': 1, 'name': 'Kunde Mustermann'},
                         '0x2DD5FF9': {'modus': 0, 'name': 'erzeuger Mustermann'}}
-status = {'modus': 0, 'cardID': ''}  # modus=0 Verkäufer, =1=Käufer-Modus
-scaleInfo = {}
 scaleWithdrawal = {}
-shopStatus = 0   # 0 = waiting for clients, 1 = client in shop
+shopStatus = 1   # 0 = waiting for clients, 1 = client in shop
+
+
+data_scales = [
+    {
+        "SerialNumber": "0x57383735393215170b03",
+        "DisplayRounding": 5,
+        "GlobalOffset": 1899.45,
+        "Offset": [41308, -239592, -8747, 26511],
+        "Slope": [-0.004746168, 0.004798805, -0.004741381, 0.004679427],
+        "Shelf": "shop-shelf-01",
+        "ProductID": 0
+    },
+    {
+        "SerialNumber": "0x59363332393115171b11",
+        "DisplayRounding": 5,
+        "GlobalOffset": 1913.963,
+        "Offset": [54148.9, 140098.6, -147084.4, 155639.7],
+        "Slope": [-0.004463, 0.004501, -0.004461, 0.004465],
+        "Shelf": "shop-shelf-02",
+        "ProductID": 1
+    },
+    {
+        "SerialNumber": "0x59363332393115051808",
+        "DisplayRounding": 1,
+        "GlobalOffset": 1828.11,
+        "Offset": [-63214.1, 186820.6, 475.1, 8388607.0],
+        "Slope": [-0.00120699, 0.00106272, -0.00110287, 0],
+        "Shelf": "shop-shelf-02",
+        "ProductID": 2
+    }
+]
+getScaleID = {'0x57383735393215170b03': 0,
+              '0x59363332393115171b11': 1, '0x59363332393115051808': 2}
+
+data_products = [
+    {
+        "ProductID": 0,
+        "ProductName": "Mehl",
+        "ProductDescription": "Aus Ingelheim.",
+        "Picture": "/images/mehl.png",
+        "ScaleID": 0,
+        "Pricing": {"GrammsPerUnit": 1000, "PricePerUnit": 1.49, "Type": 1},
+        "UnitsAtBegin": -1,
+        "UnitsCurrent": 0
+    },
+    {
+        "ProductID": 1,
+        "ProductName": "Apfelmus",
+        "ProductDescription": "Eigener Anbau.",
+        "Picture": "/images/apfelmus.jpg",
+        "ScaleID": 1,
+        "Pricing": {"GrammsPerUnit": 800, "PricePerUnit": 2.49, "Type": 1},
+        "UnitsAtBegin": -1,
+        "UnitsCurrent": 0
+    },
+    {
+        "ProductID": 2,
+        "ProductName": "Äpfel",
+        "ProductDescription": "Aus dem eigenen Anbau.",
+        "Picture": "/images/pears.jpg",
+        "ScaleID": 2,
+        "Pricing": {"GrammsPerUnit": 1000, "PricePerUnit": 2.99, "Type": 0},
+        "UnitsAtBegin": -1,
+        "UnitsCurrent": 0
+    }
+]
 
 
 def on_message(client, userdata, message):
     global WatchDogCounter
     global shopStatus
+    global data_products
     m = message.payload.decode("utf-8")
     j = {}
     try:
@@ -85,38 +146,24 @@ def on_message(client, userdata, message):
         #logger.error("error on converting MQTT message to JSON.")
 
     if ("homie/"+mqtt_client_name+"/requestShopStatus" == message.topic):
-        shopStatus = 0 #client enters the shop
-        client.publish("homie/"+mqtt_client_name+"/shopStatus",
-            shopStatus, qos=1, retain=True)
+        if (m == '1'):
+            setShopClientEntered()
+        else:
+            setShopClientLeft()
 
     try:
         msplit = re.split("/", message.topic)
         if len(msplit) == 3 and msplit[2].lower() == "state":
             clientsToMonitor[msplit[1]] = m
-        # From RFID Card Reader
-        if len(msplit) == 3 and msplit[2].lower() == "cardread":
-            status['modus'] = 1
-            status['cardID'] = j['cardUID']
-            if status['cardID'] in cardID2ClientDetails:
-                status['modus'] = cardID2ClientDetails[status['cardID']]['modus']
-
-            WatchDogCounter = args.watchdog_timeout
-        if len(msplit) == 3 and msplit[2].lower() == "status":
-            msplitScaleID = re.split("x", msplit[1])
+        if len(msplit) == 4 and msplit[3].lower() == "withdrawal":
+            msplitScaleID = re.split("x", msplit[2])
             if msplitScaleID[0] == 'scale0':
-                scaleInfo[msplitScaleID[1]] = j
-                logger.debug("scaleID {}: {}".format(msplitScaleID[1], j))
-        if len(msplit) == 3 and msplit[2].lower() == "withdrawal":
-            msplitScaleID = re.split("x", msplit[1])
-            if msplitScaleID[0] == 'scale0':
+                data_products[getScaleID['0x{}'.format(
+                    msplitScaleID[1])]]['UnitsCurrent'] = j['mass']
                 scaleWithdrawal[msplitScaleID[1]] = j
                 logger.debug("scaleID (scaleWithdrawal) {}: {}".format(
                     msplitScaleID[1], j))
 
-        if len(msplit) == 4 and msplit[3].lower() == "set":
-            if (msplit[2] == "status"):
-                # Do something
-                pass
     except:
         logger.error("error in processing JSON message.")
 
@@ -139,44 +186,105 @@ logger.info("MQTT loop started.")
 client.publish("homie/"+mqtt_client_name+"/state",
                'online', qos=1, retain=True)
 
-client.publish("homie/"+mqtt_client_name+"/shopStatus",
-               shopStatus, qos=1, retain=True)
+
 
 
 WatchDogCounter = args.watchdog_timeout
 LastCheckForDoorOpen = 0
 
+actBasket = {"data": [], "total": 0}
+client.publish("homie/"+mqtt_client_name+"/actualBasket",
+               json.dumps(actBasket), qos=1, retain=True)
+
+
+def setShopClientEntered():
+    global shopStatus, data_products
+    logger.info("Set Shop Status: Client entered")
+    shopStatus = 1  # client enters the shop
+
+    for v in data_products:
+        v['UnitsAtBegin'] = v['UnitsCurrent']
+
+    client.publish("homie/"+mqtt_client_name+"/shopStatus",
+                    shopStatus, qos=1, retain=True)
+    client.publish("homie/eingangschalten", '1',
+                    qos=2, retain=False)  # send door open impuls
+
+def setShopClientLeft():
+    global shopStatus        
+    logger.info("Set Shop Status: Client left")
+    shopStatus = 0  # no client in shop
+    client.publish("homie/"+mqtt_client_name+"/shopStatus",
+                    shopStatus, qos=1, retain=True)
+
+setShopClientLeft
 
 while (WatchDogCounter > 0):
     LastHTTPRequest = {}
-    if (time.time() - LastCheckForDoorOpen > 1) and (shopStatus == 0): #waiting for clients
+    if (time.time() - LastCheckForDoorOpen > 1) and (shopStatus == 0):  # waiting for clients
         try:
-            response = urllib.request.urlopen('http://dorfladen.imsteinert.de/status.php', timeout=1)
-            text = response.read().decode('utf-8') # a `str`; this step can't be used if data is binary
+            response = urllib.request.urlopen(
+                'http://dorfladen.imsteinert.de/status.php', timeout=1)
+            # a `str`; this step can't be used if data is binary
+            text = response.read().decode('utf-8')
             LastHTTPRequest = json.loads(text)
-            if (abs(time.time() - LastHTTPRequest['time']) > 10): #time diff between server and local shop control not larger than 10 seconds
-                logger.warning('timestamp diff too large: {} seconds'.format(time.time() - LastHTTPRequest['time']) )
+            # time diff between server and local shop control not larger than 10 seconds
+            if (abs(time.time() - LastHTTPRequest['time']) > 10):
+                logger.warning('timestamp diff too large: {} seconds'.format(
+                    time.time() - LastHTTPRequest['time']))
             else:
                 hashValid = False
-                for x in range(30): # check the last 30 seconds
-                    tempCode = sha256( '{}{}'.format(args.door_qr_code_secret, math.floor(time.time()) - x).encode('utf-8') ).hexdigest()
-                    if (LastHTTPRequest['code'] == tempCode ):
+                for x in range(30):  # check the last 30 seconds
+                    tempCode = sha256('{}{}'.format(args.door_qr_code_secret, math.floor(
+                        time.time()) - x).encode('utf-8')).hexdigest()
+                    if (LastHTTPRequest['code'] == tempCode):
                         hashValid = True
                 #logger.info('Hashcode ({}) valid: {}'.format(LastHTTPRequest['code'], hashValid))
                 if hashValid:
-                    logger.info('Hashcode ({}) valid: {}'.format(LastHTTPRequest['code'], hashValid))
-                    shopStatus = 1 #client enters the shop
-                    client.publish("homie/"+mqtt_client_name+"/shopStatus",
-                                shopStatus, qos=1, retain=True)
-                    client.publish("homie/eingangschalten", '1', qos=2, retain=False) # send door open impuls
+                    logger.info('Hashcode ({}) valid: {}'.format(
+                        LastHTTPRequest['code'], hashValid))
+                    setShopClientEntered()
 
             WatchDogCounter = 10
         except:
             logger.error("error in processing HTTP Request.")
         LastCheckForDoorOpen = time.time()
-    
-    if shopStatus == 1: #client in shop
+
+    if shopStatus == 1:  # client in shop
         WatchDogCounter = 10
+
+    # post actual basket
+    actBasketProducts = []
+    actSumTotal = 0
+    for v in data_products:
+        if v["UnitsCurrent"] < v["UnitsAtBegin"]:
+            tempPrice = (v["UnitsAtBegin"]-v["UnitsCurrent"]) * \
+                v['Pricing']['PricePerUnit']
+            if v['Pricing']['Type'] == 0:
+                tempPrice = tempPrice / v['Pricing']['GrammsPerUnit']
+            tempPrice = round(tempPrice, 2)
+            if tempPrice > 0.05:
+                tempUnit = 'Stk'
+                if v['Pricing']['Type'] == 0:
+                    tempUnit = 'g'
+                actBasketProducts.append({"productName": v['ProductName'], "descr": v['ProductDescription'],
+                                          "quantity": v["UnitsAtBegin"]-v["UnitsCurrent"], "unit": tempUnit,
+                                          "price": tempPrice})
+                actSumTotal += tempPrice
+    actBasket = {"data": actBasketProducts, "total": actSumTotal}
+    client.publish("homie/"+mqtt_client_name+"/actualBasket",
+                   json.dumps(actBasket), qos=1, retain=True)
+
+    # publish, which product sits in which shelf:
+    productsOnShelf = {1: [], 2: []}
+    for v in data_products:
+        if data_scales[v['ScaleID']]['Shelf'] == 'shop-shelf-01':
+            productsOnShelf[1].append(v)
+        if data_scales[v['ScaleID']]['Shelf'] == 'shop-shelf-02':
+            productsOnShelf[2].append(v)
+    for k, v in productsOnShelf.items():
+        client.publish("homie/"+mqtt_client_name +
+                       "/productsToDisplayOnShelf/{}/products".format(k), json.dumps(v), qos=1, retain=True)
 
     filename = 'index.html'
 
@@ -192,32 +300,7 @@ while (WatchDogCounter > 0):
         statusStr += "</td></tr>"
     statusStr = '<table width="100%">'+statusStr+'</table>'
 
-    cardStr = "Modus: Verkäufer. "
-    if status['modus'] == 1:
-        cardStr = 'Modus: Käufer.'
-    cardStr += "<br>"
-    if status['cardID'] in cardID2ClientDetails:
-        cardStr += "Kundenname: {}".format(
-            cardID2ClientDetails[status['cardID']]['name'])
-    else:
-        if status['cardID'] != "":
-            cardStr += "Karte nicht registriert. ({})".format(status['cardID'])
-
-    scaleInfoStr = "{}".format(scaleInfo)
-    scaleInfoStr = ""
-    for s, v in scaleInfo.items():
-        scaleInfoStr += "{}: {} <br>".format(
-            v['details']['ProductName'], v['details']['ProductDescription'])
-        if s in scaleWithdrawal:
-            if scaleWithdrawal[s]['pricingType'] == 0:
-                scaleInfoStr += "{}g = {:.2f}€".format(
-                    scaleWithdrawal[s]['mass'], scaleWithdrawal[s]['price'])
-            if scaleWithdrawal[s]['pricingType'] == 1:
-                scaleInfoStr += "{}x = {:.2f}€".format(
-                    scaleWithdrawal[s]['mass'], scaleWithdrawal[s]['price'])
-        scaleInfoStr += "<br>"
-
-    time.sleep(1-math.modf(time.time())[0]) # make the loop run every second
+    time.sleep(1-math.modf(time.time())[0])  # make the loop run every second
     WatchDogCounter -= 1
 
 client.disconnect()

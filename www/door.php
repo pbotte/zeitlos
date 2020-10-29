@@ -1,12 +1,11 @@
+<?php
+$debugClientStrSuffix = "";
+if (array_key_exists('debug', $_GET)) {
+	$debugClientStrSuffix = 'debug';
+}
+?>
 <html>
 <style>
-    #status {
-        background-color: white;
-        font-size: 4;
-        font-weight: bold;
-        color: white;
-        line-height: 140%;
-    }
 
     /*
 Prevent bluring of images = QR images
@@ -34,7 +33,43 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 </style>
 
 <head>
-    <title>Websockets Using JavaScript MQTT Client</title>
+    <style>
+        #overlay {
+            position: fixed;
+            display: none;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #CE1510;
+            z-index: 2;
+        }
+        #text{
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            font-size: 50px;
+            color: white;
+            transform: translate(-50%,-50%);
+            -ms-transform: translate(-50%,-50%);
+        }
+    </style>
+    <script>
+    function mqtt_warning_on() {
+        document.getElementById("overlay").style.display = "block";
+    }
+    function mqtt_warning_off() {
+        document.getElementById("overlay").style.display = "none";
+    }
+    </script>
+    <div id="overlay">
+        <div id="text">Error:<br>no connection to MQTT server</div>
+    </div>
+
+
+    <title>Door Sign</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--For the plain library-->
     <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript"></script>-->
@@ -47,17 +82,16 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 
 
         function onConnectionLost() {
+            mqtt_warning_on();
             console.log("connection lost");
-            document.getElementById("status").innerHTML = "Connection Lost";
             connected_flag = 0;
         }
         function onFailure(message) {
+            mqtt_warning_on();
             console.log("Failed");
             connected_flag = 0;
         }
         function onMessageArrived(r_message) {
-            out_msg = "Message received " + r_message.payloadString + "<br>";
-            out_msg = out_msg + "Message received Topic " + r_message.destinationName;
             console.log("MQTT recv (" + r_message.destinationName + "): ", r_message.payloadString);
 
             if (r_message.destinationName == "homie/shopController/shopStatus") {
@@ -71,13 +105,14 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         }
 
         function onConnected(recon, url) {
+            mqtt_warning_off();
             console.log(" in onConnected " + reconn);
         }
 
         function onConnect() {
+            mqtt_warning_off();
             console.log("Connected to " + host + ":" + port);
             connected_flag = 1
-            document.getElementById("status").innerHTML = "Connected";
             console.log("connected_flag= ", connected_flag);
             mqtt.subscribe("homie/shopController/shopStatus");
             mqtt.subscribe("homie/shopController/triggerHTMLPagesReload");
@@ -140,16 +175,13 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         var host = "192.168.10.28"; //shop-master
         var port = 8123;
         console.log("Set up the MQTT client to connect to " + host + ":" + port);
-        var mqtt = new Paho.MQTT.Client(host, port, "clientdoor");
+        var mqtt = new Paho.MQTT.Client(host, port, "clientdoor<?php echo "$debugClientStrSuffix";?>");
         mqtt.onConnectionLost = onConnectionLost;
         mqtt.onMessageArrived = onMessageArrived;
         mqtt.onConnected = onConnected;
 
-        var reconnectTimeout = 1000;
 
-    </script>
-
-    <script>
+        mqtt_warning_on();
         MQTTconnect();
 
         function UpdateQRCode() {
