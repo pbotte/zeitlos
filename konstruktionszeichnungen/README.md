@@ -43,6 +43,7 @@ Benötigte Teile:
 - USB-Anschlusskabel
 
 [Zeichnungen](Zeichnungen%20Einfache%20Waage%20250x400.pdf)
+[3D Modell bei OnShape](https://cad.onshape.com/documents/07e757121196d4c81f46196c/w/4d6249ebf3acd2466bdc2365/e/19fd1c365329f79e1b452f2a?configuration=default)
 ![](Ansicht%20Einfache%20Waage%20250x400.png)
 
 
@@ -55,4 +56,5 @@ Tiefe | Breite | Höhe
 400 | 1000 | 80
 
 [Zeichnungen](Zeichnungen%20Waagenregal%20400x1000mm.pdf)
+[3D-Model bei OnShape](https://cad.onshape.com/documents/c41b0a8e2bb3a65c89f800bb/w/18f783df5e9effa193c2121e/e/b8c6a7ed569a9ee8e6bb96d7?configuration=default)
 ![](Ansicht%20Waagenregal%20400x1000.png)
