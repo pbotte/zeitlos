@@ -2,6 +2,8 @@
 
 Ein Paket aus Soft- und Hardware für ein automatisches Ladensystem, welches sich für kleine Läden, bis ca. 1000 Produkte, eignet. Das System basiert darauf, dass jedes Produkt durch eine eigene Waage gewogen wird, welche mit einem Computer verbunden ist.
 
+![](https://raw.githubusercontent.com/pbotte/zeitlos/master/Projektantraege%20und%20Vortraege/IMG_1326_klein.jpg)
+
 ### Beschreibung eines typischen Einkaufs:
 1. In der einfachen Ausbaustufe befindet sich immer nur ein Kunde im Laden. Der Einlass kann durch einen Türschließer auf Kundenkarteninhaber beschränkt werden. 
 2. Im weiteren Einkauf entnimmt der Kunde die Waren selbst aus den Regalen und Kisten. Die Anzeige der entnommen Waren und Massen erfolgt sofort und automatisch auf dem Kundendisplay.
