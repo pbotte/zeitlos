@@ -14,7 +14,7 @@ In der erweiterten Ausbaustufe hält der Kunde seine Kundenkarte vor der Entnahm
 
 ## Übersicht:
 
-- [Konstruktionszeichnungen Waagen](https://github.com/pbotte/zeitlos/tree/master/konstruktionszeichnungen) (aktuell vier verschiedene Modelle)
+- [Konstruktionszeichnungen Waagen](https://github.com/pbotte/zeitlos/tree/master/hardware/waagen/konstruktionszeichnungen) (aktuell vier verschiedene Modelle)
 - [Firmware für Waagen](https://github.com/pbotte/zeitlos/tree/master/promicroControl)
 - Software auf dem zentralen Computer:
   - [Auslese der Waagen](https://github.com/pbotte/zeitlos/tree/master/scaleController)
