@@ -999,6 +999,9 @@
     (path "/ac84ca8c-8952-41f4-b081-d474e4c76964/b5205ef5-ab17-4ba7-91e6-3698fd818c59"
       (reference "#FLG02") (unit 1) (value "PWR_FLAG") (footprint "")
     )
+    (path "/ac84ca8c-8952-41f4-b081-d474e4c76964/da9cc1d9-f3db-4011-bcb4-0fe513f1e74d"
+      (reference "#FLG03") (unit 1) (value "PWR_FLAG") (footprint "")
+    )
     (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/4f93551a-6de2-49dd-91f5-0aa7e171f020"
       (reference "#PWR01") (unit 1) (value "GND") (footprint "")
     )
@@ -1047,7 +1050,7 @@
     (path "/ac84ca8c-8952-41f4-b081-d474e4c76964/714ff6a1-ca48-4b1e-9a43-76384ff65f3d"
       (reference "#PWR016") (unit 1) (value "+9V") (footprint "")
     )
-    (path "/ac84ca8c-8952-41f4-b081-d474e4c76964/acde6a67-56cc-4a56-8672-7ae217ed3855"
+    (path "/ac84ca8c-8952-41f4-b081-d474e4c76964/e7f5de8f-b1e6-4e5b-8bfa-e560a50117e9"
       (reference "#PWR017") (unit 1) (value "+9V") (footprint "")
     )
     (path "/ac84ca8c-8952-41f4-b081-d474e4c76964/64b50eb0-e654-4904-bedd-5623ccf10b50"
@@ -1178,6 +1181,9 @@
     )
     (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/1f82b8e7-be28-4d74-8ac9-14d10170eecc"
       (reference "D2") (unit 1) (value "LED") (footprint "LED_SMD:LED_1206_3216Metric_Pad1.42x1.75mm_HandSolder")
+    )
+    (path "/ac84ca8c-8952-41f4-b081-d474e4c76964/7c2084e9-3b2e-4e85-bb04-4d1893a867c2"
+      (reference "F1") (unit 1) (value "Polyfuse 500mA") (footprint "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder")
     )
     (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/bc14df0e-ffbf-47ab-9d53-587018bfb42b"
       (reference "J1") (unit 1) (value "AVR-ISP-6") (footprint "Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Horizontal")
