@@ -1183,10 +1183,10 @@
       (reference "D2") (unit 1) (value "LED") (footprint "LED_SMD:LED_1206_3216Metric_Pad1.42x1.75mm_HandSolder")
     )
     (path "/ac84ca8c-8952-41f4-b081-d474e4c76964/7c2084e9-3b2e-4e85-bb04-4d1893a867c2"
-      (reference "F1") (unit 1) (value "Polyfuse 500mA") (footprint "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder")
+      (reference "F1") (unit 1) (value "Fuse/Polyfuse 500mA") (footprint "Fuse:Fuse_2512_6332Metric_Pad1.52x3.35mm_HandSolder")
     )
     (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/bc14df0e-ffbf-47ab-9d53-587018bfb42b"
-      (reference "J1") (unit 1) (value "AVR-ISP-6") (footprint "Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Horizontal")
+      (reference "J1") (unit 1) (value "AVR-ISP-6") (footprint "Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Vertical")
     )
     (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/2082aa35-dfe4-409e-9f3f-c6c3fd7e0c8b"
       (reference "J2") (unit 1) (value "Conn_01x06") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x06_P2.54mm_Vertical")
