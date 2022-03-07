@@ -1156,6 +1156,9 @@
     (path "/ac84ca8c-8952-41f4-b081-d474e4c76964/5a128969-5504-4d99-8d57-dd94457ee4b6"
       (reference "#PWR046") (unit 1) (value "GND") (footprint "")
     )
+    (path "/30494837-48ad-4be2-9240-423a5e323ded/22c22de0-30f9-42af-ac14-44974608319c"
+      (reference "#PWR047") (unit 1) (value "VCC") (footprint "")
+    )
     (path "/43e2f932-9d0d-4a97-af5d-749f39ab369e"
       (reference "#PWR0110") (unit 1) (value "VCC") (footprint "")
     )
@@ -1254,6 +1257,9 @@
     )
     (path "/c7c8b3da-4039-4957-80a0-414bd92a94c6/b2a7bdfd-2bbf-4023-b65d-b9169f633548"
       (reference "J8") (unit 1) (value "Conn_01x03_Male") (footprint "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical")
+    )
+    (path "/30494837-48ad-4be2-9240-423a5e323ded/0a8229a4-9df7-43bb-a8d3-ff415d614cd1"
+      (reference "JP1") (unit 1) (value "SolderJumper_2_Open") (footprint "Jumper:SolderJumper-2_P1.3mm_Open_RoundedPad1.0x1.5mm")
     )
     (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/b10ce685-af81-4bf8-a69a-41137c2b97ad"
       (reference "R1") (unit 1) (value "10k") (footprint "Resistor_SMD:R_1206_3216Metric_Pad1.30x1.75mm_HandSolder")
