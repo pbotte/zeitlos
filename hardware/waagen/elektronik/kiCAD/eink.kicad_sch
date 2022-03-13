@@ -321,7 +321,7 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid c1403ebd-8e5a-4177-aef9-f2649848547a)
   )
-  (text "During refresh voltage drops by 0.7V für 10mu sec \nwhen connected tp MCP 1703 3.3V. This leads to a reset of MCU.\nTo overcome this problem, connect eink to a separate LDO."
+  (text "During refresh: voltage drops by 0.7V for 10mu sec \nwhen connected tp MCP 1703 3.3V. This leads to a reset of MCU.\nTo overcome this problem, connect eink to a separate LDO."
     (at 170.18 106.68 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid d001531b-3c03-40cd-8e84-c3362cc0542c)

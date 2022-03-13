@@ -736,7 +736,7 @@
     (property "Value" "8MHz" (id 1) (at 125.73 113.0299 90)
       (effects (font (size 1.27 1.27)) (justify right))
     )
-    (property "Footprint" "Crystal:Crystal_SMD_HC49-SD" (id 2) (at 121.92 111.76 0)
+    (property "Footprint" "Crystal:Crystal_SMD_HC49-SD_HandSoldering" (id 2) (at 121.92 111.76 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (id 3) (at 121.92 111.76 0)
