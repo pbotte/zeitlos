@@ -1076,8 +1076,8 @@
     (path "/ac84ca8c-8952-41f4-b081-d474e4c76964/52883d1c-603a-4c73-bc4d-b826b389ff66"
       (reference "#PWR019") (unit 1) (value "VCC") (footprint "")
     )
-    (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/2a4b5cd5-2ca4-47f1-944a-cd6ee54e585d"
-      (reference "#PWR020") (unit 1) (value "VCC") (footprint "")
+    (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/fd201ee4-7bd8-440f-9a10-279309c88670"
+      (reference "#PWR020") (unit 1) (value "+9V") (footprint "")
     )
     (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/4fdf1df9-df7a-4660-b54e-aba4e2c51e15"
       (reference "#PWR021") (unit 1) (value "GND") (footprint "")
@@ -1130,8 +1130,8 @@
     (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/0ffdfd90-5a76-4bb1-9454-b7a86033b61a"
       (reference "#PWR037") (unit 1) (value "VCC") (footprint "")
     )
-    (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/c39cc86b-4cbc-46df-a147-b598ce030a3a"
-      (reference "#PWR038") (unit 1) (value "VCC") (footprint "")
+    (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/0810d445-1df3-46a9-896a-86ad16793678"
+      (reference "#PWR038") (unit 1) (value "+9V") (footprint "")
     )
     (path "/30494837-48ad-4be2-9240-423a5e323ded/fc3696db-a624-46aa-b696-739a1c2336bf"
       (reference "#PWR039") (unit 1) (value "GND") (footprint "")
@@ -1236,7 +1236,7 @@
       (reference "F1") (unit 1) (value "Fuse/Polyfuse 500mA") (footprint "Fuse:Fuse_2512_6332Metric_Pad1.52x3.35mm_HandSolder")
     )
     (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/bc14df0e-ffbf-47ab-9d53-587018bfb42b"
-      (reference "J1") (unit 1) (value "AVR-ISP-6") (footprint "Connector_PinSocket_2.54mm:PinSocket_2x03_P2.54mm_Vertical")
+      (reference "J1") (unit 1) (value "AVR-ISP-6") (footprint "Connector_PinHeader_2.54mm:PinHeader_2x03_P2.54mm_Vertical")
     )
     (path "/976cd6d7-273a-47c2-827b-7e55ce9fc62e/2082aa35-dfe4-409e-9f3f-c6c3fd7e0c8b"
       (reference "J2") (unit 1) (value "Conn_01x06") (footprint "Connector_PinSocket_2.54mm:PinSocket_1x06_P2.54mm_Vertical")
