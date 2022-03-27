@@ -5,6 +5,7 @@
 #include <EEPROM.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <version.h>
 
 // eink
 #include <SPI.h>
@@ -149,12 +150,11 @@ void setup()
   mcp2515.setNormalMode();
   // Send actual Firmware version
   canMsg1.can_id = (0x00020000 + scale_device_id) | CAN_EFF_FLAG;
-  canMsg1.can_dlc = 5;
-  canMsg1.data[0] = 0x20; //rev lsb
-  canMsg1.data[1] = 0x00; //rev msb
-  canMsg1.data[2] = 0x17; //23.
-  canMsg1.data[3] = 0x02; //Feb
-  canMsg1.data[4] = 0x16; //2022
+  canMsg1.can_dlc = 4;
+  canMsg1.data[0] = BUILD_NUMBER & 0xff; //build lsb
+  canMsg1.data[1] = (BUILD_NUMBER >> 8) & 0xff; //
+  canMsg1.data[2] = (BUILD_NUMBER >> 16) & 0xff; //
+  canMsg1.data[3] = (BUILD_NUMBER >> 24) & 0xff; //build msb
   mcp2515.sendMessage(&canMsg1);
 
   Serial.println("------- CAN Read ----------");
@@ -226,7 +226,7 @@ void setup()
     }
     epd.SetFrameMemory_Partial(paint.GetImage(), 40 /*vertikal, oben=0*/, 0 /*horizontal, links=0, multiply of 8*/, paint.GetWidth(), paint.GetHeight());
 
-    paint.SetWidth(24); // vertical
+    paint.SetWidth(28); // vertical
     paint.Clear(UNCOLORED);
 
     paint.DrawStringAt(0, 4, scale_product_description, &Font24, COLORED);
@@ -244,7 +244,7 @@ void setup()
     //      epd.SetFrameMemory_Partial(paint.GetImage(), 10 /*vertical axis, top is 0*/, 0 /*horizontal axis right is 0*/, paint.GetWidth(), paint.GetHeight());
 
     paint.Clear(UNCOLORED);
-    paint.DrawStringAt(0, 4, scale_product_details_line1, &Font12, COLORED);
+    paint.DrawStringAt(0, 0, scale_product_details_line1, &Font12, COLORED);
     epd.SetFrameMemory_Partial(paint.GetImage(), 60, 0, paint.GetWidth(), paint.GetHeight());
 
     paint.Clear(UNCOLORED);
@@ -426,6 +426,7 @@ void loop()
       // eg: mas per item: cansend can0 00073320#cc00dbf97e3e
       // convert value in [kg] via https://gregstoll.com/~gregstoll/floattohex/
       // have "Swap endianness" switched on
+      // (Another great tool: https://cryptii.com/pipes/integer-encoder)
       //
       // eg: Change product description: Convert "Mehl" to 0x4D65686C
       // via https://www.rapidtables.com/convert/number/ascii-to-hex.html
