@@ -47,7 +47,13 @@ Paint paint(image, 0, 0); // width should be the multiple of 8
 Epd epd;
 
 // NAU
-NAU7802 myScale; // Create instance of the NAU7802 class
+NAU7802 myScale;                                          // Create instance of the NAU7802 class
+#define NUMBER_OF_SCALE_READINGS_BUFFER 8                 // should multiple of 2^N for fast division
+#define NUMBER_OF_SCALE_READINGS_BUFFER_DEVISION_HELPER 3 //=int(log(NUMBER_OF_SCALE_READINGS_BUFFER)/log(2))
+long last_scale_raw_readings[NUMBER_OF_SCALE_READINGS_BUFFER];
+byte last_scale_raw_readings_ringbuffer_index = 0; // points to the actual index used
+long averaged_reading_sum = 0;                     // helper variable to average all entries in last_scale_raw_readings. needs to be divided by NUMBER_OF_SCALE_READINGS_BUFFER to get real average
+long averaged_reading = 0;                         // regularly updated: averaged_reading_sum/NUMBER_OF_SCALE_READINGS_BUFFER
 
 // Overall scale variables
 uint16_t scale_device_id = 0;
@@ -71,9 +77,9 @@ void read_scale_properties_from_EEPROM()
 }
 void write_scale_properties_to_EEPROM()
 {
-  EEPROM.put(10, scale_product_description);      //@ 0a
-  EEPROM.put(60, scale_product_details_line1);    //@ 3c
-  EEPROM.put(110, scale_product_details_line2);   //@ 6e
+  EEPROM.put(10, scale_product_description);    //@ 0a
+  EEPROM.put(60, scale_product_details_line1);  //@ 3c
+  EEPROM.put(110, scale_product_details_line2); //@ 6e
   EEPROM.put(200, scale_product_price_per_unit);
   EEPROM.put(204, scale_product_mass_per_unit);   //@ CC
   EEPROM.put(208, scale_calibration_slope);       //@ D0
@@ -82,6 +88,8 @@ void write_scale_properties_to_EEPROM()
 
 void setup()
 {
+  for (byte i = 0; i < NUMBER_OF_SCALE_READINGS_BUFFER; i++)
+    last_scale_raw_readings[i] = 0;
   pinMode(LED_BUILTIN, OUTPUT);
 
   Serial.begin(115200);
@@ -151,10 +159,10 @@ void setup()
   // Send actual Firmware version
   canMsg1.can_id = (0x00020000 + scale_device_id) | CAN_EFF_FLAG;
   canMsg1.can_dlc = 4;
-  canMsg1.data[0] = BUILD_NUMBER & 0xff; //build lsb
-  canMsg1.data[1] = (BUILD_NUMBER >> 8) & 0xff; //
+  canMsg1.data[0] = BUILD_NUMBER & 0xff;         // build lsb
+  canMsg1.data[1] = (BUILD_NUMBER >> 8) & 0xff;  //
   canMsg1.data[2] = (BUILD_NUMBER >> 16) & 0xff; //
-  canMsg1.data[3] = (BUILD_NUMBER >> 24) & 0xff; //build msb
+  canMsg1.data[3] = (BUILD_NUMBER >> 24) & 0xff; // build msb
   mcp2515.sendMessage(&canMsg1);
 
   Serial.println("------- CAN Read ----------");
@@ -163,7 +171,7 @@ void setup()
   // Set CAN Filters
   // see page 34 in MCP2515 Manual
   // https://ww1.microchip.com/downloads/en/DeviceDoc/MCP2515-Stand-Alone-CAN-Controller-with-SPI-20001801J.pdf
-  // Further hint from Arduino forum: 
+  // Further hint from Arduino forum:
   //    To avoid errors you need to set all masks and filters (otherwise it can be rubbish there)
   mcp2515.setConfigMode();
   mcp2515.setFilterMask(MCP2515::MASK0, true, 0x0000ffff); // Look only for device_id
@@ -264,10 +272,7 @@ void setup()
   digitalWrite(LED_BUILTIN, HIGH);
 }
 
-
-
-
-
+unsigned long last_ADC_read = 0;
 unsigned long last_regular_check = 0;
 unsigned long last_request = 0;
 unsigned long last_read = 0;
@@ -280,29 +285,46 @@ void loop()
 {
   if (!CAN_only_mode)
   {
-    if (millis() - last_regular_check > 1000)
+    // ADC read out
+    if (millis() - last_ADC_read > 120)
     {
-      last_regular_check = millis();
+      last_ADC_read = millis();
       if (myScale.available() == true)
       {
         last_scale_raw_reading = myScale.getReading();
+
+        last_scale_raw_readings_ringbuffer_index++;
+        if (last_scale_raw_readings_ringbuffer_index >= NUMBER_OF_SCALE_READINGS_BUFFER)
+          last_scale_raw_readings_ringbuffer_index = 0;
+        averaged_reading_sum -= last_scale_raw_readings[last_scale_raw_readings_ringbuffer_index];
+        last_scale_raw_readings[last_scale_raw_readings_ringbuffer_index] = last_scale_raw_reading;
+        averaged_reading_sum += last_scale_raw_readings[last_scale_raw_readings_ringbuffer_index];
+        averaged_reading = averaged_reading_sum >> NUMBER_OF_SCALE_READINGS_BUFFER_DEVISION_HELPER;
+
+        last_scale_raw_reading = averaged_reading;
+
         Serial.print("Reading: ");
         Serial.println(last_scale_raw_reading);
 
         // Start CAN sending
         canMsg1.can_id = (0x00030000 + scale_device_id) | CAN_EFF_FLAG;
-        canMsg1.can_dlc = sizeof(last_scale_raw_reading);
-        memcpy(canMsg1.data, &last_scale_raw_reading, sizeof(last_scale_raw_reading));
+        canMsg1.can_dlc = sizeof(averaged_reading);
+        memcpy(canMsg1.data, &averaged_reading, sizeof(averaged_reading));
         mcp2515.sendMessage(&canMsg1);
         // Stop CAN sending
       }
+    }
 
+    // eink update
+    if (millis() - last_regular_check > 5000)
+    {
+      last_regular_check = millis();
       char str[100];
       char buffer[12];
 
       float actual_mass_in_kg = ((last_scale_raw_reading - scale_calibration_zero_in_raw) * scale_calibration_slope);
       dtostrf(actual_mass_in_kg * 1000, 8, 1, buffer);
-      sprintf(str, "%s g %ld Stk", buffer, round(actual_mass_in_kg/scale_product_mass_per_unit));
+      sprintf(str, "%s g %ld Stk", buffer, round(actual_mass_in_kg / scale_product_mass_per_unit));
       paint.SetHeight(220); // horizontal
       paint.SetWidth(24);   // vertical
       paint.SetRotate(ROTATE_270);
