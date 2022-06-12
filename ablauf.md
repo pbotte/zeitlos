@@ -3,8 +3,8 @@
 ```mermaid
 sequenceDiagram
     actor Kunde
-    participant shopcontroller
     participant Zugangskontrolle
+    participant shopcontroller
     participant Waagen
     participant Einkaufsanzeige
     Kunde->>Zugangskontrolle: Authentifikation (Girocard)
