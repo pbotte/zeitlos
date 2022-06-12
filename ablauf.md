@@ -3,16 +3,20 @@
 ```mermaid
 sequenceDiagram
     actor Kunde
+    participant shopcontroller
     participant Zugangskontrolle
     participant Waagen
     participant Einkaufsanzeige
     Kunde->>Zugangskontrolle: Authentifikation (Girocard)
     Zugangskontrolle->>Kunde: Vorabbuchung durchgeführt + Einlass
+    Zugangskontrolle->>shopcontroller: Kunde eingelassen
+    shopcontroller->>Waagen: Reset
+    shopcontroller->>Einkaufsanzeige: Reset
     Kunde->>Waagen: Entnimmt Produkte
-    Waagen->>Einkaufsanzeige: Anzeige aktueller Einkauf
+    shopcontroller->>Einkaufsanzeige: Anzeige aktueller Einkauf
     Waagen->>Waagen: Produkte dürfen auch wieder zurückgelegt werden
-    Zugangskontrolle->>Kunde: Geschäft verlassen, Einkauf beendet.
-    Zugangskontrolle->>Kunde: Abbuchung des finalen Geldbetrags
+    Zugangskontrolle->>shopcontroller: Geschäft verlassen, Einkauf beendet.
+    shopcontroller->>Kunde: Abbuchung des finalen Geldbetrags
 ```
 
 # Bestückung
