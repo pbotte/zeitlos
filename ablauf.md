@@ -24,6 +24,7 @@ sequenceDiagram
 sequenceDiagram
     actor Verkäufer
     participant Zugangskontrolle
+    participant shopcontroller
     participant Waagen
     participant Einkaufsanzeige
     Verkäufer->>Zugangskontrolle: Authentifikation
