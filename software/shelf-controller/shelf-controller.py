@@ -25,7 +25,8 @@ logger.setLevel(logging.WARNING-(args.verbosity*10 if args.verbosity <=2 else 20
 
 
 mcu_eeprom_data_dict_float = {"scale_product_mass_per_unit":{"start":0xcc},
-        "scale_calibration_slope": {"start":0xd0},
+        "scale_calibration_slope": {"start":0xd0} }
+mcu_eeprom_data_dict_long = {
         "scale_calibration_zero_in_raw": {"start":0xd4} }
 mcu_eeprom_data_dict_str = {"scale_product_description":{"len":50,"start":0xa},
         "scale_product_details_line1": {"len":50,"start":0x3c},
@@ -159,6 +160,9 @@ while loop_variable:
       for i in mcu_eeprom_data_dict_float:
         start_address = mcu_eeprom_data_dict_float[i]["start"]
         logger.debug("{}: {} {} {} ".format(i, start_address, eeprom_storage[start_address:start_address+4], struct.unpack('<f',bytes(eeprom_storage[start_address:start_address+4] ))[0]  ))
+      for i in mcu_eeprom_data_dict_long:
+        start_address = mcu_eeprom_data_dict_long[i]["start"]
+        logger.debug("{}: {} {} {} ".format(i, start_address, eeprom_storage[start_address:start_address+4], struct.unpack('<l',bytes(eeprom_storage[start_address:start_address+4] ))[0]  ))
 
 
 #  if args.verbosity>0:
