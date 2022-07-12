@@ -176,8 +176,8 @@ void setup()
   mcp2515.setConfigMode();
   mcp2515.setFilterMask(MCP2515::MASK0, true, 0x0000ffff); // Look only for device_id
   mcp2515.setFilter(MCP2515::RXF0, true, scale_device_id);
-  mcp2515.setFilterMask(MCP2515::MASK1, true, 0x0000ffff);
-  mcp2515.setFilter(MCP2515::RXF1, true, scale_device_id);
+  mcp2515.setFilterMask(MCP2515::MASK1, true, 0x10000000); // and broadcast meassages
+  mcp2515.setFilter(MCP2515::RXF1, true,      0x10000000);
   mcp2515.setNormalMode();
   // CAN end
 
@@ -392,26 +392,29 @@ void loop()
   {
 
     // Broadcast messages:
-    if (
-        (((canMsg.can_id >> 24) == 0x81)) &&
+    if (((canMsg.can_id >> 28)&1) == 1)
+    {
+      if (
+        ((((canMsg.can_id >> 24)&0xf) == 0x1)) &&
         (canMsg.can_dlc == 4) && // data length
         (canMsg.data[0] == 0x42) && (canMsg.data[1] == 0xfa) &&
         (canMsg.data[2] == 0xbe) && (canMsg.data[3] == 0xef))
-    {
-      reboot_device = true;
-    }
-    // CAN only mode on/off
-    if (((canMsg.can_id >> 24) == 0x82))
-    {
-      CAN_only_mode = true;
-    }
-    if (((canMsg.can_id >> 24) == 0x83))
-    {
-      CAN_only_mode = false;
+      {
+        reboot_device = true;
+      }
+      // CAN only mode on/off
+      if ((((canMsg.can_id >> 24)&0xf) == 0x2))
+      {
+        CAN_only_mode = true;
+      }
+      if ((((canMsg.can_id >> 24)&0xf) == 0x3))
+      {
+        CAN_only_mode = false;
+      }
     }
 
     // Device individual messages:
-    if ((canMsg.can_id & 0xFFFF) == scale_device_id)
+    if ( (((canMsg.can_id >> 28)&1) == 0) && ((canMsg.can_id & 0xFFFF) == scale_device_id) )
     {
 
       // Set Raw Zero calibration to actual value
@@ -429,7 +432,19 @@ void loop()
       // eg: cansend can0 00063320#cc0008
       if (((canMsg.can_id >> 16) & 0xFF) == 6)
       {
-        if (canMsg.can_dlc == 3) // 2byte for address + 1 byte for length
+        int pos=0;
+        while (pos < 256) {
+          canMsg1.can_id = (0x00090000 + scale_device_id) | CAN_EFF_FLAG;
+          canMsg1.can_dlc = 8;
+          canMsg1.data[0] = pos&0xff;
+          canMsg1.data[1] = (pos>>8)&0xff;
+          for (byte i = 0; i < 6; i++)
+            canMsg1.data[i+2] = EEPROM.read(pos + i);
+          mcp2515.sendMessage(&canMsg1);
+          delay(1);
+          pos += 6;
+        }
+/*        if (canMsg.can_dlc == 3) // 2byte for address + 1 byte for length
         {
           word address_to_be_read = canMsg.data[0] + (canMsg.data[1] << 8);
           byte length_to_be_read = canMsg.data[2];
@@ -442,7 +457,7 @@ void loop()
             canMsg1.data[i] = EEPROM.read(address_to_be_read + i);
           mcp2515.sendMessage(&canMsg1);
         }
-      }
+*/      }
 
       // Write to EEPROM
       // eg: mas per item: cansend can0 00073320#cc00dbf97e3e
@@ -466,7 +481,7 @@ void loop()
       }
 
       // Check for reboot
-      // Check only the lower 24 bits of CAN ID
+      // Check only the lower 16 bits of CAN ID
       if (((canMsg.can_id >> 16) & 0xFF) == 0)
       {
         if ((canMsg.can_dlc == 4) && // data length
