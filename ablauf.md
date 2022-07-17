@@ -19,6 +19,33 @@ sequenceDiagram
     shopcontroller->>Kunde: Abbuchung des finalen Geldbetrags
 ```
 
+# Mögliche Zustände Shop_Controller
+```mermaid
+graph TD
+  AA[Geräte Initialisierung]
+  A[Bereit, Kein Kunde im Laden]
+  B[Kunde authentifiziert]
+  C[Kunde im Laden]
+  D[Einkauf finalisiert]
+  E[Einkauf abgerechnet]
+  F[Warten auf: Kunde verlässt Laden]
+  Y[Technischer Fehler aufgetreten]
+  Z[Kunde benötigt Hilfe]
+  AA --> A
+  AA --> |Timeout| Y
+  A --> B
+  B --> |Timeout| A
+  B --> C
+  C -->|Timeout| Z
+  C --> D
+  D --> E
+  D -->|Timeout| Z
+  E --> F
+  F --> A
+  F -->|Timeout| Z
+  
+```
+
 # Bestückung
 ```mermaid
 sequenceDiagram
