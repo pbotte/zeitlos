@@ -15,6 +15,9 @@
 #define COLORED 0
 #define UNCOLORED 1
 
+//scale hardware
+#define SCALE_HARDWARE_REVISION 1
+
 // NAU ADC
 #include <Wire.h>
 #include "SparkFun_Qwiic_Scale_NAU7802_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_NAU7802
@@ -49,7 +52,6 @@ Epd epd;
 // NAU
 NAU7802 myScale;                                          // Create instance of the NAU7802 class
 #define NUMBER_OF_SCALE_READINGS_BUFFER 8                 // should multiple of 2^N for fast division
-#define NUMBER_OF_SCALE_READINGS_BUFFER_DEVISION_HELPER 3 //=int(log(NUMBER_OF_SCALE_READINGS_BUFFER)/log(2))
 long last_scale_raw_readings[NUMBER_OF_SCALE_READINGS_BUFFER];
 byte last_scale_raw_readings_ringbuffer_index = 0; // points to the actual index used
 long averaged_reading_sum = 0;                     // helper variable to average all entries in last_scale_raw_readings. needs to be divided by NUMBER_OF_SCALE_READINGS_BUFFER to get real average
@@ -158,11 +160,12 @@ void setup()
   mcp2515.setNormalMode();
   // Send actual Firmware version
   canMsg1.can_id = (0x00020000 + scale_device_id) | CAN_EFF_FLAG;
-  canMsg1.can_dlc = 4;
+  canMsg1.can_dlc = 5;
   canMsg1.data[0] = BUILD_NUMBER & 0xff;         // build lsb
   canMsg1.data[1] = (BUILD_NUMBER >> 8) & 0xff;  //
   canMsg1.data[2] = (BUILD_NUMBER >> 16) & 0xff; //
   canMsg1.data[3] = (BUILD_NUMBER >> 24) & 0xff; // build msb
+  canMsg1.data[4] = SCALE_HARDWARE_REVISION & 0xff; // scale hardware revision
   mcp2515.sendMessage(&canMsg1);
 
   Serial.println("------- CAN Read ----------");
@@ -299,17 +302,25 @@ void loop()
         averaged_reading_sum -= last_scale_raw_readings[last_scale_raw_readings_ringbuffer_index];
         last_scale_raw_readings[last_scale_raw_readings_ringbuffer_index] = last_scale_raw_reading;
         averaged_reading_sum += last_scale_raw_readings[last_scale_raw_readings_ringbuffer_index];
-        averaged_reading = averaged_reading_sum >> NUMBER_OF_SCALE_READINGS_BUFFER_DEVISION_HELPER;
+        averaged_reading = averaged_reading_sum / NUMBER_OF_SCALE_READINGS_BUFFER;
 
         last_scale_raw_reading = averaged_reading;
 
         Serial.print("Reading: ");
         Serial.println(last_scale_raw_reading);
 
-        // Start CAN sending
+/*        // Start CAN sending
         canMsg1.can_id = (0x00030000 + scale_device_id) | CAN_EFF_FLAG;
         canMsg1.can_dlc = sizeof(averaged_reading);
         memcpy(canMsg1.data, &averaged_reading, sizeof(averaged_reading));
+        mcp2515.sendMessage(&canMsg1);
+        // Stop CAN sending
+*/
+        float actual_mass_in_kg = ((last_scale_raw_reading - scale_calibration_zero_in_raw) * scale_calibration_slope);
+        // Start CAN sending
+        canMsg1.can_id = (0x000a0000 + scale_device_id) | CAN_EFF_FLAG;
+        canMsg1.can_dlc = sizeof(actual_mass_in_kg);
+        memcpy(canMsg1.data, &actual_mass_in_kg, sizeof(actual_mass_in_kg));
         mcp2515.sendMessage(&canMsg1);
         // Stop CAN sending
       }
@@ -422,10 +433,16 @@ void loop()
       if (((canMsg.can_id >> 16) & 0xFF) == 9)
       {
         scale_calibration_zero_in_raw = last_scale_raw_reading;
-        if ((canMsg.can_dlc == 1) && (canMsg.data[0] > 0))
-        {
-          write_scale_properties_to_EEPROM();
-        }
+        write_scale_properties_to_EEPROM();
+      }
+
+      // Set Slope calibration to a set value
+      // 1. With empty scale, call "Set Raw Calibration"
+      // 2. With a 500g on top, call this function
+      if (((canMsg.can_id >> 16) & 0xFF) == 0xb)
+      {
+        scale_calibration_slope = 0.5 / (last_scale_raw_reading - scale_calibration_zero_in_raw);
+        write_scale_properties_to_EEPROM();
       }
 
       // Read from EEPROM
