@@ -22,15 +22,16 @@ sequenceDiagram
 # Mögliche Zustände Shop_Controller
 ```mermaid
 graph TD
-  AA[Geräte Initialisierung]
-  A[Bereit, Kein Kunde im Laden]
-  B[Kunde authentifiziert]
-  C[Kunde im Laden]
-  D[Einkauf finalisiert]
-  E[Einkauf abgerechnet]
-  F[Warten auf: Kunde verlässt Laden]
-  Y[Technischer Fehler aufgetreten]
-  Z[Kunde benötigt Hilfe]
+  AA["Geräte Initialisierung (0)"]
+  A["Bereit, Kein Kunde im Laden (1)"]
+  B["Kunde authentifiziert (2)"]
+  C["Kunde im Laden (3)"]
+  D["Einkauf finalisiert (4)"]
+  E["Einkauf abgerechnet (5)"]
+  F["Warten auf: Kunde verlässt Laden (6)"]
+  G["Warten auf: Vorbereitung für nächsten Kunden (7)"]
+  Y["Technischer Fehler aufgetreten (8)"]
+  Z["Kunde benötigt Hilfe (9)"]
   AA --> A
   AA --> |Timeout| Y
   A --> B
@@ -41,10 +42,12 @@ graph TD
   D --> E
   D -->|Timeout| Z
   E --> F
-  F --> A
+  F --> G
+  G --> A
   F -->|Timeout| Z
   
 ```
+
 
 # Bestückung
 ```mermaid
