@@ -28,6 +28,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         /* IE8+                */
     }
     h1 {
+        font-family: Verdana, Arial, Helvetica, sans-serif;
         font-size: 100px;
     }
 </style>
@@ -64,7 +65,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         document.getElementById("overlay").style.display = "none";
     }
     </script>
-    <div id="overlay">
+    <!--Show the following sign until a MQTT connection is establised-->
+    <div id="overlay" sytel="display:block">
         <div id="text">Error:<br>no connection to MQTT server</div>
     </div>
 
@@ -94,11 +96,11 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         function onMessageArrived(r_message) {
             console.log("MQTT recv (" + r_message.destinationName + "): ", r_message.payloadString);
 
-            if (r_message.destinationName == "homie/shopController/shopStatus") {
-                shopStatus = parseInt(r_message.payloadString);
-                console.log("new shopStatus", shopStatus);
+            if (r_message.destinationName == "homie/shop_controller/shop_status") {
+                shop_status = parseInt(r_message.payloadString);
+                console.log("new shop_status", shop_status);
             }
-            if (r_message.destinationName == "homie/shopController/triggerHTMLPagesReload") {
+            if (r_message.destinationName == "homie/shop_controller/triggerHTMLPagesReload") {
                 console.log("trigger page reload via MQTT");
                 location.reload();
             }
@@ -114,11 +116,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             console.log("Connected to " + host + ":" + port);
             connected_flag = 1
             console.log("connected_flag= ", connected_flag);
-            mqtt.subscribe("homie/shopController/shopStatus");
-            mqtt.subscribe("homie/shopController/triggerHTMLPagesReload");
-            //message = new Paho.MQTT.Message("Hello World");
-            //message.destinationName = "sensor1";
-            //mqtt.send(message);
+            mqtt.subscribe("homie/shop_controller/shop_status");
+            mqtt.subscribe("homie/shop_controller/triggerHTMLPagesReload");
         }
 
         function MQTTconnect() {
@@ -139,41 +138,28 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 
 <body>
     <table border="0" style="height: 100%; width: 100%; border-collapse: collapse;">
-        <tbody>
+      <tbody>
         <tr>
-        <td style="width: 10%; background-color: white; ">
+          <td style="width: 10%; background-color: white; ">
             <p>&nbsp;</p>
-        </td>
-        <td style="width: 80%; height: 40%; text-align: center; background-color: white; vertical-align: top;">
-            <h1 align="center">Willkommen im Dorfladen</h1>
+          </td>
+          <td style="width: 0%; height: 100%; text-align: center; background-color: white; vertical-align: center;" id="fullTable">
             <h1 align="center" id="mytext">...</h1>
-        </td>
-        <td style="width: 10%; background-color: white; ">
+          </td>
+          <td style="width: 10%; background-color: white; ">
             <p>&nbsp;</p>
-        </td>
+          </td>
         </tr>
-        <tr>
-            <td colspan="3" style="width: 100%; height: 15%; text-align: center; background-color: white; vertical-align: top;">
-                <p>&nbsp;</p>
-            </td>
-            </tr>
-        <tr>
-        <td id="qrCodeArea" colspan="3" style="width: 100%; height: 45%; text-align: center; background-color: red; vertical-align: top;">
-            <p align="center">
-                <img src="/qr.php?" id="myImage" height="800" />
-            </p>
-            <p id="status">Connection Status: Not Connected</p>
-        </td>
-        </tr>
-        </tbody>
+
+      </tbody>
     </table>
 
 
     <script>
         var connected_flag = 0;
-        var shopStatus = 1; //client in shop
-        var host = "192.168.10.28"; //shop-master
-        var port = 8123;
+        var shop_status = 0; //client in shop
+        var host = "192.168.179.150"; //shop-master
+        var port = 9001;
         console.log("Set up the MQTT client to connect to " + host + ":" + port);
         var mqtt = new Paho.MQTT.Client(host, port, "clientdoor<?php echo "$debugClientStrSuffix";?>");
         mqtt.onConnectionLost = onConnectionLost;
@@ -184,38 +170,59 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         mqtt_warning_on();
         MQTTconnect();
 
-        function UpdateQRCode() {
-            var myImageElement = document.getElementById('myImage');
-            var timestamp = Math.floor(Date.now() / 1000);
 
-            var my_hash = forge_sha256('DasGeheimnis2020' + timestamp);
-
-            myImageElement.src = 'http://' + host + '/qr.php?' +
-                'text=' + encodeURIComponent('http://dorfladen.imsteinert.de/eingang/' +
-                    '?hash=' + my_hash);
-            console.log(myImageElement.src);
-        }
-
-        setInterval(function () { UpdateQRCode() }, 10 * 1000);
         setInterval(function () { if (connected_flag == 0) MQTTconnect() }, 5 * 1000);
 
-        setInterval(function () { 
-            if (shopStatus == 0) {
-                //no client
-                document.getElementById('myImage').style.display = "block";
-                document.getElementById("mytext").innerHTML = "QR-Code scannen und eintreten!";
-                document.getElementById("qrCodeArea").style.backgroundColor = "green";
-            }
-            if (shopStatus == 1) {
-                //client in shop
-                document.getElementById('myImage').style.display = "none";
-                document.getElementById("mytext").innerHTML = "Bitte eintreten. Laden derzeit belegt.";
-                document.getElementById("qrCodeArea").style.backgroundColor = "red";
-            }
+        setInterval(function () {
+          switch (shop_status) {
+            case 0:
+              document.getElementById("mytext").innerHTML = "Initialisierung, bitte warten.";
+              document.getElementById("fullTable").style.backgroundColor = "white";
+              break;
+            case 1:
+              document.getElementById("mytext").innerHTML = "Laden ist frei.<br><br>Einkauf mit Kundenkarte/Girocard beginnen.";
+              document.getElementById("fullTable").style.backgroundColor = "#44ff44";
+              break;
+            case 2:
+              document.getElementById("mytext").innerHTML = "Authentifiziert.<br>Bitte Laden betreten.";
+              document.getElementById("fullTable").style.backgroundColor = "#44ff44";
+              break;
+            case 3:
+              document.getElementById("mytext").innerHTML = "Kunde käuft ein.<br>Bitte warten.";
+              document.getElementById("fullTable").style.backgroundColor = "white";
+              break;
+            case 4:
+              document.getElementById("mytext").innerHTML = "Kunde im Laden.<br>Einkauf beendet.";
+              document.getElementById("fullTable").style.backgroundColor = "white";
+              break;
+            case 5:
+              document.getElementById("mytext").innerHTML = "Bezahlung erfolgreich.";
+              document.getElementById("fullTable").style.backgroundColor = "white";
+              break;
+            case 6:
+              document.getElementById("mytext").innerHTML = "Kunde verlässt Laden";
+              document.getElementById("fullTable").style.backgroundColor = "white";
+              break;
+            case 7:
+              document.getElementById("mytext").innerHTML = "Vorbereitung für nächsten Kunden. Bitte warten.";
+              document.getElementById("fullTable").style.backgroundColor = "white";
+              break;
+            case 8:
+              document.getElementById("mytext").innerHTML = "Ein technischer Fehler ist aufgetreten.";
+              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
+              break;
+            case 9:
+              document.getElementById("mytext").innerHTML = "Kunde benötigt Hilfe.";
+              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
+              break;
+            default:
+              document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";
+              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
+              break;
+          }
 
-            }, 100);
+        }, 100);
 
-        UpdateQRCode();
     </script>
 
 </body>

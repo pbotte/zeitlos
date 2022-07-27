@@ -1,3 +1,4 @@
 .vscode/settings.json
 .DS_Store
 hardware/waagen/elektronik/kiCAD/1284pTest2-backups/*
+software/docker/mariadb/data/*
