@@ -10,8 +10,6 @@ import math
 import sys
 import re
 import yaml  # pip3 install pyyaml
-import urllib.request
-from hashlib import sha256
 
 logging.basicConfig(level=logging.WARNING,
                     format='%(asctime)-6s %(levelname)-8s  %(message)s')
@@ -220,35 +218,6 @@ def setShopClientLeft():
 setShopClientLeft
 
 while (WatchDogCounter > 0):
-    LastHTTPRequest = {}
-    if (time.time() - LastCheckForDoorOpen > 1) and (shopStatus == 0):  # waiting for clients
-        try:
-            response = urllib.request.urlopen(
-                'http://dorfladen.imsteinert.de/status.php', timeout=1)
-            # a `str`; this step can't be used if data is binary
-            text = response.read().decode('utf-8')
-            LastHTTPRequest = json.loads(text)
-            # time diff between server and local shop control not larger than 10 seconds
-            if (abs(time.time() - LastHTTPRequest['time']) > 10):
-                logger.warning('timestamp diff too large: {} seconds'.format(
-                    time.time() - LastHTTPRequest['time']))
-            else:
-                hashValid = False
-                for x in range(30):  # check the last 30 seconds
-                    tempCode = sha256('{}{}'.format(args.door_qr_code_secret, math.floor(
-                        time.time()) - x).encode('utf-8')).hexdigest()
-                    if (LastHTTPRequest['code'] == tempCode):
-                        hashValid = True
-                #logger.info('Hashcode ({}) valid: {}'.format(LastHTTPRequest['code'], hashValid))
-                if hashValid:
-                    logger.info('Hashcode ({}) valid: {}'.format(
-                        LastHTTPRequest['code'], hashValid))
-                    setShopClientEntered()
-
-            WatchDogCounter = 10
-        except:
-            logger.error("error in processing HTTP Request.")
-        LastCheckForDoorOpen = time.time()
 
     if shopStatus == 1:  # client in shop
         WatchDogCounter = 10
@@ -271,34 +240,12 @@ while (WatchDogCounter > 0):
                                           "quantity": v["UnitsAtBegin"]-v["UnitsCurrent"], "unit": tempUnit,
                                           "price": tempPrice})
                 actSumTotal += tempPrice
-    actBasket = {"data": actBasketProducts, "total": actSumTotal}
-    client.publish("homie/"+mqtt_client_name+"/actualBasket",
-                   json.dumps(actBasket), qos=1, retain=True)
+#    actBasket = {"data": actBasketProducts, "total": actSumTotal}
+#    client.publish("homie/"+mqtt_client_name+"/actualBasket",
+#                   json.dumps(actBasket), qos=1, retain=True)
 
-    # publish, which product sits in which shelf:
-    productsOnShelf = {1: [], 2: []}
-    for v in data_products:
-        if data_scales[v['ScaleID']]['Shelf'] == 'shop-shelf-01':
-            productsOnShelf[1].append(v)
-        if data_scales[v['ScaleID']]['Shelf'] == 'shop-shelf-02':
-            productsOnShelf[2].append(v)
-    for k, v in productsOnShelf.items():
-        client.publish("homie/"+mqtt_client_name +
-                       "/productsToDisplayOnShelf/{}/products".format(k), json.dumps(v), qos=1, retain=True)
-
-    filename = 'index.html'
-
-    statusStr = ""
-    for s, v in clientsToMonitor.items():
-        if s in clientsMQTTPrettyNames:
-            s = clientsMQTTPrettyNames[s]
-        statusStr += "<tr><td>{}</td><td>".format(s)
-        if v == "online":
-            statusStr += '<font color="green">OK</font>'
-        else:
-            statusStr += '<font color="red">FEHLER</font>'
-        statusStr += "</td></tr>"
-    statusStr = '<table width="100%">'+statusStr+'</table>'
+#        client.publish("homie/"+mqtt_client_name +
+#                       "/productsToDisplayOnShelf/{}/products".format(k), json.dumps(v), qos=1, retain=True)
 
     time.sleep(1-math.modf(time.time())[0])  # make the loop run every second
     WatchDogCounter -= 1
