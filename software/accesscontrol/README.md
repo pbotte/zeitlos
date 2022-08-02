@@ -2,8 +2,23 @@
 
 ## System mit QR-Code
 
+### QR-Code Scanner für Raspi
 
-### Technisch
+- Unbedingt 32-Bit Version von Raspi OS, da raspistill nicht von 64bit unterstützt wird
+- Lite Version wurde genommen.
+
+```bash
+# mit 
+sudo raspi-config
+# die Kamera einschalten!
+
+sudo apt update
+sudo apt install -y python3-opencv python3-pip python3-zbar python3-picamera
+pip3 install pyzbar imutils paho-mqtt
+```
+
+
+### Technisch für QR-Codes in PHP-Seiten
 
 * Es wird diese PHP-Bibliothek verwendet: http://phpqrcode.sourceforge.net
 
