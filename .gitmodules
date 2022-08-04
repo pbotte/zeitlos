@@ -1,0 +1,3 @@
+[submodule "software/www/qr"]
+	path = software/www/qr
+	url = https://git.code.sf.net/p/phpqrcode/git

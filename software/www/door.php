@@ -66,7 +66,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
     }
     </script>
     <!--Show the following sign until a MQTT connection is establised-->
-    <div id="overlay" sytel="display:block">
+    <div id="overlay" style="display:block">
         <div id="text">Error:<br>no connection to MQTT server</div>
     </div>
 
@@ -78,7 +78,6 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
     <!--For the minified library: -->
     <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>-->
     <script src="/mqttws31.min.js" type="text/javascript"></script>
-    <script src='/forge-sha256/build/forge-sha256.min.js'></script>
 
     <script type="text/javascript">
 
@@ -158,7 +157,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
     <script>
         var connected_flag = 0;
         var shop_status = 0; //client in shop
-        var host = "192.168.179.150"; //shop-master
+        var host = "192.168.178.179"; //shop-master
         var port = 9001;
         console.log("Set up the MQTT client to connect to " + host + ":" + port);
         var mqtt = new Paho.MQTT.Client(host, port, "clientdoor<?php echo "$debugClientStrSuffix";?>");

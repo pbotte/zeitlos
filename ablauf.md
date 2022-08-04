@@ -30,9 +30,10 @@ graph TD
   E["Einkauf abgerechnet (5)"]
   F["Warten auf: Kunde verlässt Laden (6)"]
   G["Warten auf: Vorbereitung für nächsten Kunden (7)"]
+  W["Laden geschlossen (10)"]
   Y["Technischer Fehler aufgetreten (8)"]
   Z["Kunde benötigt Hilfe (9)"]
-  AA --> A
+  AA --> G
   AA --> |Timeout| Y
   A --> B
   B --> |Timeout| A

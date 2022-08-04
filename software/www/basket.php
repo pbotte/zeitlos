@@ -42,7 +42,9 @@ if (array_key_exists('debug', $_GET)) {
         document.getElementById("overlay").style.display = "none";
     }
     </script>
-    <div id="overlay">
+
+<!--Show the following sign until a MQTT connection is establised-->
+    <div id="overlay" style="display:block">
         <div id="text">Error:<br>no connection to MQTT server</div>
     </div>
 
@@ -54,7 +56,6 @@ if (array_key_exists('debug', $_GET)) {
 	<!--For the minified library: -->
 	<!--<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>-->
 	<script src="/mqttws31.min.js" type="text/javascript"></script>
-	<script src='/forge-sha256/build/forge-sha256.min.js'></script>
 
 	<script type="text/javascript">
 
@@ -80,16 +81,19 @@ if (array_key_exists('debug', $_GET)) {
 		function onMessageArrived(r_message) {
             //console.log("MQTT recv (" + r_message.destinationName + "): ", r_message.payloadString);
             
-            if (r_message.destinationName == "homie/shopController/actualBasket") {
+            if (r_message.destinationName == "homie/shop_controller/actualBasket") {
                 var obj = JSON.parse(r_message.payloadString);
                 //console.log(obj);
                 var mstr = '';
                 if (! isEmpty(obj['data'])) {
-                    obj['data'].forEach(element => mstr += '<tr><td style="width: 33%;">'+element['productName']+'</td>'+
-                        '<td style="width: 33%; text-align: right;">'+element['quantity']+' '+element['unit']+'</td>'+
+                    Object.values(obj['data']).forEach(element => {
+                     mstr += '<tr><td style="width: 33%;">'+element['ProductName']+'</td>'+
+                        '<td style="width: 33%; text-align: right;">'+element['withdrawal_units']+' </td>'+
                         '<td style="width: 34%; text-align: right;">'+element['price'].toLocaleString('de-DE', { 
   style                    : 'decimal', minimumFractionDigits    : 2, maximumFractionDigits    : 2})+'</td>'+
-                        '</tr>\n');
+                        '</tr>\n';
+                    }
+                    );
                 } else {
                     mstr += '<tr><td colspan="3">Noch keine Produkte entnommen.<br>&nbsp;<br>&nbsp;</td></tr>\n';
                 }
@@ -112,7 +116,7 @@ if (array_key_exists('debug', $_GET)) {
 			console.log("Connected to " + host + ":" + port);
 			connected_flag = 1
 			console.log("connected_flag= ", connected_flag);
-			mqtt.subscribe("homie/shopController/actualBasket");
+			mqtt.subscribe("homie/shop_controller/actualBasket");
 		}
 
 		function MQTTconnect() {
@@ -133,19 +137,6 @@ if (array_key_exists('debug', $_GET)) {
 <body>
 	<h1>Warenkorb</h1>
 
-	<script>
-		var connected_flag = 0;
-        var host = "192.168.10.28"; //shop-master
-        var port = 8123;
-        console.log("Set up the MQTT client to connect to " + host + ":" + port);
-        var mqtt = new Paho.MQTT.Client(host, port, "clientbasket<?php echo "$shelfID$debugClientStrSuffix"; ?>");
-        mqtt.onConnectionLost = onConnectionLost;
-        mqtt.onMessageArrived = onMessageArrived;
-        mqtt.onConnected = onConnected;
-
-        mqtt_warning_on();
-	</script>
-
     <table border="1" style="border-collapse: collapse; width: 100%;">
     <thead>
     <tr>
@@ -161,7 +152,18 @@ if (array_key_exists('debug', $_GET)) {
 
 
 	<script>
-		MQTTconnect();
+		var connected_flag = 0;
+        var host = "192.168.178.179"; //shop-master
+        var port = 9001;
+        console.log("Set up the MQTT client to connect to " + host + ":" + port+ " as clientbasket<?php echo "$shelfID$debugClientStrSuffix"; ?>");
+        var mqtt = new Paho.MQTT.Client(host, port, "clientbasket<?php echo "$shelfID$debugClientStrSuffix"; ?>");
+        mqtt.onConnectionLost = onConnectionLost;
+        mqtt.onMessageArrived = onMessageArrived;
+        mqtt.onConnected = onConnected;
+
+        mqtt_warning_on();
+
+        MQTTconnect();
 		setInterval(function () { if (connected_flag == 0) MQTTconnect() }, 5 * 1000);
 	</script>
 

@@ -1,0 +1,50 @@
+<html>
+    <head>
+        <meta http-equiv="refresh" content="5; URL=http://192.168.178.179/user-login.html">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <style>
+   html,body{
+    margin:0;
+    height:100%;
+    overflow:hidden;
+}
+img{
+    image-rendering: optimizeSpeed;
+        /*                     */
+        image-rendering: -moz-crisp-edges;
+        /* Firefox             */
+        image-rendering: -o-crisp-edges;
+        /* Opera               */
+        image-rendering: -webkit-optimize-contrast;
+        /* Chrome (and Safari) */
+        image-rendering: pixelated;
+        /* Chrome as of 2019   */
+        image-rendering: optimize-contrast;
+        /* CSS3 Proposed       */
+        -ms-interpolation-mode: nearest-neighbor;
+        /* IE8+                */
+
+
+    min-height:0%;
+    max-height:80%;
+    min-width:80%;
+    height:auto;
+    width:auto;
+    position:absolute;
+    top:-100%; bottom:-100%;
+    left:-100%; right:-100%;
+    margin:auto;
+}
+    </style>
+<body>
+    <p style="text-align: center; font-size: 2em "><br>Bitte diesen Code jetzt am Eingang scannen.</p>
+    <img src="/qr.php">
+    
+    <script>
+        setTimeout(function(){
+        window.location.reload(1);
+        }, 15000);
+    </script>
+</body>
+</html>

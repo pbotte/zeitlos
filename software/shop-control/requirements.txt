@@ -1,2 +1,3 @@
 paho-mqtt>=1.4.0
 PyYAML>=5.1.2
+mariadb==1.0.7

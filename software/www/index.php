@@ -12,8 +12,20 @@ switch ($_GET['hostname']) {
     break;
 
 }
-//header("Location: http://shop-master/".$str);
-header("Location: http://192.168.10.28/".$str);
+if (strlen($str)>0) {
+  header("Location: http://192.168.179.150/".$str);
+}
 ?>
-<h1>Shop</h1>
-<p><?php echo $_GET['hostname']; ?></p>
+<html>
+  <head>
+    <title>Overview</title>
+  </head>
+<body>
+  <h1>Shop pages overview</h1>
+  <p>hostname via GET: <?php echo $_GET['hostname']; ?></p>
+
+  <p>Weiter zu: <a href="./door.php">door.php</a></p>
+  <p>Weiter zu: <a href="./basket.php">basket.php</a></p>
+
+
+</body>
