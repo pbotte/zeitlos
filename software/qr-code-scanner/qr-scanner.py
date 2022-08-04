@@ -1,12 +1,8 @@
 #!/usr/bin/python3
 
-# reinstall
-# sudo apt install python3-opencv
-# pip3 install pyzbar
-# sudo apt install python-zbar
-# pip3 install imutils
-# pip3 install paho-mqtt
-# sudo apt install python3-picamera
+# reinstall:
+# sudo apt install -y python3-opencv python3-pip python3-zbar python3-picamera
+# pip3 install pyzbar imutils paho-mqtt
 
 import time
 
@@ -18,7 +14,7 @@ import cv2
 from pyzbar import pyzbar
 import imutils
 from imutils.video import VideoStream
-import paho.mqtt.publish as publish
+import paho.mqtt.client as paho
 import hashlib
 import json
 import argparse
@@ -31,69 +27,72 @@ import numpy as np
 logging.basicConfig(format="%(asctime)-15s %(levelname)-8s  %(message)s")
 logger = logging.getLogger("QR-Code Scanner")
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description='QR Code Scanner')
 parser.add_argument("-v", "--verbosity", help="increase output verbosity", default=0, action="count")
+parser.add_argument("-b", "--mqtt-broker-host", help="MQTT broker hostname", default="localhost")
+parser.add_argument("--save-debug-pictures", help="store every 10 sec a picture under /dev/shm/ ", action='store_true')
 args = parser.parse_args()
 logger.setLevel(logging.WARNING-(args.verbosity*10 if args.verbosity <=2 else 20) )
 
 logger.info("Verbosity min. at info level.")
 
+mqtt_client_name = "shop_qr-scanner"
 
-# floodfill like function
-def find_components(arr):
-  res = []
-  dx,dy = [1,0,-1,0],[0,-1,0,1]
-  N,M = arr.shape
-  seen = np.zeros((N,M))
-  for i in range(N):
-    for j in range(M):
-      if not seen[i][j] and arr[i][j]:
-        todo=[(i,j)]
-        seen[i][j] = 1
-        cnt=0
-        extreme_position = {'x':[i,i], 'y':[j,j]} #'x':min..max, 'y':min..max
-        while todo:
-          x,y = todo.pop()
-          cnt = cnt+1
-          for dX, dY in zip(dx,dy):
-            X=x+dX
-            Y=y+dY
-            if X>=0 and X<N and  Y>=0 and Y<M and not seen[X][Y] and arr[X][Y]:
-                todo.append((X,Y))
-                seen[X][Y] = 1
-                if X>extreme_position['x'][1]: extreme_position['x'][1]=X
-                if X<extreme_position['x'][0]: extreme_position['x'][0]=X
-                if Y>extreme_position['y'][1]: extreme_position['y'][1]=Y
-                if Y<extreme_position['y'][0]: extreme_position['y'][0]=Y
-        res.append({'pos':(i,j),'N_pixels':cnt,'extreme_position':extreme_position,
-          'width':extreme_position['x'][1]-extreme_position['x'][0],
-          'height':extreme_position['y'][1]-extreme_position['y'][0]})
-  return res
+def on_connect(client, userdata, flags, rc):
+    if rc == 0:
+        logger.info("MQTT connected OK. Return code "+str(rc))
+        client.subscribe("homie/"+mqtt_client_name+"/requestShopStatus")
+
+        logger.debug("MQTT: Subscribed to all topics")
+    else:
+        logger.error("Bad connection. Return code="+str(rc))
+
+
+def on_disconnect(client, userdata, rc):
+    if rc != 0:
+        logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
+
+def on_message(client, userdata, message):
+    m = message.payload.decode("utf-8")
+    logger.info("Topic: "+message.topic+" Message: "+m)
+
+
+client = paho.Client(mqtt_client_name)
+client.on_connect = on_connect
+client.on_message = on_message
+client.on_disconnect = on_disconnect
+client.enable_logger(logger)
+logger.info("Connecting to broker "+args.mqtt_broker_host)
+
+# start with MQTT connection and set last will
+logger.info("mqtt_client_name: {}".format(mqtt_client_name))
+client.will_set("homie/"+mqtt_client_name+"/state", 'offline', qos=1, retain=True)
+client.connect(args.mqtt_broker_host)
+client.loop_start()
+logger.info("MQTT loop started.")
+client.publish("homie/"+mqtt_client_name+"/state", 'online', qos=1, retain=True)
 
 
 # initialize video stream
 video_width = 1920
 video_height = 1440
-page_width=148 #*mm #final page after cut
-page_height=148 #*mm #final page after cut
-qr_code_size = 60 #*mm
 
 vs = VideoStream(usePiCamera = True, resolution=(video_width, video_height)  ).start()
 logger.debug("wait for camera to adapt")
-time.sleep(5)
+time.sleep(1)
 last_frame = vs.read()
 
 logger.info("Script completed initialisation.")
-#while (time.time() - time_script_started < 60*60*24): #terminate after 24 hours of runtime
 continue_loop = True
+
 while continue_loop:
-  #oben weiß
-  #publish.single("homie/qrscanner/message", "Lege die Laufkarte ein.", hostname="localhost")
   time.sleep(0.5) #spend soem time to make the CPU not heating up too much
 
   # read from camera
   frame = vs.read()
   logger.debug("picture taken")
+
+  #check, whether camera still alive - START
   loop_diff_test = cv2.subtract(frame, last_frame)
   result = not np.any(loop_diff_test)
   if result is True:
@@ -102,10 +101,12 @@ while continue_loop:
   else:
     logger.debug("picture comparision shows: picture is different comparend to last loop. Good, our camera is still alive.")
     last_frame = frame.copy()
+  # check, wether camera still alive - STOP
 
   frame_small = imutils.resize(frame, width=540)
   frame_gray = cv2.cvtColor(frame_small, cv2.COLOR_BGR2GRAY)
-  if (time.time() - time_last_debug_picture_saved >= 10):
+
+  if args.save_debug_pictures and (time.time() - time_last_debug_picture_saved >= 10):
     cv2.imwrite("/dev/shm/time_{}.png".format(round(time.time())), frame_small) #for debug reasons
     time_last_debug_picture_saved = time.time()
     logger.info("debug picture saved")
@@ -114,14 +115,15 @@ while continue_loop:
   barcodes = pyzbar.decode(frame_gray)
 
   for barcode in barcodes: #for each barcode found
- #   cv2.imwrite("/home/pi/Pictures/time_{}.png".format(round(time.time())), frame) #for debugging
-#    publish.single("homie/qrscanner/message", "QR-Code gefunden.", hostname="localhost")
-
-    logger.debug("{}".format(barcode.data.decode("utf-8")) )
+    client.publish("homie/"+mqtt_client_name+"/qrcode_detected", barcode.data.decode("utf-8"), qos=1, retain=False)
+    logger.info("{}".format(barcode.data.decode("utf-8")) )
 
 
 
 cv2.destroyAllWindows()
 vs.stop()
+
+client.disconnect()
+client.loop_stop()
 
 logger.info("Script terminated. Total runtime: {:.2f} min".format( (time.time()-time_script_started)/60 ) )

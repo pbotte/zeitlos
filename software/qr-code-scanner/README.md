@@ -1,8 +1,6 @@
-# Zugangscontrolle
+# System mit QR-Code
 
-## System mit QR-Code
-
-### QR-Code Scanner für Raspi
+## QR-Code Scanner für Raspi
 
 - Unbedingt 32-Bit Version von Raspi OS, da raspistill nicht von 64bit unterstützt wird
 - Lite Version wurde genommen.
@@ -18,7 +16,7 @@ pip3 install pyzbar imutils paho-mqtt
 ```
 
 
-### Technisch für QR-Codes in PHP-Seiten
+## Technisch für QR-Codes in PHP-Seiten
 
 * Es wird diese PHP-Bibliothek verwendet: http://phpqrcode.sourceforge.net
 
