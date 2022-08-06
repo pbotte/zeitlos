@@ -214,6 +214,10 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
               document.getElementById("mytext").innerHTML = "Kunde benötigt Hilfe.";
               document.getElementById("fullTable").style.backgroundColor = "#FF4444";
               break;
+            case 10:
+              document.getElementById("mytext").innerHTML = "Laden geschlosen.";
+              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
+              break;
             default:
               document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";
               document.getElementById("fullTable").style.backgroundColor = "#FF4444";

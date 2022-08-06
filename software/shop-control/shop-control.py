@@ -88,8 +88,6 @@ def set_shop_status(v):
 
     client.publish("homie/"+mqtt_client_name+"/shop_status", shop_status, qos=1, retain=True)
     client.publish("homie/"+mqtt_client_name+"/stop_status_last_change_timestamp", stop_status_last_change_timestamp, qos=1, retain=True)
-    if False:
-      client.publish("homie/eingangschalten", '1', qos=2, retain=False)  # send door open impuls
 
 
 
@@ -114,6 +112,7 @@ def on_message(client, userdata, message):
 
             logger.info("scales_widthdrawal: {}".format( scales_widthdrawal ))
 
+        #mosquitto_sub -t 'homie/shop_qr-scanner/qrcode_detected' -m '0000116617B8FAF7AD'
         if message.topic.lower() == "homie/shop_qr-scanner/qrcode_detected":
             logger.info("qrcode read: {}".format( m ))
             if shop_status == 1: # "Bereit, Kein Kunde im Laden"
@@ -144,6 +143,8 @@ set_shop_status(0)
 
 last_actBasket = {} #to enable the feature: Send only on change
 client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
+client.publish("homie/"+mqtt_client_name+"/shop_overview/products", json.dumps(products), qos=1, retain=True)
+client.publish("homie/"+mqtt_client_name+"/shop_overview/products_scales", json.dumps(products_scales), qos=1, retain=True)
 
 #timeout für FSM
 # muss noch umgesetzt werden
@@ -152,30 +153,31 @@ timeout_duration_sec = 60 # Wenn die Zeit abgelaufen ist, dann dan wird shop_sta
 
 while True:
 
-    if shop_status == 3:
-        actBasketProducts = {}
-        actSumTotal = 0
+    actBasketProducts = {}
+    actSumTotal = 0
+    actProductsCount = 0
 
-        for k, v in scales_widthdrawal.items():
-            if k in products_scales: # should always be true, unless error in db (assignment scales <-> products) 
-                temp_product_id = products_scales[k]
-                temp_product = products[temp_product_id]
-                if products_scales[k] in actBasketProducts: #in case product is sold on several scales and already in basket
-                    actBasketProducts[temp_product_id]['withdrawal_units'] += v
-                    actBasketProducts[temp_product_id]['price'] = actBasketProducts[temp_product_id]['withdrawal_units'] * temp_product['PricePerUnit']
-                else:
-                    temp_product['withdrawal_units'] = v
-                    temp_product['price'] = v* temp_product['PricePerUnit']
-                    actBasketProducts[temp_product_id] = temp_product
-                actSumTotal += actBasketProducts[temp_product_id]['price']
+    for k, v in scales_widthdrawal.items():
+        if k in products_scales: # should always be true, unless error in db (assignment scales <-> products) 
+            temp_product_id = products_scales[k]
+            temp_product = products[temp_product_id]
+            if products_scales[k] in actBasketProducts: #in case product is sold on several scales and already in basket
+                actBasketProducts[temp_product_id]['withdrawal_units'] += v
+                actBasketProducts[temp_product_id]['price'] = actBasketProducts[temp_product_id]['withdrawal_units'] * temp_product['PricePerUnit']
+            else:
+                temp_product['withdrawal_units'] = v
+                temp_product['price'] = v* temp_product['PricePerUnit']
+                actBasketProducts[temp_product_id] = temp_product
+            actProductsCount += v
+            actSumTotal += actBasketProducts[temp_product_id]['price']
 
-                if actBasketProducts[temp_product_id]['withdrawal_units'] == 0:
-                    actBasketProducts.pop(temp_product_id, None) #Remove from list
-        
-        actBasket = {"data": actBasketProducts, "total": actSumTotal}
-        if last_actBasket != actBasket: #change to basket? --> publish!
-            client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
-            last_actBasket = actBasket
+            if actBasketProducts[temp_product_id]['withdrawal_units'] == 0:
+                actBasketProducts.pop(temp_product_id, None) #Remove from list
+    
+    actBasket = {"data": actBasketProducts, "total": actSumTotal, "products_count": actProductsCount}
+    if last_actBasket != actBasket: #change to basket? --> publish!
+        client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
+        last_actBasket = actBasket
 
 
 
@@ -184,11 +186,12 @@ while True:
     ############################################################################
     next_shop_status = shop_status
     if shop_status == 0: #"Geräte Initialisierung"
-        next_shop_status = 1
+        next_shop_status = 7
     elif shop_status == 1: #Bereit, kein Kunde im Laden
         pass # Wechsel zu 2 passiert in MQTT-onMessage
     elif shop_status == 2: #"Kunde authentifiziert"
-        # Warten bis Türe geöffnet wird, dies passiert aktuell automatisch
+        client.publish("homie/eingangschalten", '1', qos=2, retain=False)  # send door open impuls
+        # Fehlend: Warten bis Türe geöffnet wird
         next_shop_status = 3
     elif shop_status == 3: #Kunde im Laden
         pass
@@ -199,7 +202,11 @@ while True:
     elif shop_status == 6: #"Warten auf: Kunde verlässt Laden"
         pass
     elif shop_status == 7: #"Warten auf: Vorbereitung für nächsten Kunden"
-        pass
+        client.publish("homie/"+mqtt_client_name+"/prepare_for_next_customer", "1", qos=1, retain=False)
+        if actProductsCount == 0: #no products withdrawn, all scales reset
+          next_shop_status = 1
+        else:
+          logger.info("Der Laden kann nicht nicht freigegeben werden, da noch {} Produkt(e) nicht zurückgesetzt wurden.".format(actProductsCount))
     elif shop_status == 8: #"Technischer Fehler aufgetreten"
         pass
     elif shop_status == 9: #"Kunde benötigt Hilfe"

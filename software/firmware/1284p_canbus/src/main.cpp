@@ -279,10 +279,14 @@ unsigned long last_ADC_read = 0;
 unsigned long last_regular_check = 0;
 unsigned long last_request = 0;
 unsigned long last_read = 0;
+unsigned long last_mass_kg_sent_millis = 0;
 bool wait_for_onewire_read = false;
 bool CAN_only_mode = false;
 
 long last_scale_raw_reading = 0; // raw value from ADC
+long actual_customer_netto_averaged_reading = 0; //Before client enters shop, this was the averaged_reading 
+int actual_customer_withdrawn_units = -1; //depends on averaged_reading and actual_customer_netto_averaged_reading
+                                          //-1 makes sure, that after power up a value is send
 
 void loop()
 {
@@ -317,12 +321,34 @@ void loop()
         // Stop CAN sending
 */
         float actual_mass_in_kg = ((last_scale_raw_reading - scale_calibration_zero_in_raw) * scale_calibration_slope);
-        // Start CAN sending
-        canMsg1.can_id = (0x000a0000 + scale_device_id) | CAN_EFF_FLAG;
-        canMsg1.can_dlc = sizeof(actual_mass_in_kg);
-        memcpy(canMsg1.data, &actual_mass_in_kg, sizeof(actual_mass_in_kg));
-        mcp2515.sendMessage(&canMsg1);
-        // Stop CAN sending
+
+        //calculate, how many units have been withdrawn
+        int temp_withdrawn_units = -1*round( // -1 because something is removed, but shall be counted positive
+          ((last_scale_raw_reading - actual_customer_netto_averaged_reading) * scale_calibration_slope) / 
+          scale_product_mass_per_unit);
+
+        // Only if actual_customer_withdrawn_units changes, transmit!
+        if (actual_customer_withdrawn_units != temp_withdrawn_units) {
+          // Start CAN sending
+          canMsg1.can_id = (0x000b0000 + scale_device_id) | CAN_EFF_FLAG;
+          canMsg1.can_dlc = sizeof(temp_withdrawn_units);
+          memcpy(canMsg1.data, &temp_withdrawn_units, sizeof(temp_withdrawn_units));
+          mcp2515.sendMessage(&canMsg1);
+          // Stop CAN sending
+          actual_customer_withdrawn_units = temp_withdrawn_units;
+        } 
+
+        //Transmit regularly the actual raw kg value measured
+        if ((millis() - last_mass_kg_sent_millis) > 5000) 
+        {
+          last_mass_kg_sent_millis = millis();
+          // Start CAN sending
+          canMsg1.can_id = (0x000a0000 + scale_device_id) | CAN_EFF_FLAG;
+          canMsg1.can_dlc = sizeof(actual_mass_in_kg);
+          memcpy(canMsg1.data, &actual_mass_in_kg, sizeof(actual_mass_in_kg));
+          mcp2515.sendMessage(&canMsg1);
+          // Stop CAN sending
+        }
       }
     }
 
@@ -421,6 +447,11 @@ void loop()
       if ((((canMsg.can_id >> 24)&0xf) == 0x3))
       {
         CAN_only_mode = false;
+      }
+      // homie/shop_controller/prepare_for_next_customer from shop_controller via shelf_controller
+      if ((((canMsg.can_id >> 24)&0xf) == 0x4))
+      {
+        actual_customer_netto_averaged_reading = averaged_reading;
       }
     }
 

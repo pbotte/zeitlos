@@ -36,6 +36,7 @@ def on_connect(client, userdata, flags, rc):
   if rc==0:
     logger.info("MQTT connected OK. Return code "+str(rc) )
     client.subscribe("homie/"+args.mqtt_client_name+"/#")
+    client.subscribe("homie/shop_controller/prepare_for_next_customer")
     logger.info("MQTT: Success, subscribed to all topics")
   else:
     logger.error("Bad connection. Return code="+str(rc))
@@ -63,6 +64,13 @@ def on_message(client, userdata, message):
     # mosquitto_pub -m 0 -t homie/shelf01/can-on-all
     if len(msplit) == 3 and msplit[2].lower() == "can-on-all":
       msg = can.Message(arbitration_id=0x13000000, data=[], is_extended_id=True)
+      bus.send(msg)
+
+    # mosquitto_pub -n -t homie/shop_controller/prepare_for_next_customer
+    # message from shop_controller to all scales to become ready for next customer
+    # eg reset units withdrawn
+    if len(msplit) == 3 and msplit[1].lower() == "shop_controller" and msplit[2].lower() == "prepare_for_next_customer":
+      msg = can.Message(arbitration_id=0x14000000, data=[], is_extended_id=True)
       bus.send(msg)
 
     #reset individual scale
@@ -201,6 +209,13 @@ while loop_variable:
     client.publish("homie/"+args.mqtt_client_name+"/{:02x}/mass_kg".format(sender_id), "{}".format( data ), qos=1, retain=False)
     msg_handeled = True
 
+  if cmd_id == 0xb:
+    sender_id = (message.arbitration_id&0xffff)
+    data = struct.unpack('<h',message.data)[0] #integer with 2 bytes
+    logger.info("Withdrawal units: {} {}".format(message.data, data ) )
+    client.publish("homie/"+args.mqtt_client_name+"/{:02x}/withdrawal_units".format(sender_id), "{}".format( data ), qos=1, retain=True)
+    msg_handeled = True
+
   if cmd_id == 4:
     sender_id = (message.arbitration_id&0xffff)
     data = struct.unpack('<f',message.data)[0]
@@ -245,8 +260,8 @@ while loop_variable:
 
 #  if args.verbosity>0:
   #  time.sleep(1-time.time() % 1) #every second, even if the processing before took longer
-  #else:
-#    time.sleep(0.025)
+#  else:
+  time.sleep(0.001)
 
 
 client.loop_stop()
