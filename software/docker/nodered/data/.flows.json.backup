@@ -1,0 +1,379 @@
+[
+    {
+        "id": "993296db21e0de95",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "d4570277bd2545ce",
+        "type": "ui_tab",
+        "name": "Home",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "249c7afb0df11d0e",
+        "type": "ui_base",
+        "theme": {
+            "name": "theme-light",
+            "lightTheme": {
+                "default": "#0094CE",
+                "baseColor": "#0094CE",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": true,
+                "reset": false
+            },
+            "darkTheme": {
+                "default": "#097479",
+                "baseColor": "#097479",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+                "edited": false
+            },
+            "customTheme": {
+                "name": "Untitled Theme 1",
+                "default": "#4B7930",
+                "baseColor": "#4B7930",
+                "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+            },
+            "themeState": {
+                "base-color": {
+                    "default": "#0094CE",
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-titlebar-backgroundColor": {
+                    "value": "#0094CE",
+                    "edited": false
+                },
+                "page-backgroundColor": {
+                    "value": "#fafafa",
+                    "edited": false
+                },
+                "page-sidebar-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-textColor": {
+                    "value": "#1bbfff",
+                    "edited": false
+                },
+                "group-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "group-backgroundColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "widget-textColor": {
+                    "value": "#111111",
+                    "edited": false
+                },
+                "widget-backgroundColor": {
+                    "value": "#0094ce",
+                    "edited": false
+                },
+                "widget-borderColor": {
+                    "value": "#ffffff",
+                    "edited": false
+                },
+                "base-font": {
+                    "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+                }
+            },
+            "angularTheme": {
+                "primary": "indigo",
+                "accents": "blue",
+                "warn": "red",
+                "background": "grey",
+                "palette": "light"
+            }
+        },
+        "site": {
+            "name": "Node-RED Dashboard",
+            "hideToolbar": "false",
+            "allowSwipe": "false",
+            "lockMenu": "false",
+            "allowTempTheme": "true",
+            "dateFormat": "DD.MM.YYYY",
+            "sizes": {
+                "sx": 48,
+                "sy": 48,
+                "gx": 6,
+                "gy": 6,
+                "cx": 6,
+                "cy": 6,
+                "px": 0,
+                "py": 0
+            }
+        }
+    },
+    {
+        "id": "d4e8a1e8746ae8dc",
+        "type": "ui_group",
+        "name": "Standard",
+        "tab": "d4570277bd2545ce",
+        "order": 1,
+        "disp": true,
+        "width": "12",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "48959b49.34fb6c",
+        "type": "ui_group",
+        "name": "Kameras",
+        "tab": "b3c64a2d.c0638",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": true
+    },
+    {
+        "id": "b3c64a2d.c0638",
+        "type": "ui_tab",
+        "name": "Kameras",
+        "icon": "fa-video-camera",
+        "order": 2,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "d7d5290d1343ea02",
+        "type": "ui_group",
+        "name": "360° Kamera",
+        "tab": "b3c64a2d.c0638",
+        "order": 2,
+        "disp": true,
+        "width": "15",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "9472ae9df42c4534",
+        "type": "ui_group",
+        "name": "Shop-Controller",
+        "tab": "d4570277bd2545ce",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "b1634a54dc9da698",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "192.168.10.10",
+        "port": "1883",
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": "4",
+        "keepalive": "60",
+        "cleansession": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "64afc51f7e4516fe",
+        "type": "ui_template",
+        "z": "993296db21e0de95",
+        "group": "d4e8a1e8746ae8dc",
+        "name": "Aufnahmen-Historie",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "format": "<p><a href=\"http://192.168.10.10:8081/\">Aufnahmen der letzten 24h</a></p>\n",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 580,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ead3b545b4da0608",
+        "type": "ui_template",
+        "z": "993296db21e0de95",
+        "group": "d7d5290d1343ea02",
+        "name": "360Grad Kamera",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "format": "<iframe width=\"800\" height=\"600\" src=\"http://192.168.10.25/video1.mjpg\" frameborder=\"0\" allowfullscreen></iframe>\n<!--<video src=\"http://192.168.178.207/video1.mjpg\" controls>\n   Your browser does not support the <code>video</code> element.\n</video>\n-->\n<p><a href=\"http://192.168.10.25/video1.mjpg\">MPEG Stream UG</a></p>\n<p><a href=\"rtsp://192.168.10.25:554/live1.sdp\">RTSP Stream UG (low)</a></p>\n<p><a href=\"rtsp://192.168.10.25:554/live2.sdp\">RTSP Stream UG (high)</a></p>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "local",
+        "className": "",
+        "x": 570,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "59c3e87f83413c32",
+        "type": "ui_template",
+        "z": "993296db21e0de95",
+        "group": "48959b49.34fb6c",
+        "name": "No Referrer",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "format": "<meta name=\"referrer\" content=\"no-referrer\">",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": true,
+        "templateScope": "global",
+        "className": "",
+        "x": 710,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7b4e7422dbe62a47",
+        "type": "ui_template",
+        "z": "993296db21e0de95",
+        "group": "48959b49.34fb6c",
+        "name": "Bullet Kamera",
+        "order": 1,
+        "width": 6,
+        "height": 5,
+        "format": "<img id=myImage alt=\"\" src=\"/cam01\"  />\n\n<script language=\"javascript\" type=\"text/javascript\">\nsetInterval(function() {\nvar myImageElement = document.getElementById('myImage');\nmyImageElement.src = '/cam01?rand=' + Math.random();\n}, 3000);\n</script>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": false,
+        "templateScope": "local",
+        "className": "",
+        "x": 560,
+        "y": 440,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7311c9bc01095390",
+        "type": "http in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "url": "/cam01",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 170,
+        "y": 140,
+        "wires": [
+            [
+                "80946dc7c29c1c47"
+            ]
+        ]
+    },
+    {
+        "id": "80946dc7c29c1c47",
+        "type": "http request",
+        "z": "993296db21e0de95",
+        "name": "",
+        "method": "GET",
+        "ret": "bin",
+        "paytoqs": "ignore",
+        "url": "http://peter:peter@192.168.10.24/dms?nowprofileid=2",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 370,
+        "y": 140,
+        "wires": [
+            [
+                "9568a8084acccdda"
+            ]
+        ]
+    },
+    {
+        "id": "9568a8084acccdda",
+        "type": "http response",
+        "z": "993296db21e0de95",
+        "name": "",
+        "statusCode": "",
+        "headers": {
+            "Content-Type": "image/jpeg",
+            "Cache-Control": "no-cache"
+        },
+        "x": 550,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "a6e99190dcaf40ca",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "shop_controller/upload_all",
+        "topic": "homie/shop_controller/upload_all",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 580,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "33c10ada04315e62",
+        "type": "ui_button",
+        "z": "993296db21e0de95",
+        "name": "",
+        "group": "9472ae9df42c4534",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Upload All",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 310,
+        "y": 640,
+        "wires": [
+            [
+                "a6e99190dcaf40ca"
+            ]
+        ]
+    }
+]

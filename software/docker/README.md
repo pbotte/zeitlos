@@ -56,3 +56,8 @@ docker run --name phpmyadmin --restart unless-stopped -dit -e PMA_ARBITRARY=1 -p
 # Benutzername root und Passwort siehe "-e MYSQL_ROOT_PASSWORD=mysupersecretpw"
 ```
 
+
+## Node Red
+```bash
+docker run -dit --restart unless-stopped -p 1880:1880 -v /home/pi/zeitlos/software/docker/nodered/data:/data  -e TZ=Europe/Berlin  --name nodered nodered/node-red
+``
