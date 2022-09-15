@@ -4,7 +4,7 @@ After=network.target syslog.target
 
 [Service]
 WorkingDirectory=/home/pi/zeitlos/software/shelf-controller
-ExecStart=/home/pi/zeitlos/software/shelf-controller/shelf-controller.py -v shelf01
+ExecStart=/home/pi/zeitlos/software/shelf-controller/shelf-controller.py -b shop-master shelf01
 Restart=always
 RestartSec=15
 User=pi

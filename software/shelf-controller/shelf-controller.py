@@ -25,7 +25,8 @@ logger.setLevel(logging.WARNING-(args.verbosity*10 if args.verbosity <=2 else 20
 
 
 mcu_eeprom_data_dict_float = {"scale_product_mass_per_unit":{"start":0xcc},
-        "scale_calibration_slope": {"start":0xd0} }
+        "scale_calibration_slope": {"start":0xd0},
+        "scale_product_price_per_unit": {"start":0xd8} }
 mcu_eeprom_data_dict_sgn_long = {
         "scale_calibration_zero_in_raw": {"start":0xd4} }
 mcu_eeprom_data_dict_str = {"scale_product_description":{"len":50,"start":0xa},
@@ -261,7 +262,7 @@ while loop_variable:
 #  if args.verbosity>0:
   #  time.sleep(1-time.time() % 1) #every second, even if the processing before took longer
 #  else:
-  time.sleep(0.001)
+  time.sleep(0.0001)
 
 
 client.loop_stop()
