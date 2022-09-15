@@ -131,28 +131,17 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             return false;
         }
 
+
+	function sendMQTTMessage() {
+	  message = new Paho.MQTT.Message('{"v":1}');
+	  message.destinationName = "homie/touchinput/confirm";
+	  mqtt.send(message);
+	}
     </script>
 
 </head>
 
 <body>
-    <table border="0" style="height: 100%; width: 100%; border-collapse: collapse;">
-      <tbody>
-        <tr>
-          <td style="width: 10%; background-color: white; ">
-            <p>&nbsp;</p>
-          </td>
-          <td style="width: 0%; height: 100%; text-align: center; background-color: white; vertical-align: center;" id="fullTable">
-            <h1 align="center" id="mytext">...</h1>
-          </td>
-          <td style="width: 10%; background-color: white; ">
-            <p>&nbsp;</p>
-          </td>
-        </tr>
-
-      </tbody>
-    </table>
-
 
     <script>
         var connected_flag = 0;
@@ -160,7 +149,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         var host = "192.168.10.10"; //shop-master
         var port = 9001;
         console.log("Set up the MQTT client to connect to " + host + ":" + port);
-        var mqtt = new Paho.MQTT.Client(host, port, "clientdoor<?php echo "$debugClientStrSuffix";?>");
+        var mqtt = new Paho.MQTT.Client(host, port, "clientbuttons<?php echo "$debugClientStrSuffix";?>");
         mqtt.onConnectionLost = onConnectionLost;
         mqtt.onMessageArrived = onMessageArrived;
         mqtt.onConnected = onConnected;
@@ -176,57 +165,80 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           switch (shop_status) {
             case 0:
               document.getElementById("mytext").innerHTML = "Initialisierung, bitte warten.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 1:
               document.getElementById("mytext").innerHTML = "Laden ist frei.<br><br>Einkauf mit Kundenkarte/Girocard beginnen.";
-              document.getElementById("fullTable").style.backgroundColor = "#44ff44";
               break;
             case 2:
               document.getElementById("mytext").innerHTML = "Authentifiziert.<br>Bitte Laden betreten.";
-              document.getElementById("fullTable").style.backgroundColor = "#44ff44";
               break;
             case 3:
               document.getElementById("mytext").innerHTML = "Kunde käuft ein.<br>Bitte warten.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 4:
               document.getElementById("mytext").innerHTML = "Kunde im Laden.<br>Einkauf beendet.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 5:
               document.getElementById("mytext").innerHTML = "Bezahlung erfolgreich.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 6:
               document.getElementById("mytext").innerHTML = "Kunde verlässt Laden";
-              document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 7:
               document.getElementById("mytext").innerHTML = "Vorbereitung für nächsten Kunden. Bitte warten.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 8:
               document.getElementById("mytext").innerHTML = "Ein technischer Fehler ist aufgetreten.";
-              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
               break;
             case 9:
               document.getElementById("mytext").innerHTML = "Kunde benötigt Hilfe.";
-              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
               break;
             case 10:
               document.getElementById("mytext").innerHTML = "Laden geschlosen.";
-              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
               break;
             default:
               document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";
-              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
               break;
           }
 
         }, 100);
 
     </script>
+
+
+    <style>
+      .block {
+        display: block;
+        width: 100%;
+        border: none;
+        background-color: #04AA6D;
+        padding: 14px 28px;
+        font-size: 16px;
+        cursor: pointer;
+        text-align: center;
+    }
+    </style>
+
+    <table border="0" style="height: 100%; width: 100%; border-collapse: collapse;">
+      <tbody>
+        <tr>
+          <td style="width: 10%; background-color: white; ">
+            <p>&nbsp;</p>
+          </td>
+          <td style="width: 0%; height: 100%; text-align: center; background-color: white; vertical-align: center;" id="fullTable">
+            <p id="mytext">...</p>
+            <p>
+              <button type="button" class="block" onClick="sendMQTTMessage();">Einkauf abschließen</button>
+              <button type="button" class="block" onClick="sendMQTTMessage();">Ich benötige Hilfe</button>
+            </p>
+          </td>
+          <td style="width: 10%; background-color: white; ">
+            <p>&nbsp;</p>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
 
 </body>
 

@@ -1,19 +1,22 @@
 <?php
 $str = "";
 switch ($_GET['hostname']) {
-  case 'shop-door':
+  case 'shop-display01':
     $str = "door.php";
     break;
-  case 'shop-shelf-01':
-	  $str = "shelf.php?shelfid=1";
-	  break;
-  case 'shop-shelf-02':
-    $str = "shelf.php?shelfid=2";
+  case 'shop-display02':
+    $str = "basket.php";
+    break;
+  case 'shop-touch01':
+    $str = "buttons.php";
+    break;
+  case 'shop-touch2':
+    $str = "buttons.php";
     break;
 
 }
 if (strlen($str)>0) {
-  header("Location: http://192.168.179.150/".$str);
+  header("Location: http://192.168.10.10/".$str);
 }
 ?>
 <html>
@@ -26,6 +29,7 @@ if (strlen($str)>0) {
 
   <p>Weiter zu: <a href="./door.php">door.php</a></p>
   <p>Weiter zu: <a href="./basket.php">basket.php</a></p>
+  <p>Weiter zu: <a href="./buttons.php">buttons.php</a></p>
 
 
 </body>

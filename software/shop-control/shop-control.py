@@ -32,7 +32,7 @@ mqtt_client_name = "shop_controller"
 conn = mariadb.connect(
     user="user_shop_control",
     password="wlLvMOR4FStMEzzN",
-    host="192.168.179.150",
+    host="192.168.10.10",
     database="zeitlos")
 cur = conn.cursor() 
 
@@ -52,7 +52,8 @@ def get_all_data_from_db():
     logger.debug("products_scales from db: {}".format(products_scales))
 
 get_all_data_from_db()
-
+#Support for retrieval of data from scales. Put scales anmes e.g. shelf01/921a into this list
+list_retrieve_scales = []
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -60,6 +61,8 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe("homie/+/+/withdrawal_units")
         client.subscribe("homie/"+mqtt_client_name+"/request_shop_status")
         client.subscribe("homie/shop_qr-scanner/qrcode_detected")
+        client.subscribe("homie/"+mqtt_client_name+"/upload_all")
+        client.subscribe("homie/"+mqtt_client_name+"/retrieve_all")
 
         logger.debug("MQTT: Subscribed to all topics")
     else:
@@ -95,6 +98,7 @@ actBasket = {"data": {}, "total": 0}
 
 
 def on_message(client, userdata, message):
+    global list_retrieve_scales
     try:
         m = message.payload.decode("utf-8")
         logger.info("Topic: "+message.topic+" Message: "+m)
@@ -112,13 +116,33 @@ def on_message(client, userdata, message):
 
             logger.info("scales_widthdrawal: {}".format( scales_widthdrawal ))
 
-        #mosquitto_sub -t 'homie/shop_qr-scanner/qrcode_detected' -m '0000116617B8FAF7AD'
+        #emulate with: mosquitto_pub -t 'homie/shop_qr-scanner/qrcode_detected' -m '0000116617B8FAF7AD'
         if message.topic.lower() == "homie/shop_qr-scanner/qrcode_detected":
             logger.info("qrcode read: {}".format( m ))
             if shop_status == 1: # "Bereit, Kein Kunde im Laden"
               set_shop_status(2)
 
- 
+        #mosquitto_pub -t 'homie/shop_controller/retrieve_all' -n
+        if message.topic.lower() == "homie/"+mqtt_client_name+"/retrieve_all":
+          list_retrieve_scales = list(products_scales.keys())
+          logger.info("Start retrieve all with: {}".format(list_retrieve_scales))
+
+	#mosquitto_pub -t 'homie/shop_controller/upload_all' -n
+        if message.topic.lower() == "homie/"+mqtt_client_name+"/upload_all":
+          logger.info("Start upload of settings to all scales.")
+          client.publish("homie/shelf01/can-off-all", "0", qos=1, retain=False)
+          for k,v in products_scales.items(): #{'shelf01/65c0': 1, 'shelf01/2438': 2, ...   | Products: {1: {'ProductID': 1, 'ProductName': 'Kürbis', 'ProductDescription': 'eigene Ernte', 'PriceType': 0, 'PricePerUnit': 1.9, 'kgPerUnit': 0.8}, 
+            if v in products:
+              logger.info("Sending data to scale: {}".format(k))
+              client.publish("homie/"+k+"/scale_product_description/set", products[v]['ProductName'], qos=1, retain=False)
+              client.publish("homie/"+k+"/scale_product_details_line1/set", products[v]['ProductDescription'], qos=1, retain=False)
+              client.publish("homie/"+k+"/scale_product_details_line2/set", "", qos=1, retain=False)
+              client.publish("homie/"+k+"/scale_product_mass_per_unit/set", products[v]['kgPerUnit'], qos=1, retain=False)
+              client.publish("homie/"+k+"/scale_product_price_per_unit/set", products[v]['PricePerUnit'], qos=1, retain=False)
+            else:
+              logger.warning("Product ID {} not found. Assigned by scale: {}. Update assignment.".format(v, k))
+          client.publish("homie/shelf01/can-on-all", "0", qos=1, retain=False)
+
     except Exception as err:
         traceback.print_tb(err.__traceback__)
 
@@ -173,12 +197,17 @@ while True:
 
             if actBasketProducts[temp_product_id]['withdrawal_units'] == 0:
                 actBasketProducts.pop(temp_product_id, None) #Remove from list
-    
+
     actBasket = {"data": actBasketProducts, "total": actSumTotal, "products_count": actProductsCount}
     if last_actBasket != actBasket: #change to basket? --> publish!
         client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
         last_actBasket = actBasket
 
+    # Support for scale data retrieval
+    if list_retrieve_scales:
+      logger.debug("list_retrieve_scales: {}".format(list_retrieve_scales))
+      # make sure to publish this not to fast multiple times in a row to allow the scales to answer
+      client.publish("homie/"+list_retrieve_scales.pop()+"/retrieve", "0", qos=1, retain=False)
 
 
     ############################################################################

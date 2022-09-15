@@ -153,7 +153,7 @@ if (array_key_exists('debug', $_GET)) {
 
 	<script>
 		var connected_flag = 0;
-        var host = "192.168.178.179"; //shop-master
+        var host = "192.168.10.10"; //shop-master
         var port = 9001;
         console.log("Set up the MQTT client to connect to " + host + ":" + port+ " as clientbasket<?php echo "$shelfID$debugClientStrSuffix"; ?>");
         var mqtt = new Paho.MQTT.Client(host, port, "clientbasket<?php echo "$shelfID$debugClientStrSuffix"; ?>");
