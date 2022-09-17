@@ -60,6 +60,7 @@ def on_connect(client, userdata, flags, rc):
         logger.info("MQTT connected OK. Return code "+str(rc))
         client.subscribe("homie/+/+/withdrawal_units")
         client.subscribe("homie/"+mqtt_client_name+"/request_shop_status")
+        client.subscribe("homie/"+mqtt_client_name+"/close_shop");
         client.subscribe("homie/shop_qr-scanner/qrcode_detected")
         client.subscribe("homie/"+mqtt_client_name+"/upload_all")
         client.subscribe("homie/"+mqtt_client_name+"/retrieve_all")
@@ -106,6 +107,9 @@ def on_message(client, userdata, message):
         msplit = re.split("/", message.topic)
         if len(msplit) == 3 and msplit[2].lower() == "request_shop_status":
             set_shop_status(0)
+        if len(msplit) == 3 and msplit[2].lower() == "close_shop":
+            set_shop_status(10)
+
         # products withdrawal
         if len(msplit) == 4 and msplit[3].lower() == "withdrawal_units":
             #product_id = products_scales[ msplit[1]+"/"+msplit[2] ]
@@ -135,10 +139,15 @@ def on_message(client, userdata, message):
             if v in products:
               logger.info("Sending data to scale: {}".format(k))
               client.publish("homie/"+k+"/scale_product_description/set", products[v]['ProductName'], qos=1, retain=False)
+              time.sleep(0.05)
               client.publish("homie/"+k+"/scale_product_details_line1/set", products[v]['ProductDescription'], qos=1, retain=False)
-              client.publish("homie/"+k+"/scale_product_details_line2/set", "", qos=1, retain=False)
+              time.sleep(0.05)
+              client.publish("homie/"+k+"/scale_product_details_line2/set", "Stueckpreis: {:.2f}EUR".format(products[v]['PricePerUnit']), qos=1, retain=False)
+              time.sleep(0.05)
               client.publish("homie/"+k+"/scale_product_mass_per_unit/set", products[v]['kgPerUnit'], qos=1, retain=False)
+              time.sleep(0.05)
               client.publish("homie/"+k+"/scale_product_price_per_unit/set", products[v]['PricePerUnit'], qos=1, retain=False)
+              time.sleep(0.05)
             else:
               logger.warning("Product ID {} not found. Assigned by scale: {}. Update assignment.".format(v, k))
           client.publish("homie/shelf01/can-on-all", "0", qos=1, retain=False)

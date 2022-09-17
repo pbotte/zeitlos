@@ -7,10 +7,10 @@ switch ($_GET['hostname']) {
   case 'shop-display02':
     $str = "basket.php";
     break;
-  case 'shop-touch01':
+  case 'shop-touch':
     $str = "buttons.php";
     break;
-  case 'shop-touch2':
+  case 'shop-touch':
     $str = "buttons.php";
     break;
 
@@ -31,5 +31,9 @@ if (strlen($str)>0) {
   <p>Weiter zu: <a href="./basket.php">basket.php</a></p>
   <p>Weiter zu: <a href="./buttons.php">buttons.php</a></p>
 
+  <p>&nbsp;</p>
+  <p><a href="http://192.168.10.10:8080/">phpMyAdmin</a></p>
+  <p><a href="http://192.168.10.10:1880/ui">nodered</a></p>
+  <p><a href="https://www.hemmes24.de">hemmes24.de</p>
 
 </body>

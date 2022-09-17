@@ -12,6 +12,7 @@
         "type": "ui_tab",
         "name": "Home",
         "icon": "dashboard",
+        "order": 1,
         "disabled": false,
         "hidden": false
     },
@@ -119,7 +120,7 @@
         "tab": "d4570277bd2545ce",
         "order": 1,
         "disp": true,
-        "width": "12",
+        "width": "6",
         "collapse": false,
         "className": ""
     },
@@ -190,6 +191,17 @@
         "willMsg": {},
         "userProps": "",
         "sessionExpiry": ""
+    },
+    {
+        "id": "63527e49cf671131",
+        "type": "ui_group",
+        "name": "Shop_Status",
+        "tab": "d4570277bd2545ce",
+        "order": 3,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
     },
     {
         "id": "64afc51f7e4516fe",
@@ -344,8 +356,8 @@
         "correl": "",
         "expiry": "",
         "broker": "b1634a54dc9da698",
-        "x": 580,
-        "y": 640,
+        "x": 440,
+        "y": 540,
         "wires": []
     },
     {
@@ -368,8 +380,8 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 310,
-        "y": 640,
+        "x": 170,
+        "y": 540,
         "wires": [
             [
                 "a6e99190dcaf40ca"
@@ -390,8 +402,8 @@
         "correl": "",
         "expiry": "",
         "broker": "b1634a54dc9da698",
-        "x": 580,
-        "y": 700,
+        "x": 440,
+        "y": 600,
         "wires": []
     },
     {
@@ -414,11 +426,233 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 310,
-        "y": 700,
+        "x": 170,
+        "y": 600,
         "wires": [
             [
                 "23c878149d2e0088"
+            ]
+        ]
+    },
+    {
+        "id": "73e3bbce7808f2b5",
+        "type": "ui_button",
+        "z": "993296db21e0de95",
+        "name": "",
+        "group": "63527e49cf671131",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Initialisieren",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 170,
+        "y": 680,
+        "wires": [
+            [
+                "0965fa82d88ae84b"
+            ]
+        ]
+    },
+    {
+        "id": "b98e300076a8ca73",
+        "type": "ui_button",
+        "z": "993296db21e0de95",
+        "name": "",
+        "group": "63527e49cf671131",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Laden schließen",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 180,
+        "y": 720,
+        "wires": [
+            [
+                "5771e840ddf55057"
+            ]
+        ]
+    },
+    {
+        "id": "0965fa82d88ae84b",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/shop_controller/request_shop_status",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 510,
+        "y": 680,
+        "wires": []
+    },
+    {
+        "id": "77f08a0af53fe6b7",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/shop_controller/shop_status",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 260,
+        "y": 760,
+        "wires": [
+            [
+                "2e15aad63a168040"
+            ]
+        ]
+    },
+    {
+        "id": "2e15aad63a168040",
+        "type": "ui_text",
+        "z": "993296db21e0de95",
+        "group": "63527e49cf671131",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Shop Status",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 490,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "5771e840ddf55057",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/shop_controller/close_shop",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 480,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "d1b2543501e68df7",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/shelf01/can-on-all",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 450,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "602302420aa71078",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/shelf01/can-off-all",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 470,
+        "y": 900,
+        "wires": []
+    },
+    {
+        "id": "d7dd17d1fe561618",
+        "type": "ui_button",
+        "z": "993296db21e0de95",
+        "name": "",
+        "group": "d4e8a1e8746ae8dc",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "CAN all on",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 190,
+        "y": 860,
+        "wires": [
+            [
+                "d1b2543501e68df7"
+            ]
+        ]
+    },
+    {
+        "id": "1eea48424524face",
+        "type": "ui_button",
+        "z": "993296db21e0de95",
+        "name": "",
+        "group": "d4e8a1e8746ae8dc",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "CAN all off",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 190,
+        "y": 900,
+        "wires": [
+            [
+                "602302420aa71078"
             ]
         ]
     }
