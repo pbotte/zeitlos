@@ -32,6 +32,7 @@ if (array_key_exists('debug', $_GET)) {
             color: white;
             transform: translate(-50%,-50%);
             -ms-transform: translate(-50%,-50%);
+
         }
     </style>
     <script>
@@ -88,7 +89,7 @@ if (array_key_exists('debug', $_GET)) {
                 if (! isEmpty(obj['data'])) {
                     Object.values(obj['data']).forEach(element => {
                      mstr += '<tr><td style="width: 33%;">'+element['ProductName']+'</td>'+
-                        '<td style="width: 33%; text-align: right;">'+element['withdrawal_units']+' </td>'+
+                        '<td style="width: 33%; text-align: right; text-align: center;">'+element['withdrawal_units']+' </td>'+
                         '<td style="width: 34%; text-align: right;">'+element['price'].toLocaleString('de-DE', { 
   style                    : 'decimal', minimumFractionDigits    : 2, maximumFractionDigits    : 2})+'</td>'+
                         '</tr>\n';
@@ -134,15 +135,85 @@ if (array_key_exists('debug', $_GET)) {
 
 </head>
 
+<style>
+h1 {
+font-family: Tahoma, Geneva, sans-serif;
+font-size: 150px;
+letter-spacing: 2px;
+word-spacing: 2px;
+color: #000000;
+font-weight: 700;
+text-decoration: none;
+font-style: normal;
+font-variant: normal;
+text-transform: none;
+}
+
+td {
+font-family: Tahoma, Geneva, sans-serif;
+font-size: 40px;
+letter-spacing: 2px;
+word-spacing: 2px;
+color: #000000;
+font-weight: 400;
+text-decoration: none;
+font-style: normal;
+font-variant: normal;
+text-transform: none;
+}
+
+table.paleBlueRows {
+  font-family: Tahoma, Geneva, sans-serif;
+  border: 1px solid #FFFFFF;
+  width: 350px;
+  height: 200px;
+  border-collapse: collapse;
+}
+table.paleBlueRows td, table.paleBlueRows th {
+  border: 0px solid #000000;
+  padding: 3px 2px;
+}
+table.paleBlueRows tbody td {
+  font-size: 30px;
+}
+table.paleBlueRows tr:nth-child(even) {
+  background: #D0E4F5;
+}
+table.paleBlueRows thead {
+  background: #0B6FA4;
+  border-bottom: 5px solid #FFFFFF;
+}
+table.paleBlueRows thead th {
+  font-size: 23px;
+  font-weight: bold;
+  color: #FFFFFF;
+  border-left: 2px solid #FFFFFF;
+}
+table.paleBlueRows thead th:first-child {
+  border-left: none;
+}
+
+table.paleBlueRows tfoot {
+  font-size: 30px;
+  font-weight: bold;
+  color: #333333;
+  background: #D0E4F5;
+  border-top: 3px solid #444444;
+}
+table.paleBlueRows tfoot td {
+  font-size: 30px;
+}
+</style>
+
 <body>
 	<h1>Warenkorb</h1>
 
-    <table border="1" style="border-collapse: collapse; width: 100%;">
+    <table border="1" style="border-collapse: collapse; width: 100%;" class="paleBlueRows">
     <thead>
     <tr>
     <td style="width: 33%; background-color: blue;"><span style="color: #ffffff;"><strong>Produkt</strong></span></td>
-    <td style="width: 33%; background-color: blue;"><span style="color: #ffffff;"><strong>Menge</strong></span></td>
-    <td style="width: 34%; background-color: blue;"><span style="color: #ffffff;"><strong>Preis in &euro;</strong></span></td>
+    <td style="width: 33%; background-color: blue; text-align: center;"><span style="color: #ffffff;""><strong>Menge</strong></span></td>
+    <td style="width: 34%; background-color: blue; text-align: right;"><span style="color: #ffffff;"><strong>Preis in &euro;</strong></span></td>
     </tr>
     </thead>
     <tbody id="myBasketTable">
