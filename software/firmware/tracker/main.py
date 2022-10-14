@@ -3,11 +3,14 @@
 from PiicoDev_VL53L1X import PiicoDev_VL53L1X
 from time import sleep
 import json
+import machine
 
 distSensor = PiicoDev_VL53L1X()
 
+s = ''.join( '{:02x}'.format(i) for i in machine.unique_id() )
+
 while True:
-    v = {'v': distSensor.read()} # read the distance in millimetres
+    v = {'sn': s, 'v': distSensor.read()} # read the distance in millimetres
     print(json.dumps(v))
     sleep(0.1)
 

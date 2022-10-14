@@ -1,0 +1,13 @@
+[Unit]
+Description=Shop-Track Controller for %i
+BindTo=%i.device
+After=%i.device
+
+[Service]
+#Type=oneshot
+#TimeoutStartSec=300
+Restart=always
+RestartSec=10s
+User=pi
+Group=pi
+ExecStart=/usr/bin/python3 /home/pi/zeitlos/software/shop-track/shop-track.py -b dom -p 1884 -v shop-track %I
