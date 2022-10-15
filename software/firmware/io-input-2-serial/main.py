@@ -7,7 +7,7 @@ import json
 
 p0 = Pin(0, Pin.IN, Pin.PULL_UP)
 p1 = Pin(1, Pin.IN, Pin.PULL_UP)
-pled = Pin('LED', Pin.OUT)
+pled = Pin(25, Pin.OUT) #use Pin 'LED' for Pico WLAN
 
 time_light = 0
 
