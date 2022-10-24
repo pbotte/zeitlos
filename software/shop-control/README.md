@@ -13,3 +13,6 @@ sudo apt install libmariadb3 libmariadb-dev
 ```
 
 
+## QR-Secret-Str
+
+in die Datei `shop-controller.service` muss noch als notwendiger Parameter der QR-Secret-Str übergeben werden. Dieser muss gleich mit den auf der Webseite und php-Seiten sein.
