@@ -7,11 +7,13 @@ from datetime import datetime
 import logging
 import argparse
 import traceback
+import hashlib
 import math
 import sys
 import re
 import yaml  # pip3 install pyyaml
 import mariadb #1st: sudo apt install libmariadb3 libmariadb-dev   2nd: pip install -Iv mariadb==1.0.7 
+import parse #pip install parse
 
 logging.basicConfig(level=logging.WARNING,
                     format='%(asctime)-6s %(levelname)-8s  %(message)s')
@@ -24,6 +26,7 @@ parser.add_argument("-b", "--mqtt-broker-host",
                     help="MQTT broker hostname. default=localhost", default="localhost")
 parser.add_argument("-t", "--timeout",
                     help="timeout in seconds. default=1h", default=100*60*60, type=int)
+parser.add_argument("qr_secret_str", help="used to generate a true secret for QR codes. Needs to be the same for the webpage.", type=str)
 args = parser.parse_args()
 logger.setLevel(logging.WARNING-(args.verbosity * 10 if args.verbosity <= 2 else 20))
 
@@ -64,6 +67,8 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe("homie/shop_qr-scanner/qrcode_detected")
         client.subscribe("homie/"+mqtt_client_name+"/upload_all")
         client.subscribe("homie/"+mqtt_client_name+"/retrieve_all")
+        client.subscribe("homie/shop-track/+/distance")
+        client.subscribe("homie/door/#")
 
         logger.debug("MQTT: Subscribed to all topics")
     else:
@@ -74,32 +79,49 @@ def on_disconnect(client, userdata, rc):
     if rc != 0:
         logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
 
-shop_status = None
+shop_status = 10 # Laden geschlossen
 shop_status_descr = {0: "Geräte Initialisierung", 1: "Bereit, Kein Kunde im Laden", 2: "Kunde authentifiziert", 
-    3: "Kunde im Laden", 4: "Einkauf finalisiert", 5: "Einkauf abgerechnet", 6: "Warten auf: Kunde verlässt Laden", 
+    3: "Kunde im Laden", 4: "Einkauf finalisiert & Kunde nicht mehr im Laden", 5: "Einkauf abgerechnet", 6: "Warten auf: Kunde verlässt Laden", 
     7: "Warten auf: Vorbereitung für nächsten Kunden", 8: "Technischer Fehler aufgetreten", 9: "Kunde benötigt Hilfe",
     10: "Laden geschlossen" }
-stop_status_last_change_timestamp = 0
+shop_status_timeout = {
+    0: {'time':10,'next':8}, #Geräte Initialisierung
+    1: None, #Bereit, Keine Kunde im laden
+    2: {'time':5,'next':1}, #Kunde authentifiziert
+    3: {'time':60*10,'next':9}, #Kunde im Laden
+    4: {'time':10,'next':5}, #Einkauf finalisiert / Kunde nicht mehr im Laden
+    5: None, # Einkauf abgerechnet
+    6: None, # Zustand aktuell nicht genutzt
+    7: {'time':30,'next':8}, #Warten auf: Vorbereitung für nächsten Kunden
+    8: None, #Technischer Fehler aufgetreten
+    9: None, #Kunde benötigt Hilfe
+    10: None # Laden geschlossen
+    }
+shop_status_last_change_timestamp = time.time()
 
 def set_shop_status(v):
     global shop_status
-    global stop_status_last_change_timestamp
+    global shop_status_last_change_timestamp
     if shop_status == v:
         return
     shop_status = v
-    stop_status_last_change_timestamp = time.time()
+    shop_status_last_change_timestamp = time.time()
     logger.info("Set Shop Status: {}".format(shop_status_descr[shop_status]))
 
     client.publish("homie/"+mqtt_client_name+"/shop_status", shop_status, qos=1, retain=True)
-    client.publish("homie/"+mqtt_client_name+"/stop_status_last_change_timestamp", stop_status_last_change_timestamp, qos=1, retain=True)
+    client.publish("homie/"+mqtt_client_name+"/shop_status_last_change_timestamp", shop_status_last_change_timestamp, qos=1, retain=True)
 
 
 
 actBasket = {"data": {}, "total": 0}
-
+status_no_person_in_shop = None # if all readings from homie/shop-track/+/distance are > 2000, then False, else True
+status_door_closed = None
+last_reading_distances = {}
 
 def on_message(client, userdata, message):
     global list_retrieve_scales
+    global status_no_person_in_shop, last_reading_distances
+    global status_door_closed
     try:
         m = message.payload.decode("utf-8")
         logger.info("Topic: "+message.topic+" Message: "+m)
@@ -109,6 +131,11 @@ def on_message(client, userdata, message):
             set_shop_status(0)
         if len(msplit) == 3 and msplit[2].lower() == "close_shop":
             set_shop_status(10)
+
+        # distance reading to know person presence
+        if len(msplit) == 4 and msplit[1].lower() == "shop-track"  and msplit[3].lower() == "distance":
+            last_reading_distances[msplit[2].lower()] = float(m)
+            status_no_person_in_shop = all( value > 2000 for value in last_reading_distances.values()  ) #all return true if all elements are true
 
         # products withdrawal
         if len(msplit) == 4 and msplit[3].lower() == "withdrawal_units":
@@ -124,7 +151,29 @@ def on_message(client, userdata, message):
         if message.topic.lower() == "homie/shop_qr-scanner/qrcode_detected":
             logger.info("qrcode read: {}".format( m ))
             if shop_status == 1: # "Bereit, Kein Kunde im Laden"
-              set_shop_status(2)
+              r=parse.parse("{time:d} {id:d} {hash:w}", m) #definition see: https://pypi.org/project/parse/
+              if r: #time, user id and hash in qr code?
+                expected_sum = hashlib.md5("{}{}{}".format(args.qr_secret_str, r['time'], r['id']).encode('utf-8')).hexdigest()
+                logger.info("HASH expected_sum computated: {}".format(expected_sum[:6]))
+                if r['hash'] == expected_sum[:6]:
+                    logger.info("hash in qr code read equals expected sum: {}".format(expected_sum[:6]))
+                    if abs(time.time() - r['time']) < 10*60: #qrcode needs to be generated within a time windows of 10*60 seconds
+                      client.publish("homie/"+mqtt_client_name+"/actualclient/id", r['id'], qos=1, retain=True)
+                      set_shop_status(2)
+                      client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
+                    else:
+                      logger.warning("Time window of qr code not met.") # qr code too old or time not set correctly
+
+        #mosquitto_pub -t 'homie/door/Pin0' -m 1
+        # Door open/close message
+        if message.topic.lower() == "homie/door/pin0":
+          if m == "0": #Tür ist offen
+            status_door_closed = False
+            if shop_status == 2: # Kunde authentifiziert, warten auf Tür-Öffnung
+              client.publish("homie/fsr-control/innen/tuerschliesser/set", '0', qos=2, retain=False)  # send door open impuls = OFF
+              set_shop_status(3) # Kunde ist im Laden am einfkaufen
+          else:
+            status_door_closed = True
 
         #mosquitto_pub -t 'homie/shop_controller/retrieve_all' -n
         if message.topic.lower() == "homie/"+mqtt_client_name+"/retrieve_all":
@@ -228,18 +277,22 @@ while True:
     elif shop_status == 1: #Bereit, kein Kunde im Laden
         pass # Wechsel zu 2 passiert in MQTT-onMessage
     elif shop_status == 2: #"Kunde authentifiziert"
-        client.publish("homie/eingangschalten", '1', qos=2, retain=False)  # send door open impuls
-        # Fehlend: Warten bis Türe geöffnet wird
-        next_shop_status = 3
-    elif shop_status == 3: #Kunde im Laden
         pass
+#        client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
+        # Dies muss in MQTT-onMessage passieren
+#        next_shop_status = 3
+    elif shop_status == 3: #Kunde im Laden
+        logger.warning("status_no_person_in_shop: {} status_door_closed {}".format(status_no_person_in_shop, status_door_closed))
+        if (status_no_person_in_shop == True) and (status_door_closed == True):
+          next_shop_status = 4
     elif shop_status == 4: #"Einkauf finalisiert"
         pass
     elif shop_status == 5: #"Einkauf abgerechnet"
-        pass
+        next_shop_status = 7
     elif shop_status == 6: #"Warten auf: Kunde verlässt Laden"
-        pass
+        next_shop_status = 7
     elif shop_status == 7: #"Warten auf: Vorbereitung für nächsten Kunden"
+        client.publish("homie/"+mqtt_client_name+"/actualclient/id", -1, qos=1, retain=True)
         client.publish("homie/"+mqtt_client_name+"/prepare_for_next_customer", "1", qos=1, retain=False)
         if actProductsCount == 0: #no products withdrawn, all scales reset
           next_shop_status = 1
@@ -251,9 +304,18 @@ while True:
         pass
     elif shop_status == 10: #"Laden geschlossen"
         pass
-    else: 
+    else:
         logger.error("Unbekannter shop_status Wert.")
 
+    ########################
+    # check for time out of actual state
+    ########################
+    if shop_status_timeout[shop_status] is not None:
+      if (time.time()-shop_status_last_change_timestamp > shop_status_timeout[shop_status]['time']): #die Zeit für den aktuellen Zustand ist abgelaufen
+        next_shop_status = shop_status_timeout[shop_status]['next']
+        logger.info("Timeout des shop_status: {}. Daher nächster Status: {}".format(shop_status, next_shop_status))
+
+    #### Setzen des nächsten Shop-Status
     set_shop_status(next_shop_status)
 
 

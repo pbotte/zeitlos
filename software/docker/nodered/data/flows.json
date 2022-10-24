@@ -204,6 +204,17 @@
         "className": ""
     },
     {
+        "id": "5762a8c37f72c790",
+        "type": "ui_group",
+        "name": "Abstandssensoren",
+        "tab": "d4570277bd2545ce",
+        "order": 4,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
         "id": "64afc51f7e4516fe",
         "type": "ui_template",
         "z": "993296db21e0de95",
@@ -653,6 +664,438 @@
         "wires": [
             [
                 "602302420aa71078"
+            ]
+        ]
+    },
+    {
+        "id": "4722d91b217b3268",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/shop-fsr/1",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 200,
+        "y": 1020,
+        "wires": [
+            [
+                "4179c092ce1fb67c"
+            ]
+        ]
+    },
+    {
+        "id": "6dbe60891a5ef50a",
+        "type": "ui_text",
+        "z": "993296db21e0de95",
+        "group": "d4e8a1e8746ae8dc",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Türöffner",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "x": 720,
+        "y": 1040,
+        "wires": []
+    },
+    {
+        "id": "4179c092ce1fb67c",
+        "type": "switch",
+        "z": "993296db21e0de95",
+        "name": "",
+        "property": "payload.v",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "else"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 3,
+        "x": 370,
+        "y": 1020,
+        "wires": [
+            [
+                "849173f9072c26bd"
+            ],
+            [
+                "012509439bc7f684"
+            ],
+            [
+                "c95461e4ea3f28c4"
+            ]
+        ]
+    },
+    {
+        "id": "849173f9072c26bd",
+        "type": "template",
+        "z": "993296db21e0de95",
+        "name": "",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "ein",
+        "output": "str",
+        "x": 520,
+        "y": 1000,
+        "wires": [
+            [
+                "6dbe60891a5ef50a"
+            ]
+        ]
+    },
+    {
+        "id": "012509439bc7f684",
+        "type": "template",
+        "z": "993296db21e0de95",
+        "name": "",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "aus",
+        "output": "str",
+        "x": 520,
+        "y": 1040,
+        "wires": [
+            [
+                "6dbe60891a5ef50a"
+            ]
+        ]
+    },
+    {
+        "id": "c95461e4ea3f28c4",
+        "type": "template",
+        "z": "993296db21e0de95",
+        "name": "",
+        "field": "payload",
+        "fieldType": "msg",
+        "format": "handlebars",
+        "syntax": "mustache",
+        "template": "Fehler",
+        "output": "str",
+        "x": 520,
+        "y": 1080,
+        "wires": [
+            [
+                "6dbe60891a5ef50a"
+            ]
+        ]
+    },
+    {
+        "id": "40c6358bceea0193",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/fsr-control/innen/tuerschliesser/set",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 700,
+        "y": 1140,
+        "wires": []
+    },
+    {
+        "id": "1bc0b4e116469b5f",
+        "type": "ui_button",
+        "z": "993296db21e0de95",
+        "name": "",
+        "group": "d4e8a1e8746ae8dc",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Türöffner aktivieren",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "1",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 410,
+        "y": 1140,
+        "wires": [
+            [
+                "40c6358bceea0193"
+            ]
+        ]
+    },
+    {
+        "id": "347c01a5cd975240",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/shop-track/e6616408431e8b32/distance",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 300,
+        "y": 1280,
+        "wires": [
+            [
+                "a00c4a80cc42cdc3"
+            ]
+        ]
+    },
+    {
+        "id": "a00c4a80cc42cdc3",
+        "type": "ui_level",
+        "z": "993296db21e0de95",
+        "group": "5762a8c37f72c790",
+        "order": 0,
+        "width": "1",
+        "height": "6",
+        "name": "",
+        "label": "",
+        "colorHi": "#00f900",
+        "colorWarn": "#ff9900",
+        "colorNormal": "#ff2600",
+        "colorOff": "#595959",
+        "min": 0,
+        "max": "2300",
+        "segWarn": "",
+        "segHigh": "",
+        "unit": "mm",
+        "layout": "sv",
+        "channelA": "",
+        "channelB": "",
+        "decimals": 0,
+        "animations": "off",
+        "shape": 2,
+        "colorschema": "fixed",
+        "textoptions": "default",
+        "colorText": "#eeeeee",
+        "fontLabel": "",
+        "fontValue": "",
+        "fontSmall": "",
+        "colorFromTheme": true,
+        "textAnimations": false,
+        "hideValue": false,
+        "tickmode": "off",
+        "peakmode": false,
+        "property": "payload",
+        "peaktime": 3000,
+        "x": 570,
+        "y": 1280,
+        "wires": []
+    },
+    {
+        "id": "779d0a87d44ad553",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/shop-track/e661640843635132/distance",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 300,
+        "y": 1340,
+        "wires": [
+            [
+                "2f057a6f63ae8934"
+            ]
+        ]
+    },
+    {
+        "id": "2f057a6f63ae8934",
+        "type": "ui_level",
+        "z": "993296db21e0de95",
+        "group": "5762a8c37f72c790",
+        "order": 0,
+        "width": "1",
+        "height": "6",
+        "name": "",
+        "label": "",
+        "colorHi": "#00f900",
+        "colorWarn": "#ff9900",
+        "colorNormal": "#ff2600",
+        "colorOff": "#595959",
+        "min": 0,
+        "max": "2300",
+        "segWarn": "",
+        "segHigh": "",
+        "unit": "mm",
+        "layout": "sv",
+        "channelA": "",
+        "channelB": "",
+        "decimals": 0,
+        "animations": "off",
+        "shape": 2,
+        "colorschema": "fixed",
+        "textoptions": "default",
+        "colorText": "#eeeeee",
+        "fontLabel": "",
+        "fontValue": "",
+        "fontSmall": "",
+        "colorFromTheme": true,
+        "textAnimations": false,
+        "hideValue": false,
+        "tickmode": "off",
+        "peakmode": false,
+        "property": "payload",
+        "peaktime": 3000,
+        "x": 570,
+        "y": 1340,
+        "wires": []
+    },
+    {
+        "id": "74e9bd6688fa2266",
+        "type": "ui_level",
+        "z": "993296db21e0de95",
+        "group": "5762a8c37f72c790",
+        "order": 0,
+        "width": "1",
+        "height": "6",
+        "name": "",
+        "label": "",
+        "colorHi": "#00f900",
+        "colorWarn": "#ff9900",
+        "colorNormal": "#ff2600",
+        "colorOff": "#595959",
+        "min": 0,
+        "max": "2300",
+        "segWarn": "",
+        "segHigh": "",
+        "unit": "mm",
+        "layout": "sv",
+        "channelA": "",
+        "channelB": "",
+        "decimals": 0,
+        "animations": "off",
+        "shape": 2,
+        "colorschema": "fixed",
+        "textoptions": "default",
+        "colorText": "#eeeeee",
+        "fontLabel": "",
+        "fontValue": "",
+        "fontSmall": "",
+        "colorFromTheme": true,
+        "textAnimations": false,
+        "hideValue": false,
+        "tickmode": "off",
+        "peakmode": false,
+        "property": "payload",
+        "peaktime": 3000,
+        "x": 570,
+        "y": 1400,
+        "wires": []
+    },
+    {
+        "id": "ed31c7bdbd1625f4",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/shop-track/e6615cc1d3500e23/distance",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 300,
+        "y": 1400,
+        "wires": [
+            [
+                "74e9bd6688fa2266"
+            ]
+        ]
+    },
+    {
+        "id": "79b5367f8032768b",
+        "type": "ui_level",
+        "z": "993296db21e0de95",
+        "group": "5762a8c37f72c790",
+        "order": 0,
+        "width": "1",
+        "height": "6",
+        "name": "",
+        "label": "",
+        "colorHi": "#00f900",
+        "colorWarn": "#ff9900",
+        "colorNormal": "#ff2600",
+        "colorOff": "#595959",
+        "min": 0,
+        "max": "2300",
+        "segWarn": "",
+        "segHigh": "",
+        "unit": "mm",
+        "layout": "sv",
+        "channelA": "",
+        "channelB": "",
+        "decimals": 0,
+        "animations": "off",
+        "shape": 2,
+        "colorschema": "fixed",
+        "textoptions": "default",
+        "colorText": "#eeeeee",
+        "fontLabel": "",
+        "fontValue": "",
+        "fontSmall": "",
+        "colorFromTheme": true,
+        "textAnimations": false,
+        "hideValue": false,
+        "tickmode": "off",
+        "peakmode": false,
+        "property": "payload",
+        "peaktime": 3000,
+        "x": 570,
+        "y": 1460,
+        "wires": []
+    },
+    {
+        "id": "669575eb0859a33f",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/shop-track/e661640843437e39/distance",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 300,
+        "y": 1460,
+        "wires": [
+            [
+                "79b5367f8032768b"
             ]
         ]
     }
