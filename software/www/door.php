@@ -187,7 +187,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
               document.getElementById("fullTable").style.backgroundColor = "#44ff44";
               break;
             case 3:
-              document.getElementById("mytext").innerHTML = "Kunde käuft ein.<br>Bitte warten.";
+              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten.";
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 4:
@@ -215,7 +215,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
               document.getElementById("fullTable").style.backgroundColor = "#FF4444";
               break;
             case 10:
-              document.getElementById("mytext").innerHTML = "Laden geschlosen.";
+              document.getElementById("mytext").innerHTML = "Laden geschlossen.";
               document.getElementById("fullTable").style.backgroundColor = "#FF4444";
               break;
             default:
