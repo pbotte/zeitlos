@@ -24,10 +24,13 @@ sequenceDiagram
 graph TD
   AA["Geräte Initialisierung (0)"]
   A["Bereit, Kein Kunde im Laden (1)"]
+  AF["Fehler bei Authentifizierung (13)"]
   B["Kunde authentifiziert (2)"]
-  C["Kunde im Laden (3)"]
-  D["Einkauf finalisiert (4) / Kunde nicht mehr im Laden"]
-  E["Einkauf abgerechnet (5)"]
+  C["Kunde betritt/verlässt gerade den Laden (3)"]
+  CC["Kunde möglicherweise im Laden (11)"]
+  CCC["Kunde sicher im Laden (12)"]
+  D["Möglicherweise: Einkauf finalisiert / Kunde nicht mehr im Laden (4)"]
+  E["Einkauf beendet und abgerechnet (5)"]
   G["Warten auf: Vorbereitung für nächsten Kunden (7)"]
   W["Laden geschlossen (10)"]
   Y["Technischer Fehler aufgetreten (8)"]
@@ -35,12 +38,18 @@ graph TD
   AA --> G
   AA --> |Timeout| Y
   A --> |gültiger QR-Code| B
+  A --> |ungültiger QR-Code| AF
+  AF --> |Timeout| A
   B --> |Timeout| A
   B --> |Türkontakt = offen| C
-  C -->|Timeout| Z
-  C --> |Türkontakt = zu UND alle Distanzsensoren = leer| D
+  C --> |Tür=zu| CC
+  CC --> |Distanzsensoren=im Laden| CCC
+  CCC --> |Tür=offen| C
+  CCC -->|Timeout| Z
+  CC --> |alle Distanzsensoren = leer| D
   D --> |nach 5 Sek.| E
-  D --> |Tür=offen ODER Distanzsensor=im Laden| C
+  D --> |Tür=offen| C
+  D --> |Distanzsensor=im Laden| CCC
   E --> G
   G --> A
   
