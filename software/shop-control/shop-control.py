@@ -81,21 +81,25 @@ def on_disconnect(client, userdata, rc):
 
 shop_status = 10 # Laden geschlossen
 shop_status_descr = {0: "Geräte Initialisierung", 1: "Bereit, Kein Kunde im Laden", 2: "Kunde authentifiziert", 
-    3: "Kunde im Laden", 4: "Einkauf finalisiert & Kunde nicht mehr im Laden", 5: "Einkauf abgerechnet", 6: "Warten auf: Kunde verlässt Laden", 
+    3: "Kunde betritt/verlässt gerade den Laden", 4: "Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden", 
+    5: "Einkauf beendet und abgerechnet", 6: "ungenutzt", 
     7: "Warten auf: Vorbereitung für nächsten Kunden", 8: "Technischer Fehler aufgetreten", 9: "Kunde benötigt Hilfe",
-    10: "Laden geschlossen" }
+    10: "Laden geschlossen", 11: "Kunde möglicherweise im Laden", 12:"Kunde sicher im Laden", 13:"Fehler bei Authentifizierung" }
 shop_status_timeout = {
     0: {'time':10,'next':8}, #Geräte Initialisierung
-    1: None, #Bereit, Keine Kunde im laden
-    2: {'time':5,'next':1}, #Kunde authentifiziert
-    3: {'time':60*10,'next':9}, #Kunde im Laden
-    4: {'time':10,'next':5}, #Einkauf finalisiert / Kunde nicht mehr im Laden
-    5: None, # Einkauf abgerechnet
+    1: None, #Bereit, Keine Kunde im Laden
+    2: {'time':5,'next':7}, #Kunde authentifiziert
+    3: {'time':60*10,'next':9}, #Kunde betritt/verlässt gerade den Laden
+    4: {'time':5,'next':5}, #Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden
+    5: {'time':60,'next':8}, # Einkauf beendet und abgerechnet
     6: None, # Zustand aktuell nicht genutzt
     7: {'time':30,'next':8}, #Warten auf: Vorbereitung für nächsten Kunden
-    8: None, #Technischer Fehler aufgetreten
-    9: None, #Kunde benötigt Hilfe
-    10: None # Laden geschlossen
+    8: None, # Technischer Fehler aufgetreten
+    9: None, # Kunde benötigt Hilfe
+    10: None, # Laden geschlossen
+    11: {'time': 5,'next':4}, # Kunde möglicherweise im Laden? Falls 5 Sek. kein Kunde im Laden -> Wechsel zu 4
+    12: {'time':60*10,'next':9}, # Kunde sicher im Laden
+    13: {'time': 3,'next':1} # Fehler bei Authentifizierung
     }
 shop_status_last_change_timestamp = time.time()
 
@@ -147,7 +151,9 @@ def on_message(client, userdata, message):
 
             logger.info("scales_widthdrawal: {}".format( scales_widthdrawal ))
 
-        #emulate with: mosquitto_pub -t 'homie/shop_qr-scanner/qrcode_detected' -m '0000116617B8FAF7AD'
+        # QR Code scanned.
+        #emulate with: mosquitto_pub -t 'homie/shop_qr-scanner/qrcode_detected' -m '1666703949 43 B8FAF7'
+        # 3 numbers, separated with spaces: time.time(), User ID, md5-hash
         if message.topic.lower() == "homie/shop_qr-scanner/qrcode_detected":
             logger.info("qrcode read: {}".format( m ))
             if shop_status == 1: # "Bereit, Kein Kunde im Laden"
@@ -156,24 +162,36 @@ def on_message(client, userdata, message):
                 expected_sum = hashlib.md5("{}{}{}".format(args.qr_secret_str, r['time'], r['id']).encode('utf-8')).hexdigest()
                 logger.info("HASH expected_sum computated: {}".format(expected_sum[:6]))
                 if r['hash'] == expected_sum[:6]:
-                    logger.info("hash in qr code read equals expected sum: {}".format(expected_sum[:6]))
-                    if abs(time.time() - r['time']) < 10*60: #qrcode needs to be generated within a time windows of 10*60 seconds
-                      client.publish("homie/"+mqtt_client_name+"/actualclient/id", r['id'], qos=1, retain=True)
-                      set_shop_status(2)
-                      client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
-                    else:
-                      logger.warning("Time window of qr code not met.") # qr code too old or time not set correctly
+                  logger.info("hash in qr code read equals expected sum: {}".format(expected_sum[:6]))
+                  if abs(time.time() - r['time']) < 10*60: #qrcode needs to be generated within a time windows of 10*60 seconds
+                    client.publish("homie/"+mqtt_client_name+"/actualclient/id", r['id'], qos=1, retain=True)
+                    set_shop_status(2)
+                    client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
+                  else:
+                    logger.warning("Time window of qr code not met.") # qr code too old or time not set correctly
+                    set_shop_status(13) #Fehler bei Authentifizierung
+                else:
+                  logger.warning("hash in qr code not as expected.")
+                  set_shop_status(13) #Fehler bei Authentifizierung
+              else:
+                set_shop_status(13) #Fehler bei Authentifizierung
 
         #mosquitto_pub -t 'homie/door/Pin0' -m 1
         # Door open/close message
         if message.topic.lower() == "homie/door/pin0":
           if m == "0": #Tür ist offen
             status_door_closed = False
-            if shop_status == 2: # Kunde authentifiziert, warten auf Tür-Öffnung
-              client.publish("homie/fsr-control/innen/tuerschliesser/set", '0', qos=2, retain=False)  # send door open impuls = OFF
-              set_shop_status(3) # Kunde ist im Laden am einfkaufen
           else:
             status_door_closed = True
+          if (shop_status == 2) and (status_door_closed == False): # Kunde authentifiziert, und Tür geht auf
+            client.publish("homie/fsr-control/innen/tuerschliesser/set", '0', qos=2, retain=False)  # send door open impuls = OFF
+            set_shop_status(3) # Kunde betritt / verlässt gerade den Laden
+          elif (shop_status == 3) and (status_door_closed == True): # Tür ist wieder zu
+            set_shop_status(11) # Kunde möglicherweise im Laden
+          elif (shop_status == 4) and (status_door_closed == False): #Möglicherweise Einkauf final / Kunde nicht mehr im Laden
+            set_shop_status(3) # Kunde betritt / verlässt gerade den Laden
+          elif (shop_status == 12) and (status_door_closed == False): #Kunde sicher im laden
+            set_shop_status(3) # Kunde betritt / verlässt gerade den Laden
 
         #mosquitto_pub -t 'homie/shop_controller/retrieve_all' -n
         if message.topic.lower() == "homie/"+mqtt_client_name+"/retrieve_all":
@@ -275,21 +293,20 @@ while True:
     if shop_status == 0: #"Geräte Initialisierung"
         next_shop_status = 7
     elif shop_status == 1: #Bereit, kein Kunde im Laden
-        pass # Wechsel zu 2 passiert in MQTT-onMessage
+        pass # Wechsel zu 2 (OK) oder 13 (Fehler) passiert in MQTT-onMessage
     elif shop_status == 2: #"Kunde authentifiziert"
-        pass
-#        client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
-        # Dies muss in MQTT-onMessage passieren
-#        next_shop_status = 3
-    elif shop_status == 3: #Kunde im Laden
+        pass # Tür offen in MQTT-Message: Wechsel zu next_shop_status = 3
+    elif shop_status == 3: #Kunde betritt/verlässt gerade den Laden
         logger.warning("status_no_person_in_shop: {} status_door_closed {}".format(status_no_person_in_shop, status_door_closed))
         if (status_no_person_in_shop == True) and (status_door_closed == True):
           next_shop_status = 4
-    elif shop_status == 4: #"Einkauf finalisiert"
-        pass
-    elif shop_status == 5: #"Einkauf abgerechnet"
+    elif shop_status == 4: # Möglicherweise: Einkauf finalisiert / Kunde nicht mehr im Laden"
+        #Tür==offen: Wechsel zu 3 über MQTT-Message
+        if status_no_person_in_shop == False:
+          next_shop_status = 12
+    elif shop_status == 5: #"Einkauf beendet und abgerechnet"
         next_shop_status = 7
-    elif shop_status == 6: #"Warten auf: Kunde verlässt Laden"
+    elif shop_status == 6: # ungenutzter Zustand
         next_shop_status = 7
     elif shop_status == 7: #"Warten auf: Vorbereitung für nächsten Kunden"
         client.publish("homie/"+mqtt_client_name+"/actualclient/id", -1, qos=1, retain=True)
@@ -304,6 +321,14 @@ while True:
         pass
     elif shop_status == 10: #"Laden geschlossen"
         pass
+    elif shop_status == 11: # Kunde möglichweise im Laden
+        if (time.time()-shop_status_last_change_timestamp > 1): # Zur Vermeidung von Melde-Verzögerungen der Distanzsensoren erst nach einer Sekund auswerten
+          if status_no_person_in_shop == False: # Kunde ist im Laden
+            next_shop_status = 12 # Kunde sicher im Laden
+    elif shop_status == 12: # Kunde sicher im Laden
+        pass # Tür==offen: Wechsel zu 3 über MQTT-Message
+    elif shop_status == 13: # Fehler bei Authentifizierung
+        pass # geht über Timeout weiter zu 1
     else:
         logger.error("Unbekannter shop_status Wert.")
 

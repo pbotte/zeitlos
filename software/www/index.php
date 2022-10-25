@@ -35,5 +35,5 @@ if (strlen($str)>0) {
   <p><a href="http://192.168.10.10:8080/">phpMyAdmin</a></p>
   <p><a href="http://192.168.10.10:1880/ui">nodered</a></p>
   <p><a href="https://www.hemmes24.de">hemmes24.de</p>
-
+  <p><a href="http://192.168.10.10/qrscanner-debug/last.png">Last picture from qrscanner</a> (start with <pre>qr-scanner.py --save-last-debug-picture</pre> and run some copy process like <pre>cd qrscanner-debug && ./retrieve.sh</pre>)
 </body>
