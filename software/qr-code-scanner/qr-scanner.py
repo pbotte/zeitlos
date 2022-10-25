@@ -7,6 +7,7 @@
 import time
 
 time_last_debug_picture_saved = 0
+time_last_debug_picture_saved_fixed_name = 0
 time_script_started = time.time() #to terminate script after some time to prevent possible hang up of hard or software
 
 
@@ -31,6 +32,7 @@ parser = argparse.ArgumentParser(description='QR Code Scanner')
 parser.add_argument("-v", "--verbosity", help="increase output verbosity", default=0, action="count")
 parser.add_argument("-b", "--mqtt-broker-host", help="MQTT broker hostname", default="localhost")
 parser.add_argument("--save-debug-pictures", help="store every 10 sec a picture under /dev/shm/ ", action='store_true')
+parser.add_argument("--save-last-debug-picture", help="store every 5 sec a picture under /dev/shm/last.png - This helps adjusting the focus.", action='store_true')
 args = parser.parse_args()
 logger.setLevel(logging.WARNING-(args.verbosity*10 if args.verbosity <=2 else 20) )
 
@@ -110,6 +112,10 @@ while continue_loop:
     cv2.imwrite("/dev/shm/time_{}.png".format(round(time.time())), frame_small) #for debug reasons
     time_last_debug_picture_saved = time.time()
     logger.info("debug picture saved")
+  if args.save_last_debug_picture and (time.time() - time_last_debug_picture_saved_fixed_name >= 5):
+    cv2.imwrite("/dev/shm/last.png", frame_small) #for debug reasons
+    time_last_debug_picture_saved_fixed_name = time.time()
+    logger.info("debug picture with fixed name saved")
 
   logger.debug("start searching for qr-codes")
   barcodes = pyzbar.decode(frame_gray)
@@ -117,7 +123,6 @@ while continue_loop:
   for barcode in barcodes: #for each barcode found
     client.publish("homie/"+mqtt_client_name+"/qrcode_detected", barcode.data.decode("utf-8"), qos=1, retain=False)
     logger.info("{}".format(barcode.data.decode("utf-8")) )
-
 
 
 cv2.destroyAllWindows()
