@@ -179,7 +179,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 1:
-              document.getElementById("mytext").innerHTML = "Laden ist frei.<br><br><font size=\"50\">Öffnen Sie <u>hemmes24.de/einlass</u> mit Ihrem Mobiltelefon und zeigen Sie den QR-Code vor der Kamera im Loch.</font><br><br>&#x1F4F7;<br>&#x21E9;";
+              document.getElementById("mytext").innerHTML = "Laden ist frei.<br><br><font size=\"50\">Öffnen Sie <u>hemmes24.de/einlass</u><br><img src=\"https://www.hemmes24.de/qr/qr.php?size=10&text=http://www.hemmes24.de/einlass\"><br> mit Ihrem Mobiltelefon und zeigen Sie den QR-Code vor der Kamera im Loch.</font><br><br>&#x1F4F7;<br>&#x21E9;";
               document.getElementById("fullTable").style.backgroundColor = "#44ff44";
               break;
             case 2:

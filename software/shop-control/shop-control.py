@@ -139,13 +139,13 @@ def on_message(client, userdata, message):
         # distance reading to know person presence
         if len(msplit) == 4 and msplit[1].lower() == "shop-track"  and msplit[3].lower() == "distance":
             last_reading_distances[msplit[2].lower()] = float(m)
-            status_no_person_in_shop = all( value > 2000 for value in last_reading_distances.values()  ) #all return true if all elements are true
+            status_no_person_in_shop = all( value > 2000 for value in last_reading_distances.values()  ) #all returns true if all elements are true
 
         # products withdrawal
         if len(msplit) == 4 and msplit[3].lower() == "withdrawal_units":
             #product_id = products_scales[ msplit[1]+"/"+msplit[2] ]
             temp_units = int(m)
-            if temp_units<0: temp_units=0
+            if temp_units<-1000: temp_units=-1000 # set soem limits, arbitraryly choosen
             if temp_units>1000: temp_units=1000 #set some limits, arbitrary
             scales_widthdrawal[msplit[1]+"/"+msplit[2]] = temp_units
 
@@ -261,11 +261,12 @@ while True:
         if k in products_scales: # should always be true, unless error in db (assignment scales <-> products) 
             temp_product_id = products_scales[k]
             temp_product = products[temp_product_id]
+            temp_v = 0 if v<0 else v #no negative numbers of items in basket! Negative numbers only for actProductsCount
             if products_scales[k] in actBasketProducts: #in case product is sold on several scales and already in basket
-                actBasketProducts[temp_product_id]['withdrawal_units'] += v
+                actBasketProducts[temp_product_id]['withdrawal_units'] += temp_v
                 actBasketProducts[temp_product_id]['price'] = actBasketProducts[temp_product_id]['withdrawal_units'] * temp_product['PricePerUnit']
             else:
-                temp_product['withdrawal_units'] = v
+                temp_product['withdrawal_units'] = temp_v
                 temp_product['price'] = v* temp_product['PricePerUnit']
                 actBasketProducts[temp_product_id] = temp_product
             actProductsCount += v
@@ -297,7 +298,6 @@ while True:
     elif shop_status == 2: #"Kunde authentifiziert"
         pass # Tür offen in MQTT-Message: Wechsel zu next_shop_status = 3
     elif shop_status == 3: #Kunde betritt/verlässt gerade den Laden
-        logger.warning("status_no_person_in_shop: {} status_door_closed {}".format(status_no_person_in_shop, status_door_closed))
         if (status_no_person_in_shop == True) and (status_door_closed == True):
           next_shop_status = 4
     elif shop_status == 4: # Möglicherweise: Einkauf finalisiert / Kunde nicht mehr im Laden"
@@ -322,7 +322,7 @@ while True:
     elif shop_status == 10: #"Laden geschlossen"
         pass
     elif shop_status == 11: # Kunde möglichweise im Laden
-        if (time.time()-shop_status_last_change_timestamp > 1): # Zur Vermeidung von Melde-Verzögerungen der Distanzsensoren erst nach einer Sekund auswerten
+        if (time.time()-shop_status_last_change_timestamp > 2): # Zur Vermeidung von Melde-Verzögerungen der Distanzsensoren erst nach einiger Zeit auswerten
           if status_no_person_in_shop == False: # Kunde ist im Laden
             next_shop_status = 12 # Kunde sicher im Laden
     elif shop_status == 12: # Kunde sicher im Laden

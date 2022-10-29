@@ -4,3 +4,4 @@ hardware/waagen/elektronik/kiCAD/1284pTest2-backups/*
 software/docker/mariadb/data/*
 software/docker/nodered/data/.npm/*
 software/docker/nodered/data/node_modules/*
+software/www/qrscanner-debug/last.png
