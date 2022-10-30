@@ -368,7 +368,7 @@
         "expiry": "",
         "broker": "b1634a54dc9da698",
         "x": 440,
-        "y": 540,
+        "y": 500,
         "wires": []
     },
     {
@@ -392,7 +392,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 170,
-        "y": 540,
+        "y": 500,
         "wires": [
             [
                 "a6e99190dcaf40ca"
@@ -414,7 +414,7 @@
         "expiry": "",
         "broker": "b1634a54dc9da698",
         "x": 440,
-        "y": 600,
+        "y": 560,
         "wires": []
     },
     {
@@ -438,7 +438,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 170,
-        "y": 600,
+        "y": 560,
         "wires": [
             [
                 "23c878149d2e0088"
@@ -1098,5 +1098,51 @@
                 "79b5367f8032768b"
             ]
         ]
+    },
+    {
+        "id": "1c3e57d1ee836dd9",
+        "type": "ui_button",
+        "z": "993296db21e0de95",
+        "name": "",
+        "group": "9472ae9df42c4534",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Reset all scales",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "0",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 180,
+        "y": 600,
+        "wires": [
+            [
+                "8a2d30bda302bb9a"
+            ]
+        ]
+    },
+    {
+        "id": "8a2d30bda302bb9a",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/shelf01/reset-all",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 420,
+        "y": 600,
+        "wires": []
     }
 ]

@@ -79,7 +79,7 @@ def on_disconnect(client, userdata, rc):
     if rc != 0:
         logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
 
-shop_status = 10 # Laden geschlossen
+shop_status = 0 # Needs to be different from 10, to make set_shop_status(10) later make work
 shop_status_descr = {0: "Geräte Initialisierung", 1: "Bereit, Kein Kunde im Laden", 2: "Kunde authentifiziert", 
     3: "Kunde betritt/verlässt gerade den Laden", 4: "Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden", 
     5: "Einkauf beendet und abgerechnet", 6: "ungenutzt", 
@@ -239,17 +239,12 @@ logger.info("MQTT loop started.")
 client.publish("homie/"+mqtt_client_name+"/state", 'online', qos=1, retain=True)
 
 
-set_shop_status(0)
+set_shop_status(10) # Laden geschlossen. Sonst kann man den laden eröffnen durch Stromunterbrechung.
 
 last_actBasket = {} #to enable the feature: Send only on change
 client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
 client.publish("homie/"+mqtt_client_name+"/shop_overview/products", json.dumps(products), qos=1, retain=True)
 client.publish("homie/"+mqtt_client_name+"/shop_overview/products_scales", json.dumps(products_scales), qos=1, retain=True)
-
-#timeout für FSM
-# muss noch umgesetzt werden
-timeout_goto_shop_status = 8 # Wenn der Timeout auftritt, zu welchem Status gewechselt werden soll
-timeout_duration_sec = 60 # Wenn die Zeit abgelaufen ist, dann dan wird shop_status = timeout_goto_shop_status. Bei <0 passiert nichts
 
 while True:
 
@@ -267,7 +262,7 @@ while True:
                 actBasketProducts[temp_product_id]['price'] = actBasketProducts[temp_product_id]['withdrawal_units'] * temp_product['PricePerUnit']
             else:
                 temp_product['withdrawal_units'] = temp_v
-                temp_product['price'] = v* temp_product['PricePerUnit']
+                temp_product['price'] = temp_v * temp_product['PricePerUnit']
                 actBasketProducts[temp_product_id] = temp_product
             actProductsCount += v
             actSumTotal += actBasketProducts[temp_product_id]['price']

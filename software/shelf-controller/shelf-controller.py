@@ -92,12 +92,14 @@ def on_message(client, userdata, message):
 
     #Set raw Zero calibration individual scale
     # cansend can0 00093320#
+    # mosquitto_pub -n -t homie/shelf01/65c0/zero-raw-to-act-reading
     if len(msplit) == 4 and msplit[3].lower() == "zero-raw-to-act-reading":
       scale_id = int(msplit[2],16)
       msg = can.Message(arbitration_id=0x90000+scale_id, data=[], is_extended_id=True)
       bus.send(msg)
 
     #Set slope calibration individual scale
+    # mosquitto_pub -n -t homie/shelf01/65c0/set-slope-to-act-reading
     if len(msplit) == 4 and msplit[3].lower() == "set-slope-to-act-reading":
       scale_id = int(msplit[2],16)
       msg = can.Message(arbitration_id=0xb0000+scale_id, data=[], is_extended_id=True)
