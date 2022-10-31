@@ -51,9 +51,12 @@ def on_message(client, userdata, message):
         if message.topic.lower() == "homie/"+args.mqtt_client_name+"/power/set":
           stream = os.popen("vcgencmd display_power "+m)
           output = stream.read().strip()
-          if last_power_status != m:
-            logger.info("power_status changed")
-            last_power_status = m
+          logger.info("power_status changed")
+          r=parse.parse("display_power={v:d}", output) #definition see: https://pypi.org/project/parse/
+          if r:
+            if last_power_status != r['v']:
+              last_power_status = r['v']
+              client.publish("homie/"+args.mqtt_client_name+"/power", r['v'], qos=1, retain=True)
 
     except Exception as err:
         traceback.print_tb(err.__traceback__)
@@ -75,12 +78,15 @@ client.publish("homie/"+args.mqtt_client_name+"/state", 'online', qos=1, retain=
 
 
 while True:
+  # perform regular status checks
   stream = os.popen("vcgencmd display_power")
   output = stream.read().strip()
   r=parse.parse("display_power={v:d}", output) #definition see: https://pypi.org/project/parse/
   if r:
-    client.publish("homie/"+args.mqtt_client_name+"/power", r['v'], qos=1, retain=True)
-  time.sleep(1-math.modf(time.time())[0])  # make the loop run every second
+    if last_power_status != r['v']:
+      last_power_status = r['v']
+      client.publish("homie/"+args.mqtt_client_name+"/power", r['v'], qos=1, retain=True)
+  time.sleep(10-math.modf(time.time())[0])  # make the loop run every second
 
 client.disconnect()
 client.loop_stop()

@@ -4,7 +4,7 @@ After=network.target syslog.target
 
 [Service]
 WorkingDirectory=/home/pi/zeitlos/software/display-power-control/
-ExecStart=/home/pi/zeitlos/software/display-power-control/display-power-control.py
+ExecStart=/home/pi/zeitlos/software/display-power-control/display-power-control.py -b 192.168.10.10 -v display-power-control-01
 Restart=always
 RestartSec=15
 User=pi
