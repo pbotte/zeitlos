@@ -25,7 +25,8 @@ graph TD
   AA["Geräte Initialisierung (0)"]
   A["Bereit, Kein Kunde im Laden (1)"]
   AF["Fehler bei Authentifizierung (13)"]
-  B["Kunde authentifiziert (2)"]
+  B["Kunde authentifiziert / Waagen tara wird ausgeführt (2)"]
+  BB["Bitte Laden betreten (14)"]
   C["Kunde betritt/verlässt gerade den Laden (3)"]
   CC["Kunde möglicherweise im Laden (11)"]
   CCC["Kunde sicher im Laden (12)"]
@@ -39,19 +40,24 @@ graph TD
   AA --> |Timeout| Y
   A --> |gültiger QR-Code| B
   A --> |ungültiger QR-Code| AF
+  B --> |Waagen Tara erfolgreich| BB
   AF --> |Timeout| A
-  B --> |Timeout| A
-  B --> |Türkontakt = offen| C
+  B --> |Timeout| Y
+  BB --> |Timeout| G
+  BB --> |Türkontakt = offen| C
   C --> |Tür=zu| CC
+  C --> |Timeout| Z
   CC --> |Distanzsensoren=im Laden| CCC
   CCC --> |Tür=offen| C
   CCC -->|Timeout| Z
-  CC --> |alle Distanzsensoren = leer| D
+  CC --> |Timeout = alle Distanzsensoren=leer| D
   D --> |nach 5 Sek.| E
   D --> |Tür=offen| C
   D --> |Distanzsensor=im Laden| CCC
   E --> G
+  E --> |Timeout| Y
   G --> A
+  G --> |Timeout| Y
   
 ```
 
