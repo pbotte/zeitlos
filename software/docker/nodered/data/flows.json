@@ -1144,5 +1144,151 @@
         "x": 420,
         "y": 600,
         "wires": []
+    },
+    {
+        "id": "680fdf797f869786",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/display-power-control-01/power/set",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 690,
+        "y": 1640,
+        "wires": []
+    },
+    {
+        "id": "215101dbdf40aa12",
+        "type": "ui_switch",
+        "z": "993296db21e0de95",
+        "name": "",
+        "label": "Display 01",
+        "tooltip": "",
+        "group": "d4e8a1e8746ae8dc",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "decouple": "true",
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 430,
+        "y": 1640,
+        "wires": [
+            [
+                "680fdf797f869786"
+            ]
+        ]
+    },
+    {
+        "id": "9d5bcd87b9d6fdc8",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/display-power-control-01/power",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 190,
+        "y": 1640,
+        "wires": [
+            [
+                "215101dbdf40aa12"
+            ]
+        ]
+    },
+    {
+        "id": "47d32df0dfaddfe0",
+        "type": "ui_switch",
+        "z": "993296db21e0de95",
+        "name": "",
+        "label": "Display 02",
+        "tooltip": "",
+        "group": "d4e8a1e8746ae8dc",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "decouple": "true",
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 430,
+        "y": 1720,
+        "wires": [
+            [
+                "97f65fc2169ec05b"
+            ]
+        ]
+    },
+    {
+        "id": "36ec5b187c6db3c6",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/display-power-control-02/power",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 190,
+        "y": 1720,
+        "wires": [
+            [
+                "47d32df0dfaddfe0"
+            ]
+        ]
+    },
+    {
+        "id": "97f65fc2169ec05b",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/display-power-control-02/power/set",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 690,
+        "y": 1720,
+        "wires": []
     }
 ]
