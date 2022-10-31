@@ -1,24 +1,3 @@
-# Einkauf
-
-```mermaid
-sequenceDiagram
-    actor Kunde
-    participant Zugangskontrolle
-    participant shopcontroller
-    participant Waagen
-    participant Einkaufsanzeige
-    Kunde->>Zugangskontrolle: Authentifikation (Girocard)
-    Zugangskontrolle->>Kunde: Vorabbuchung durchgeführt + Einlass
-    Zugangskontrolle->>shopcontroller: Kunde eingelassen
-    shopcontroller->>Waagen: Reset
-    shopcontroller->>Einkaufsanzeige: Reset
-    Kunde->>Waagen: Entnimmt Produkte
-    shopcontroller->>Einkaufsanzeige: Anzeige aktueller Einkauf
-    Waagen->>Waagen: Produkte dürfen auch wieder zurückgelegt werden
-    Zugangskontrolle->>shopcontroller: Geschäft verlassen, Einkauf beendet.
-    shopcontroller->>Kunde: Abbuchung des finalen Geldbetrags
-```
-
 # Mögliche Zustände Shop_Controller
 ```mermaid
 graph TD
@@ -31,6 +10,7 @@ graph TD
   CC["Kunde möglicherweise im Laden (11)"]
   CCC["Kunde sicher im Laden (12)"]
   D["Möglicherweise: Einkauf finalisiert / Kunde nicht mehr im Laden (4)"]
+  DD["Sicher: Kunde nicht mehr im Laden. Abrechnung wird vorbereitet (15)"]
   E["Einkauf beendet und abgerechnet (5)"]
   G["Warten auf: Vorbereitung für nächsten Kunden (7)"]
   W["Laden geschlossen (10)"]
@@ -51,9 +31,11 @@ graph TD
   CCC --> |Tür=offen| C
   CCC -->|Timeout| Z
   CC --> |Timeout = alle Distanzsensoren=leer| D
-  D --> |nach 5 Sek.| E
+  D --> |nach 5 Sek.| DD
   D --> |Tür=offen| C
   D --> |Distanzsensor=im Laden| CCC
+  DD --> E
+  DD --> |Timeout| Y
   E --> G
   E --> |Timeout| Y
   G --> A
@@ -61,8 +43,31 @@ graph TD
   
 ```
 
+# Nicht ganz aktuell:
 
-# Bestückung
+## Einkauf
+
+```mermaid
+sequenceDiagram
+    actor Kunde
+    participant Zugangskontrolle
+    participant shopcontroller
+    participant Waagen
+    participant Einkaufsanzeige
+    Kunde->>Zugangskontrolle: Authentifikation (Girocard)
+    Zugangskontrolle->>Kunde: Vorabbuchung durchgeführt + Einlass
+    Zugangskontrolle->>shopcontroller: Kunde eingelassen
+    shopcontroller->>Waagen: Reset
+    shopcontroller->>Einkaufsanzeige: Reset
+    Kunde->>Waagen: Entnimmt Produkte
+    shopcontroller->>Einkaufsanzeige: Anzeige aktueller Einkauf
+    Waagen->>Waagen: Produkte dürfen auch wieder zurückgelegt werden
+    Zugangskontrolle->>shopcontroller: Geschäft verlassen, Einkauf beendet.
+    shopcontroller->>Kunde: Abbuchung des finalen Geldbetrags
+```
+
+
+## Bestückung
 ```mermaid
 sequenceDiagram
     actor Verkäufer
