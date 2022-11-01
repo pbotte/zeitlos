@@ -34,6 +34,7 @@ end
   C ==> |Tür=zu| CC
   C --> |Timeout| Z
   CC ==> |Distanzsensoren=im Laden| CCC
+  CC ==> |Tür offen| C
   CCC ==> |Tür=offen| C
   CCC -->|Timeout| Z
   CC --> |Timeout = alle Distanzsensoren=leer| D
