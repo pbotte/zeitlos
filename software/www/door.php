@@ -183,15 +183,15 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
               document.getElementById("fullTable").style.backgroundColor = "#44ff44";
               break;
             case 2:
-              document.getElementById("mytext").innerHTML = "Authentifiziert.<br>Bitte Laden betreten.";
+              document.getElementById("mytext").innerHTML = "Authentifiziert.<br>Laden wird vorbereitet.";
               document.getElementById("fullTable").style.backgroundColor = "#44ff44";
               break;
             case 3:
-              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten.<br><br>(3)";
+              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten.";
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 4:
-              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten.<br><br>(4)";
+              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten..";
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 5:
@@ -219,15 +219,23 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
               document.getElementById("fullTable").style.backgroundColor = "#FF4444";
               break;
             case 11:
-              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten.<br><br>(11)";
+              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten...";
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 12:
-              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten.<br><br>(12)";
+              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten....";
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 13:
               document.getElementById("mytext").innerHTML = "Fehler bei Authentifizierung.<br><br>Ist der QR-Code schon zu alt?";
+              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
+              break;
+            case 14:
+              document.getElementById("mytext").innerHTML = "Bitte den Laden betreten";
+              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
+              break;
+            case 15:
+              document.getElementById("mytext").innerHTML = "Abrechnung wird vorbereitet.";
               document.getElementById("fullTable").style.backgroundColor = "#FF4444";
               break;
             default:
