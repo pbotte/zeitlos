@@ -232,11 +232,11 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
               break;
             case 14:
               document.getElementById("mytext").innerHTML = "Bitte den Laden betreten";
-              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
+              document.getElementById("fullTable").style.backgroundColor = "44ff44";
               break;
             case 15:
               document.getElementById("mytext").innerHTML = "Abrechnung wird vorbereitet.";
-              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
+              document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             default:
               document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";
