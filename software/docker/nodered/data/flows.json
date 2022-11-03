@@ -215,6 +215,17 @@
         "className": ""
     },
     {
+        "id": "3d85fbc00304fe9b",
+        "type": "ui_group",
+        "name": "Licht",
+        "tab": "d4570277bd2545ce",
+        "order": 5,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
         "id": "64afc51f7e4516fe",
         "type": "ui_template",
         "z": "993296db21e0de95",
@@ -617,7 +628,7 @@
         "z": "993296db21e0de95",
         "name": "",
         "group": "d4e8a1e8746ae8dc",
-        "order": 1,
+        "order": 2,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -645,7 +656,7 @@
         "z": "993296db21e0de95",
         "name": "",
         "group": "d4e8a1e8746ae8dc",
-        "order": 1,
+        "order": 3,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -693,7 +704,7 @@
         "type": "ui_text",
         "z": "993296db21e0de95",
         "group": "d4e8a1e8746ae8dc",
-        "order": 3,
+        "order": 4,
         "width": 0,
         "height": 0,
         "name": "",
@@ -825,7 +836,7 @@
         "z": "993296db21e0de95",
         "name": "",
         "group": "d4e8a1e8746ae8dc",
-        "order": 4,
+        "order": 5,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -1171,7 +1182,7 @@
         "label": "Display 01",
         "tooltip": "",
         "group": "d4e8a1e8746ae8dc",
-        "order": 5,
+        "order": 6,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -1226,7 +1237,7 @@
         "label": "Display 02",
         "tooltip": "",
         "group": "d4e8a1e8746ae8dc",
-        "order": 5,
+        "order": 7,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -1289,6 +1300,216 @@
         "broker": "b1634a54dc9da698",
         "x": 690,
         "y": 1720,
+        "wires": []
+    },
+    {
+        "id": "e7f1a7c36a6fa2e0",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/fsr-control/aussen/licht",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 200,
+        "y": 1940,
+        "wires": [
+            [
+                "5fb2b97c8ecd628d"
+            ]
+        ]
+    },
+    {
+        "id": "1f9df93bd03a7e33",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/fsr-control/aussen/licht/set",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 980,
+        "y": 1940,
+        "wires": []
+    },
+    {
+        "id": "94d5c655765bb089",
+        "type": "ui_switch",
+        "z": "993296db21e0de95",
+        "name": "",
+        "label": "Außenlicht",
+        "tooltip": "",
+        "group": "3d85fbc00304fe9b",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "decouple": "true",
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 730,
+        "y": 1940,
+        "wires": [
+            [
+                "1f9df93bd03a7e33"
+            ]
+        ]
+    },
+    {
+        "id": "5fb2b97c8ecd628d",
+        "type": "change",
+        "z": "993296db21e0de95",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.v",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 490,
+        "y": 1940,
+        "wires": [
+            [
+                "94d5c655765bb089"
+            ]
+        ]
+    },
+    {
+        "id": "318cb48b686a1f2c",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/fsr-control/innen/licht",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 200,
+        "y": 2020,
+        "wires": [
+            [
+                "d6cf7ae16b4df07c"
+            ]
+        ]
+    },
+    {
+        "id": "d6cf7ae16b4df07c",
+        "type": "change",
+        "z": "993296db21e0de95",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.v",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 490,
+        "y": 2020,
+        "wires": [
+            [
+                "f8dd468ab407e80e"
+            ]
+        ]
+    },
+    {
+        "id": "f8dd468ab407e80e",
+        "type": "ui_switch",
+        "z": "993296db21e0de95",
+        "name": "",
+        "label": "Innenlicht",
+        "tooltip": "",
+        "group": "3d85fbc00304fe9b",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "decouple": "true",
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 720,
+        "y": 2020,
+        "wires": [
+            [
+                "5a0bc138be9b63d3"
+            ]
+        ]
+    },
+    {
+        "id": "5a0bc138be9b63d3",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/fsr-control/innen/licht/set",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 970,
+        "y": 2020,
+        "wires": []
+    },
+    {
+        "id": "3bf9117ed008bd91",
+        "type": "comment",
+        "z": "993296db21e0de95",
+        "name": "Licht",
+        "info": "",
+        "x": 90,
+        "y": 1840,
         "wires": []
     }
 ]

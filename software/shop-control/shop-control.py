@@ -172,7 +172,6 @@ def on_message(client, userdata, message):
                     actualclientID = r['id']
                     client.publish("homie/"+mqtt_client_name+"/actualclient/id", r['id'], qos=1, retain=True)
                     set_shop_status(2) # Authentifizierung war in Ordnung
-                    client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
                   else:
                     logger.warning("Time window of qr code not met.") # qr code too old or time not set correctly
                     set_shop_status(13) #Fehler bei Authentifizierung
@@ -302,6 +301,7 @@ while True:
         client.publish("homie/"+mqtt_client_name+"/prepare_for_next_customer", "1", qos=1, retain=False) # Waagen tara ausführen
         if actProductsCount == 0: #no products withdrawn, all scales reset
           next_shop_status = 14 # Bitte Laden betreten
+          client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
         else:
           logger.info("Der Laden kann nicht nicht freigegeben werden, da noch {} Produkt(e) nicht zurückgesetzt wurden.".format(actProductsCount))
     elif shop_status == 3: #Kunde betritt/verlässt gerade den Laden
