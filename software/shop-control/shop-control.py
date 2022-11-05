@@ -14,6 +14,7 @@ import re
 import yaml  # pip3 install pyyaml
 import mariadb #1st: sudo apt install libmariadb3 libmariadb-dev   2nd: pip install -Iv mariadb==1.0.7 
 import parse #pip install parse
+import signal #to catch interrupts and exit gracefully
 
 logging.basicConfig(level=logging.WARNING,
                     format='%(asctime)-6s %(levelname)-8s  %(message)s')
@@ -32,18 +33,28 @@ logger.setLevel(logging.WARNING-(args.verbosity * 10 if args.verbosity <= 2 else
 
 mqtt_client_name = "shop_controller"
 
-conn = mariadb.connect(
+conn = None
+cur = None
+def db_prepare():
+  global conn, cur
+  conn = mariadb.connect(
     user="user_shop_control",
     password="wlLvMOR4FStMEzzN",
     host="192.168.10.10",
     database="zeitlos")
-cur = conn.cursor() 
+  cur = conn.cursor()
+
+def db_close():
+  global conn, cur
+  cur.close()
+  conn.close()
 
 products = {}
 products_scales = {}
 scales_widthdrawal = {}
 def get_all_data_from_db():
     global products, products_scales
+    db_prepare()
     cur.execute("SELECT ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit FROM Products ") 
     for ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit in cur: 
         products[ProductID] = {"ProductID":ProductID, "ProductName":ProductName, "ProductDescription": ProductDescription, 
@@ -53,6 +64,7 @@ def get_all_data_from_db():
         products_scales[ShelfName+"/"+ScaleHexStr] = ProductID
     logger.debug("products from db: {}".format(products))
     logger.debug("products_scales from db: {}".format(products_scales))
+    db_close()
 
 get_all_data_from_db()
 #Support for retrieval of data from scales. Put scales anmes e.g. shelf01/921a into this list
@@ -253,8 +265,14 @@ client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket),
 client.publish("homie/"+mqtt_client_name+"/shop_overview/products", json.dumps(products), qos=1, retain=True)
 client.publish("homie/"+mqtt_client_name+"/shop_overview/products_scales", json.dumps(products_scales), qos=1, retain=True)
 
-while True:
+loop_var = True
+def signal_handler(sig, frame):
+  global loop_var
+  logger.info('You pressed Ctrl+C! Preparing for graceful exit.')
+  loop_var = False
+signal.signal(signal.SIGINT, signal_handler)
 
+while loop_var:
     actBasketProducts = {}
     actSumTotal = 0
     actProductsCount = 0
@@ -316,6 +334,7 @@ while True:
         next_shop_status = 7
     elif shop_status == 7: #"Warten auf: Vorbereitung für nächsten Kunden"
         client.publish("homie/"+mqtt_client_name+"/actualclient/id", -1, qos=1, retain=True)
+        client.publish("homie/fsr-control/innen/licht/set", '0', qos=1, retain=False)
         actualclientID = -1
         client.publish("homie/"+mqtt_client_name+"/prepare_for_next_customer", "1", qos=1, retain=False)
         if actProductsCount == 0: #no products withdrawn, all scales reset
@@ -329,7 +348,7 @@ while True:
     elif shop_status == 10: #"Laden geschlossen"
         pass
     elif shop_status == 11: # Kunde möglichweise im Laden
-        if (time.time()-shop_status_last_change_timestamp > 2): # Zur Vermeidung von Melde-Verzögerungen der Distanzsensoren erst nach einiger Zeit auswerten
+        if (time.time()-shop_status_last_change_timestamp > 2.5): # Zur Vermeidung von Melde-Verzögerungen der Distanzsensoren erst nach einiger Zeit auswerten
           if status_no_person_in_shop == False: # Kunde ist im Laden
             next_shop_status = 12 # Kunde sicher im Laden
     elif shop_status == 12: # Kunde sicher im Laden
@@ -337,23 +356,28 @@ while True:
     elif shop_status == 13: # Fehler bei Authentifizierung
         pass # geht über Timeout weiter zu 1
     elif shop_status == 14: # Bitte Laden betreten
-        pass # Tür offen in MQTT-Message: Wechsel zu next_shop_status = 3
+        client.publish("homie/fsr-control/innen/licht/set", '1', qos=1, retain=False)
+        client.publish("homie/display-power-control-02/power/set", '1', qos=1, retain=False)
+        # Tür offen in MQTT-Message: Wechsel zu next_shop_status = 3
     elif shop_status == 15: # Abrechnung wird vorbereitet
         # Abrechnung durchführen
         try:
           sql_str = "INSERT INTO `Invoices` (`ClientID`, `Products`) VALUES (?, ?); "
           actBasket_str = json.dumps(actBasket)
           logger.info("Executed the following SQL Str: {} with ({}, {})".format(sql_str, actualclientID, actBasket_str))
+          db_prepare()
           try:
             cur.execute(sql_str, (actualclientID, actBasket_str))
+            conn.commit()
+            logger.info("Last Inserted ID: {}".format(cur.lastrowid))
           except mariadb.Error as e:
-            print(f"Error: {e}")
-          conn.commit()
-          logger.info("Last Inserted ID: {}".format(cur.lastrowid))
+            logger.warning(f"Error while SQL INSERT: {e}")
+          db_close()
 
           next_shop_status = 5 # Weiter zu: Einkauf beendet und abgerechnet
         except:
           next_shop_status = 8
+          logger.warning("Errir while saving the basket in db")
     else:
         logger.error("Unbekannter shop_status Wert.")
 
@@ -370,6 +394,9 @@ while True:
 
 
     time.sleep(1-math.modf(time.time())[0])  # make the loop run every second
+
+
+set_shop_status(10) # Laden geschlossen
 
 client.disconnect()
 client.loop_stop()

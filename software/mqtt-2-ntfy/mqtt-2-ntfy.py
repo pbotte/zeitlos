@@ -57,11 +57,12 @@ def on_message(client, userdata, message):
 
         if message.topic.lower() == "homie/shop_controller/shop_status":
           if last_shop_status != m:
-            logger.info("shop_status changed")
+            logger.debug("shop_status changed")
             temp_str = m
             if int(m) in shop_status_descr:
               temp_str = m+": "+shop_status_descr[int(m)]
             requests.post("https://ntfy.sh/zeitlos-state", data=temp_str.encode(encoding='utf-8'))
+            logger.info("Submitted new zeitlos-state to ntfy: {}".format(m))
             last_shop_status = m
 
     except Exception as err:
