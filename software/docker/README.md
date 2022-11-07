@@ -12,7 +12,7 @@ sudo usermod -aG docker pi
 ```bash
 docker run -dit --restart unless-stopped -p 80:80 --name apache-php -v /home/pi/zeitlos/software/www/:/var/www/html php:7.2-apache
 ```
-and modifiy it in a second step to enable GD support:
+and modifiy it in a second step to enable GD and SQL support:
 ```bash
 docker exec -it apache-php /bin/bash
 $ apt-get update && apt-get -y install libjpeg-dev libpng-dev zlib1g-dev git zip
@@ -21,6 +21,7 @@ $ docker-php-ext-configure gd \
         --with-jpeg-dir=/usr/include \
     && docker-php-ext-install gd \
     && docker-php-ext-enable gd
+$ docker-php-ext-install pdo pdo_mysql
 $ logout
 docker stop apache-php
 docker start apache-php
