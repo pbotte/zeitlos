@@ -61,13 +61,17 @@ logger.info("MQTT loop started.")
 
 ser = serial.Serial(args.serial_device_name, 115200, timeout=1.0)
 
-def send_data():
+def send_data(act_v=None):
   global last_dist_during_transfer
   last_dist_during_transfer = act_distance_avg
   logger.info("Summarizing Reading: {}+-{}".format(act_distance_avg, act_distance_stdev))
-  client.publish("homie/shop-track/"+sn+"/data", json.dumps(
-                    {"v": act_distance_avg, 'Dv': act_distance_stdev, 'reading_stack':list(readings_stack), "time": time.time()},
-                     sort_keys=True), qos = 1)
+#  client.publish("homie/shop-track/"+sn+"/data", json.dumps(
+ #                   {"v": act_distance_avg, 'Dv': act_distance_stdev, 'reading_stack':list(readings_stack), "time": time.time()},
+  #                   sort_keys=True), qos = 1)
+  if act_v:
+    client.publish("homie/shop-track/"+sn+"/distance", act_v, qos=1, retain=True)
+  else:
+    client.publish("homie/shop-track/"+sn+"/distance", act_distance_avg, qos=1, retain=True)
 
 #readout data stack
 readings_stack = collections.deque(maxlen=5)
@@ -92,13 +96,15 @@ while (WatchDogCounter > 0):
         logger.debug("Actual Reading: {}".format(data))
 #        client.publish('homie/'+args.mqtt_client_name+'/actreading', json.dumps(data), qos=1, retain=True)
 
-        if (len(readings_stack)>3): #some reading has to be in the stack
+        if (len(readings_stack)>2): #some reading has to be in the stack
           act_distance_avg = statistics.mean(list(readings_stack))
           act_distance_stdev = statistics.stdev(list(readings_stack))
 
-          if abs(last_dist_during_transfer-data['v']) > 50: # of it changes by more than a certain threshold
-            if (time.time() - lastTransfer_due_change) >= 1:
+#          if abs(last_dist_during_transfer-data['v']) > 50: # of it changes by more than a certain threshold
+          if abs(last_dist_during_transfer-act_distance_avg) > 200: #distance in mm
+            if (time.time() - lastTransfer_due_change) >= 0.9:
               lastTransfer_due_change = time.time()
+#              send_data(data['v'])
               send_data()
         WatchDogCounter = args.watchdog_timeout
 
@@ -108,7 +114,7 @@ while (WatchDogCounter > 0):
 
   #submit data only every 10 second(s)
   if (time.time() - lastTransfer) >= 10:
-    if (len(readings_stack)>3):
+    if (len(readings_stack)>2):
       lastTransfer = time.time()
       send_data()
 
