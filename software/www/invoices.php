@@ -62,7 +62,7 @@ $i = 0;
 if (!is_null($p)) {
   foreach ($p['data'] as $v) {
     $i++;
-    print($v["withdrawal_units"]."x ".$v["ProductName"]." (".$v['ProductDescription'].") (".$v['PricePerUnit']."/Stk) à ".$v['PricePerUnit']."€ = ".$v['price']."€ <br>");
+    print($v["withdrawal_units"]."x ".$v["ProductName"]." (".$v['ProductDescription'].") (".$v['kgPerUnit']."kg/Stk) à ".number_format($v['PricePerUnit'],2)."€ = ".number_format($v['price'],2)."€ <br>");
 /*PriceType
 kgPerUnit */
   }
