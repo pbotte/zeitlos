@@ -23,6 +23,7 @@ import requests #pip3 install requests
 import logging
 from pathlib import Path
 import numpy as np
+import sdnotify # to call systemd-notify
 
 
 logging.basicConfig(format="%(asctime)-15s %(levelname)-8s  %(message)s")
@@ -87,6 +88,11 @@ last_frame = vs.read()
 logger.info("Script completed initialisation.")
 continue_loop = True
 
+# Inform systemd that we've finished our startup sequence...
+n = sdnotify.SystemdNotifier()
+n.notify("READY=1")
+count = 1 #some watchdog counter
+
 while continue_loop:
   time.sleep(0.5) #spend soem time to make the CPU not heating up too much
 
@@ -124,6 +130,12 @@ while continue_loop:
     client.publish("homie/"+mqtt_client_name+"/qrcode_detected", barcode.data.decode("utf-8"), qos=1, retain=False)
     logger.info("{}".format(barcode.data.decode("utf-8")) )
 
+  #inform systemd via sdnotify we are still alive
+  n.notify("STATUS=Count is {}".format(count))
+  n.notify("WATCHDOG=1")
+  count += 1
+
+#  if count > 100: time.sleep(100)
 
 cv2.destroyAllWindows()
 vs.stop()

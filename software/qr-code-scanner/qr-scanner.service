@@ -1,14 +1,26 @@
 [Unit]
-Description=QR-Code-Scanner to MQTT
-After=network.target syslog.target
+Description=QRScanner to MQTT
+After=network-online.target syslog.target
+
+#if all the fixing does not work, reboot
+# but first, restart 2 timeswithin 30sec
+StartLimitIntervalSec=30
+StartLimitBurst=10
+StartLimitAction=reboot
 
 [Service]
-WorkingDirectory=/home/pi/zeitlos/software/qr-code-scanner
-ExecStart=/home/pi/zeitlos/software/qr-code-scanner/qr-scanner.py -b 192.168.179.150
+WorkingDirectory=/home/pi/zeitlos/software/qr-code-scanner/
+ExecStart=/home/pi/zeitlos/software/qr-code-scanner/qr-scanner.py -b 192.168.10.10 --save-last-debug-picture -v
 Restart=always
 RestartSec=15
 User=pi
 Group=pi
+
+# Note that we use Type=notify here since the script will send "READY=1"
+# when it's finished starting up
+Type=notify
+TimeoutSec=15
+WatchdogSec=15
 
 # Note: setting PYTHONUNBUFFERED is necessary to see the output of this service in the journal
 # See https://docs.python.org/2/using/cmdline.html#envvar-PYTHONUNBUFFERED
@@ -16,3 +28,4 @@ Environment=PYTHONUNBUFFERED=true
 
 [Install]
 WantedBy=multi-user.target
+
