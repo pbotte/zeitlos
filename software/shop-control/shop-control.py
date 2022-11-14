@@ -149,7 +149,10 @@ def on_message(client, userdata, message):
 
         msplit = re.split("/", message.topic)
         if len(msplit) == 3 and msplit[2].lower() == "request_shop_status":
-            set_shop_status(0)
+            if len(m) > 0:
+               set_shop_status(int(m))
+            else:
+               set_shop_status(0)
         if len(msplit) == 3 and msplit[2].lower() == "close_shop":
             set_shop_status(10)
 

@@ -179,7 +179,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 1:
-              document.getElementById("mytext").innerHTML = "Laden ist frei.<br><br><font size=\"50\">Öffnen Sie <u>hemmes24.de/einlass</u><br><img src=\"https://www.hemmes24.de/qr/qr.php?size=10&text=http://www.hemmes24.de/einlass\"><br> mit Ihrem Mobiltelefon und zeigen Sie den QR-Code vor der Kamera im Loch.</font><br><img src=\"images/demoscan.gif\"> <br>&#x21E9;</p>";
+              document.getElementById("mytext").innerHTML = "Laden ist frei.<br><br><font size=\"50\">Öffnen Sie <u>hemmes24.de/einlass</u><br><img src=\"https://www.hemmes24.de/qr/qr.php?size=10&text=http://www.hemmes24.de/einlass\"><br> mit Ihrem Mobiltelefon und zeigen Sie den QR-Code vor der Kamera im Loch.</font></p><p>&nbsp;<br><img src=\"images/demoscan.gif\"> <br>&#x21E9;</p>";
               document.getElementById("fullTable").style.backgroundColor = "#44ff44";
               break;
             case 2:
@@ -187,11 +187,11 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
               document.getElementById("fullTable").style.backgroundColor = "#44ff44";
               break;
             case 3:
-              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten.";
+              document.getElementById("mytext").innerHTML = "Laden wird gerade betreten / verlassen.<br>Bitte warten.";
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 4:
-              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten..";
+              document.getElementById("mytext").innerHTML = "Überprüfung, ob Laden belegt.<br>Bitte warten..";
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 5:
@@ -203,7 +203,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 7:
-              document.getElementById("mytext").innerHTML = "Vorbereitung für nächsten Kunden. Bitte warten.";
+              document.getElementById("mytext").innerHTML = "Vorbereitung. Bitte warten.";
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 8:
@@ -219,11 +219,11 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
               document.getElementById("fullTable").style.backgroundColor = "#FF4444";
               break;
             case 11:
-              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten...";
+              document.getElementById("mytext").innerHTML = "Überprüfung, ob Laden belegt.<br>Bitte warten.";
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 12:
-              document.getElementById("mytext").innerHTML = "Kunde kauft ein.<br>Bitte warten....";
+              document.getElementById("mytext").innerHTML = "Laden belegt.<br>Bitte warten.";
               document.getElementById("fullTable").style.backgroundColor = "white";
               break;
             case 13:
