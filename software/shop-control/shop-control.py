@@ -15,6 +15,7 @@ import yaml  # pip3 install pyyaml
 import mariadb #1st: sudo apt install libmariadb3 libmariadb-dev   2nd: pip install -Iv mariadb==1.0.7 
 import parse #pip install parse
 import signal #to catch interrupts and exit gracefully
+import queue
 
 logging.basicConfig(level=logging.WARNING,
                     format='%(asctime)-6s %(levelname)-8s  %(message)s')
@@ -138,12 +139,60 @@ status_no_person_in_shop = None # if all readings from homie/shop-track/+/distan
 status_door_closed = None
 last_reading_distances = {}
 
+mqtt_queue=queue.Queue()
 def on_message(client, userdata, message):
-    global list_retrieve_scales
-    global status_no_person_in_shop, last_reading_distances
-    global status_door_closed
-    global actualclientID
-    try:
+  global mqtt_queue
+  try:
+    mqtt_queue.put(message)
+    m = message.payload.decode("utf-8")
+    logger.info("MQTT message received. Topic: "+message.topic+" Payload: "+m)
+  except Exception as err:
+    traceback.print_tb(err.__traceback__)
+
+
+client = paho.Client(mqtt_client_name)
+client.on_connect = on_connect
+client.on_message = on_message
+client.on_disconnect = on_disconnect
+client.enable_logger(logger)
+logger.info("Connecting to broker "+args.mqtt_broker_host)
+
+# start with MQTT connection and set last will
+logger.info("mqtt_client_name: {}".format(mqtt_client_name))
+client.will_set("homie/"+mqtt_client_name+"/state", 'offline', qos=1, retain=True)
+client.connect(args.mqtt_broker_host)
+client.loop_start()
+logger.info("MQTT loop started.")
+client.publish("homie/"+mqtt_client_name+"/state", 'online', qos=1, retain=True)
+
+
+set_shop_status(10) # Laden geschlossen. Sonst kann man den laden eröffnen durch Stromunterbrechung.
+
+last_actBasket = {} #to enable the feature: Send only on change
+client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
+client.publish("homie/"+mqtt_client_name+"/shop_overview/products", json.dumps(products), qos=1, retain=True)
+client.publish("homie/"+mqtt_client_name+"/shop_overview/products_scales", json.dumps(products_scales), qos=1, retain=True)
+
+loop_var = True
+def signal_handler(sig, frame):
+  global loop_var
+  logger.info('You pressed Ctrl+C! Preparing for graceful exit.')
+  loop_var = False
+signal.signal(signal.SIGINT, signal_handler)
+
+while loop_var:
+    ###########################################################################
+    # Process MQTT messages
+    # important: process them here in the loop, not asyncron in call_back routine
+    ###########################################################################
+
+    while not mqtt_queue.empty():
+      message = mqtt_queue.get()
+      if message is None:
+        continue
+      logger.info(f"Process queued MQTT message now: {str(message.payload.decode('utf-8'))}")
+
+      try:
         m = message.payload.decode("utf-8")
         logger.info("Topic: "+message.topic+" Message: "+m)
 
@@ -220,7 +269,7 @@ def on_message(client, userdata, message):
           list_retrieve_scales = list(products_scales.keys())
           logger.info("Start retrieve all with: {}".format(list_retrieve_scales))
 
-	#mosquitto_pub -t 'homie/shop_controller/upload_all' -n
+	      #mosquitto_pub -t 'homie/shop_controller/upload_all' -n
         if message.topic.lower() == "homie/"+mqtt_client_name+"/upload_all":
           logger.info("Start upload of settings to all scales.")
           client.publish("homie/shelf01/can-off-all", "0", qos=1, retain=False)
@@ -241,41 +290,13 @@ def on_message(client, userdata, message):
               logger.warning("Product ID {} not found. Assigned by scale: {}. Update assignment.".format(v, k))
           client.publish("homie/shelf01/can-on-all", "0", qos=1, retain=False)
 
-    except Exception as err:
+      except Exception as err:
         traceback.print_tb(err.__traceback__)
+    ############################################################################
 
 
-client = paho.Client(mqtt_client_name)
-client.on_connect = on_connect
-client.on_message = on_message
-client.on_disconnect = on_disconnect
-client.enable_logger(logger)
-logger.info("Connecting to broker "+args.mqtt_broker_host)
-
-# start with MQTT connection and set last will
-logger.info("mqtt_client_name: {}".format(mqtt_client_name))
-client.will_set("homie/"+mqtt_client_name+"/state", 'offline', qos=1, retain=True)
-client.connect(args.mqtt_broker_host)
-client.loop_start()
-logger.info("MQTT loop started.")
-client.publish("homie/"+mqtt_client_name+"/state", 'online', qos=1, retain=True)
 
 
-set_shop_status(10) # Laden geschlossen. Sonst kann man den laden eröffnen durch Stromunterbrechung.
-
-last_actBasket = {} #to enable the feature: Send only on change
-client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
-client.publish("homie/"+mqtt_client_name+"/shop_overview/products", json.dumps(products), qos=1, retain=True)
-client.publish("homie/"+mqtt_client_name+"/shop_overview/products_scales", json.dumps(products_scales), qos=1, retain=True)
-
-loop_var = True
-def signal_handler(sig, frame):
-  global loop_var
-  logger.info('You pressed Ctrl+C! Preparing for graceful exit.')
-  loop_var = False
-signal.signal(signal.SIGINT, signal_handler)
-
-while loop_var:
     actBasketProducts = {}
     actSumTotal = 0
     actProductsCount = 0
