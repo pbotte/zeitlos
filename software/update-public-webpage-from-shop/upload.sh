@@ -19,7 +19,7 @@ echo -n "crop image... "
 convert actualpic_r.jpg -crop 780x650+1390+640 actualpic_rc.jpg
 echo "done."
 
-export SSHPASS=NeueBilderkommen2345
+export SSHPASS=NeueBilderHeute463
 echo -n "upload to webpage... "
 sshpass -e sftp -oBatchMode=no -b - sftp_uploader-act-pic\@hemmes24.de@ssh.strato.de << !
    put actualpic_rc.jpg
