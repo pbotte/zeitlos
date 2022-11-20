@@ -1547,7 +1547,7 @@
             }
         ],
         "repeat": "",
-        "crontab": "00 17 * * *",
+        "crontab": "30 16 * * *",
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
