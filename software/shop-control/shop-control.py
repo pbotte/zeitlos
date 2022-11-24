@@ -358,7 +358,7 @@ while loop_var:
         next_shop_status = 7
     elif shop_status == 7: #"Warten auf: Vorbereitung für nächsten Kunden"
         client.publish("homie/"+mqtt_client_name+"/actualclient/id", -1, qos=1, retain=True)
-        client.publish("homie/fsr-control/innen/licht/set", '0', qos=1, retain=False)
+        client.publish("homie/shop_controller/generic_pir/innen_licht", '{"v":0,"type":"Generic_PIR"}', qos=1, retain=False)
         actualclientID = -1
         client.publish("homie/"+mqtt_client_name+"/prepare_for_next_customer", "1", qos=1, retain=False)
         if actProductsCount == 0: #no products withdrawn, all scales reset
@@ -380,7 +380,7 @@ while loop_var:
     elif shop_status == 13: # Fehler bei Authentifizierung
         pass # geht über Timeout weiter zu 1
     elif shop_status == 14: # Bitte Laden betreten
-        client.publish("homie/fsr-control/innen/licht/set", '1', qos=1, retain=False)
+        client.publish("homie/shop_controller/generic_pir/innen_licht", '{"v":1,"type":"Generic_PIR"}', qos=1, retain=False)
         client.publish("homie/display-power-control-02/power/set", '1', qos=1, retain=False)
         # Tür offen in MQTT-Message: Wechsel zu next_shop_status = 3
     elif shop_status == 15: # Abrechnung wird vorbereitet
