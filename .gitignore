@@ -15,3 +15,7 @@ software/docker/nodered/data/.config.users.json.backup
 software/docker/nodered/data/.config.users.json
 
 software/www/qrscanner-debug/last.png
+
+__pycache__
+software/update-public-webpage-from-shop/password
+software/shop-control/myconfig.py

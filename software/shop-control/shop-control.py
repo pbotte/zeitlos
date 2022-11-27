@@ -16,6 +16,7 @@ import mariadb #1st: sudo apt install libmariadb3 libmariadb-dev   2nd: pip inst
 import parse #pip install parse
 import signal #to catch interrupts and exit gracefully
 import queue
+import myconfig # credentials go here
 
 logging.basicConfig(level=logging.WARNING,
                     format='%(asctime)-6s %(levelname)-8s  %(message)s')
@@ -190,7 +191,7 @@ while loop_var:
       message = mqtt_queue.get()
       if message is None:
         continue
-      logger.info(f"Process queued MQTT message now: {str(message.payload.decode('utf-8'))}")
+      logger.debug(f"Process queued MQTT message now: {str(message.payload.decode('utf-8'))}")
 
       try:
         m = message.payload.decode("utf-8")
@@ -225,6 +226,9 @@ while loop_var:
         # 3 numbers, separated with spaces: time.time(), User ID, md5-hash
         if message.topic.lower() == "homie/shop_qr-scanner/qrcode_detected":
             logger.info("qrcode read: {}".format( m ))
+            if m == myconfig.Door_master_key_QR_Code_Str: #master key
+              logger.info("Master key read. Open door now.")
+              client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
             if shop_status == 1: # "Bereit, Kein Kunde im Laden"
               r=parse.parse("{time:d} {id:d} {hash:w}", m) #definition see: https://pypi.org/project/parse/
               if r: #time, user id and hash in qr code?
