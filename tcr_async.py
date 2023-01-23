@@ -37,6 +37,12 @@ def skip_command_header(msg):
     return parse_lenght_bytes(msg)
 
 
+def fmt_bytes(bytes):
+    if type(bytes) == int:
+        return fmt_bytes(bytearray([bytes]))
+    return bytes.hex(sep=' ').upper()
+
+
 def parse_lllvar(msg):
     if len(msg) < 3:
         raise Exception(f'Tried to parse LLLVAR with {len(msg)} bytes')
@@ -44,7 +50,7 @@ def parse_lllvar(msg):
     for i in range(3):
         length *= 10
         if (msg[i] & 0xF0) != 0xF0:
-            raise Exception(f'Tried to parse LLVAR with {msg[i]} as {i}th byte')
+            raise Exception(f'Tried to parse LLVAR with {fmt_bytes(msg[i])} as {i}th byte')
         length += msg[i] & 0x0F
     del msg[:3]
     if len(msg) < length:
@@ -56,7 +62,7 @@ def parse_lllvar(msg):
 
 def check_and_skip_command_header(msg, header):
     if not msg.startswith(header):
-        raise Exception(f'Found instead expected header {header}: {msg}')
+        raise Exception(f'Found instead expected header {fmt_bytes(header)}: {fmt_bytes(msg)}')
     return skip_command_header(msg)
 
 
@@ -78,7 +84,7 @@ class PTConnection:
         if msg == b'\x84\x83\x00':
             raise Exception('Unsupported or unknown command!')
         elif msg != b'\x80\x00\x00':
-            raise Exception(error.replace('%m', f'{msg}'))
+            raise Exception(error.replace('%m', fmt_bytes(msg)))
 
     async def recv_message(self):
         msg = bytearray()
@@ -118,6 +124,11 @@ class PTConnection:
     async def query_pending_pre_auth(self):
         msg = await self.send_query(b'\x06\x23\x03\x87\xFF\xFF')
         check_and_skip_command_header(msg, b'\x06\x1E')
+        if len(msg) < 4:
+            raise Exception('Preauth query response too short!')
+        if msg[:2] != b'\xB8\x87':
+            raise Exception('Preauth response data block does not start with B8 87!')
+        return None if msg[2:4] == b'\xFF\xFF' else msg[2:4]
 
 
     async def send_and_log_chat(self, data, logfile, complete_code=b'\x06\x0F', prefix=True):
@@ -147,7 +158,7 @@ def parse_tlv_entry(msg: bytearray, is_primitive: bool):
         tlv_len = int.from_bytes(msg[1:3], byteorder='big')
         del msg[:3]
     else:
-        raise Exception(f'Unexpected TLV length byte {msg[0]}')
+        raise Exception(f'Unexpected TLV length byte {fmt_bytes(msg[0])}')
     if len(msg) < tlv_len:
         raise Exception(f'Remaining data ({len(msg)} bytes) shorter than TLV entry ({tlv_len})')
     if is_primitive:
@@ -191,7 +202,7 @@ def parse_tlv_entry(msg: bytearray, is_primitive: bool):
 # parse TLV container, first byte must be x06
 def parse_tlv_containter(msg: bytearray):
     if msg[0] != 6:
-        raise Exception(f'TLV container does not start with 06 but {msg[0]}')
+        raise Exception(f'TLV container does not start with 06 but {fmt_bytes(msg[0])}')
     del msg[0]
     return parse_tlv_entry(msg, False)
 
@@ -224,7 +235,7 @@ def try_parse_intermediate_status(msg):
         if len(msg) > 0:
             res['tlv'] = parse_tlv_containter(msg)
     if len(msg) > 0:
-        raise Exception(f'Trailing bytes after intermediate status: {msg}')
+        raise Exception(f'Trailing bytes after intermediate status: {fmt_bytes(msg)}')
     return res
 
 
@@ -251,12 +262,12 @@ async def make_pt_connection(host, port):
             msg = msg[5:]
         elif msg[0] == 0x49:
             if msg[1:3] != euro_cc:
-                raise Exception(f'Received currency code {msg[1:3]} instead of expected € code {euro_cc} after registration')
+                raise Exception(f'Received currency code {fmt_bytes(msg[1:3])} instead of expected € code {fmt_bytes(euro_cc)} after registration')
             msg = msg[3:]
         elif msg[0] == 0x06:
             tlv = parse_tlv_containter(msg)
         else:
-            raise Exception(f'Received unexpected tag {msg[0]} after registration')
+            raise Exception(f'Received unexpected tag {fmt_bytes(msg[0])} after registration')
     if tlv is not None:
         supported_commands = get_recursive(('universal', 10), tlv)
         if supported_commands is not None:
@@ -275,18 +286,23 @@ async def make_pt_connection(host, port):
     if msg[0] == 0xDC:
         raise Exception('Terminal not ready because card inserted!')
     elif msg[0] != 0x00:
-        raise Exception(f'Terminal not ready - returned status byte {msg[0]}')
+        raise Exception(f'Terminal not ready - returned status byte {fmt_bytes(msg[0])}')
 
     return ptc
 
 
 async def main():
-    mqtt = aiomqtt.Client("192.168.180.3")
+    bb = b'\xAB\x01'
+    x = fmt_bytes(bb[0])
+
+    mqtt = aiomqtt.Client("192.168.180.2")
     await mqtt.connect()
 
     ptc = await make_pt_connection('192.168.180.230', 20007)
 
-    await ptc.query_pending_pre_auth()
+    rcpt_no = await ptc.query_pending_pre_auth()
+    if rcpt_no is not None:
+        raise Exception(f'There is a pending pre auth with receipt no. {fmt_bytes(rcpt_no)}')
 
     # await ptc.send_and_log_chat(
     #     data=b'\x05\x01\x03\x00\x00\x00',
@@ -298,10 +314,10 @@ async def main():
     #    logfile='auth2.log'
     # )
 
-    # await ptc.send_and_log_chat(
-    #     data=b'\x06\x22\x12\x04\x00\x00\x00\x00\x12\x34\x49\x09\x78\x19\x40\x06\x04\x40\x02\xff\x00',
-    #     logfile='preauth.log'
-    # )
+    await ptc.send_and_log_chat(
+        data=b'\x06\x22\x12\x04\x00\x00\x00\x01\x00\x00\x49\x09\x78\x19\x40\x06\x04\x40\x02\xff\x00',
+        logfile='preauth.log'
+    )
 
     await mqtt.disconnect()
 
