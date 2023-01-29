@@ -14,3 +14,5 @@ www/qrscanner-debug/last.png
 
 update-public-webpage-from-shop/password
 shop-control/myconfig.py
+
+.DS_Store
