@@ -1,10 +1,8 @@
-# Waage V3
+# Waage V4
 
-Dieses Design sieht vor, dass das Produkt nicht gewogen wird, sondern lediglich über einen Schalter festgestellt wird, dass etwas auf der Waage liegt. 
-Dies ist z.B. für Obstschalen interessant.
+* Waage aus 3D Drucker
+* Wiegen mit Wägezellen
 
-Kosten: Etwa 6€/Schalte mit Druck und Elektornik.
+Kosten: Etwa 25€/Schalte mit Druck und Elektornik.
 
 Stand: Prototyp, nicht fertig entwickelt. 
-
-Ausblick: Da eine Waage mit größerer Fläche und Wiegezellen 20€ kostet, wird dieser Ansatz aktuell nicht weiter verfolgt.
