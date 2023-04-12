@@ -1,3 +1,5 @@
 (fp_lib_table
-  (lib (name "Library_USB_A")(type "KiCad")(uri "${KIPRJMOD}/Library_USB_A.pretty")(options "")(descr ""))
+  (version 7)
+  (lib (name "Quiicconnector")(type "KiCad")(uri "${KIPRJMOD}/libs/SM04B-SRSS-TB_LF__SN_")(options "")(descr ""))
+  (lib (name "NAU")(type "KiCad")(uri "${KIPRJMOD}/libs/NAU7802")(options "")(descr ""))
 )
