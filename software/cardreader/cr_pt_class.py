@@ -48,12 +48,14 @@ class PTConnection:
         await self.recv_ack()
         return await self.recv_message()
 
-    async def do_with_timeout(self, timeout_secs, awaitable):
+    async def do_with_timeout(self, awaitable, timeout_secs):
+        msg = 1
         try:
-            await asyncio.wait_for(awaitable, timeout_secs)
+            msg = await asyncio.wait_for(awaitable, timeout_secs)
         except asyncio.TimeoutError:
             if self.mqtt_client:
                 await self.mqtt_client.publish("homie/cardreader/timeout", payload=timeout_secs)
+        return msg
 
 
     # returns pending pre_auth from PT
@@ -87,12 +89,16 @@ class PTConnection:
     async def wait_for_and_parse_status(self, msg):
         while msg.startswith(b"\x04\xFF"):
             skip_command_header(msg)
-            if self.mqtt_client and len(msg) > 3 and msg[2] == b'\x06':
+            if self.mqtt_client and len(msg) > 3 and msg[2] == 6:
                 del msg[:3]
                 tlv = parse_tlv_containter(msg)
                 if text := tlv.get(0x24):
                     if line := text.get(0x07):
-                        await self.mqtt_client.publish("homie/cardreader/text", payload=f'{{"text":{json.dumps(line.decode())}}}')
+                        if type(line) == list:
+                            line_printout = ' '.join(x.decode() for x in line)
+                        else:
+                            line_printout = line.decode()
+                        await self.mqtt_client.publish("homie/cardreader/text", payload=f'{{"text":{json.dumps(line_printout)}}}')
             msg = await self.recv_message()
         if not msg.startswith(b"\x04\x0F"):
             raise Exception(f"Instead 04 0F receivd {fmt_bytes(msg)}")
@@ -104,6 +110,8 @@ class PTConnection:
             self.logger.debug(f"wait_for_completion(): Loop {i}")
             try:
                 msg = await asyncio.wait_for(self.recv_message(), timeout=10)
+#                msg = self.do_with_timeout(self.recv_message(),10)
+                
                 if msg == b"\x06\x1E\x01\x6C":
                     self.logger.error(f"wait_for_completion(): No card within time window presented. Return: {fmt_bytes(msg)}") #Exception
                     res = 1
@@ -191,20 +199,21 @@ class PTConnection:
     
 
     # Switch into menu
+    # just sends the first few bytes and does only wait a few seconds for end service mode (leave menu by technican)
+    # currently necessary to restart software to get in sync with the PT again
     async def pt_activate_service_menu(self): # see pdf: 2.55 Activate Service-Mode (08 01)
         self.logger.debug("pt_activate_service_menu(): start")
         data = b"\x08\x01\x00"
         msg = await self.send_query(data)
         self.logger.debug("pt_activate_service_menu(): wait_for_and_parse_status")
-        res = await self.wait_for_and_parse_status(msg)
-        self.logger.debug(f"pt_activate_service_menu(): wait_for_completion. result: {res}")
+#        res = await self.wait_for_and_parse_status(msg)
+#        self.logger.debug(f"pt_activate_service_menu(): wait_for_completion. result: {res}")
         res2 = await self.wait_for_completion(1)
         self.logger.debug(f"pt_activate_service_menu(): completed. result: {res2}")
-        res["return_code_completion"] = res2
+#        res["return_code_completion"] = res2
         if self.mqtt_client:
             await self.mqtt_client.publish("homie/cardreader/pt_activate_service_menu", payload=f"{res2}")
-        return res
-    
+        return res2    
 
     # Request directly some money, wihtout pre_auth
     async def authorization(self, amount_cents): #0see pdf: 0601. Request money without preauth

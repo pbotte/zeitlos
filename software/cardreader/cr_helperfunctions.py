@@ -79,6 +79,12 @@ def encode_bcd(width, num):
             break
     return res
 
+def convert_ll_var_bcd(msg): #for bitmap 22, LL VAR BCD
+    s = msg.hex()
+    if any(map(lambda c: c not in "0123456789fe", s)): #f for padding, e for masking, see docu
+        raise Exception(f'Tried to parse "{s}" as BCD')
+    return s
+
 
 def check_and_skip_command_header(msg, header):
     if not msg.startswith(header):
@@ -190,7 +196,7 @@ def parse_bmps(msg):
         elif bmp == 0x19:
             res['payment-type'] = pop_byte(msg)
         elif bmp == 0x22:
-            res['ef-id'] = parse_lvar(2, msg)
+            res['ef-id'] = convert_ll_var_bcd(parse_lvar(2, msg))
         elif bmp == 0x29:
             res['terminal-id'] = parse_bcd(msg, 4)
         elif bmp == 0x3B:

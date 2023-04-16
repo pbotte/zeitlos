@@ -85,7 +85,7 @@ async def main():
                 async with client.messages() as messages:
                     await client.subscribe("#")
                     async for message in messages:
-                        print(message.payload.decode())
+                        logger.debug(f"MQTT message: {message.payload.decode()}")
                         if message.topic.matches("homie/cardreader/cmd/end_of_day"):
                             await ptc.end_of_day()
                         if message.topic.matches("homie/cardreader/cmd/auth"):
@@ -125,7 +125,7 @@ async def main():
                             await ptc.pt_activate_service_menu()
 
         except aiomqtt.MqttError as error:
-            print(f'Error "{error}". Reconnecting in {reconnect_interval} seconds.')
+            logger.error(f'Error "{error}". Reconnecting in {reconnect_interval} seconds.')
             await asyncio.sleep(reconnect_interval)
 
     # reverse pre_auth
