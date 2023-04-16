@@ -79,6 +79,13 @@ class PTConnection:
 
     async def wait_for_and_parse_status(self, msg):
         while msg.startswith(b"\x04\xFF"):
+            skip_command_header(msg)
+            if self.mqtt_client and len(msg) > 3 and msg[2] == b'\x06':
+                del msg[:3]
+                tlv = parse_tlv_containter(msg)
+                if text := tlv.get(0x24):
+                    if line := text.get(0x07):
+                        await self.mqtt_client.publish("homie/cardreader/text", payload=f'{{"text":{json.dumps(line.decode())}}}')
             msg = await self.recv_message()
         if not msg.startswith(b"\x04\x0F"):
             raise Exception(f"Instead 04 0F receivd {fmt_bytes(msg)}")
