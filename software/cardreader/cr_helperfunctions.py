@@ -252,6 +252,6 @@ def parse_result_msg(msg, logger):
     result_code = pop_byte(msg)
     if result_code != 0:
         #in case an error occured, eg non card presented, etc.
-        logger.debug(f'parse_result_msg(): result code not 00 but {fmt_bytes(result_code)}!')
+        logger.info(f'parse_result_msg(): result code not 00 but {fmt_bytes(result_code)}!')
     return parse_bmps(msg)
 
