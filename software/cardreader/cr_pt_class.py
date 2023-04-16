@@ -48,6 +48,13 @@ class PTConnection:
         await self.recv_ack()
         return await self.recv_message()
 
+    async def do_with_timeout(self, timeout_secs, awaitable):
+        try:
+            await asyncio.wait_for(awaitable, timeout_secs)
+        except asyncio.TimeoutError:
+            if self.mqtt_client:
+                await self.mqtt_client.publish("homie/cardreader/timeout", payload=timeout_secs)
+
 
     # returns pending pre_auth from PT
     # 1st parameter: receipt_no 
