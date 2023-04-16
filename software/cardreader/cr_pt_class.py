@@ -122,7 +122,7 @@ class PTConnection:
         if self.mqtt_client:
             if res2==0: #succesful
                 data = {"amount": res['amount'], "trace": res['trace'], "payment-type": res['payment-type'], "receipt-no": res['receipt-no'], "card-type": res['card-type'], "amount_book": -1}
-                await self.mqtt_client.publish("data_for_book_total_json", payload=json.dumps(data))
+                await self.mqtt_client.publish("homie/cardreader/data_for_book_total_json", payload=json.dumps(data))
             
         return res
 
@@ -155,6 +155,8 @@ class PTConnection:
         res2 = await self.wait_for_completion(1)
         self.logger.debug(f"book_total(): completed. result: {res2}")
         res["return_code_completion"] = res2
+        if self.mqtt_client:
+            await self.mqtt_client.publish("homie/cardreader/book_total", payload=f"{res2}")
         return res
     
     # Abort
@@ -169,6 +171,24 @@ class PTConnection:
         res2 = await self.wait_for_completion(1)
         self.logger.debug(f"abort(): completed. result: {res2}")
         res["return_code_completion"] = res2
+        if self.mqtt_client:
+            await self.mqtt_client.publish("homie/cardreader/abort", payload=f"{res2}")
+        return res
+    
+
+    # Switch into menu
+    async def pt_activate_service_menu(self): # see pdf: 2.55 Activate Service-Mode (08 01)
+        self.logger.debug("pt_activate_service_menu(): start")
+        data = b"\x08\x01\x00"
+        msg = await self.send_query(data)
+        self.logger.debug("pt_activate_service_menu(): wait_for_and_parse_status")
+        res = await self.wait_for_and_parse_status(msg)
+        self.logger.debug(f"pt_activate_service_menu(): wait_for_completion. result: {res}")
+        res2 = await self.wait_for_completion(1)
+        self.logger.debug(f"pt_activate_service_menu(): completed. result: {res2}")
+        res["return_code_completion"] = res2
+        if self.mqtt_client:
+            await self.mqtt_client.publish("homie/cardreader/pt_activate_service_menu", payload=f"{res2}")
         return res
     
 
@@ -191,6 +211,8 @@ class PTConnection:
         res2 = await self.wait_for_completion(1)
         self.logger.debug(f"authorization(): completed. result: {res2}")
         res["return_code_completion"] = res2
+        if self.mqtt_client:
+            await self.mqtt_client.publish("homie/cardreader/authorization", payload=f"{res2}")
         return res
     
 
@@ -211,6 +233,8 @@ class PTConnection:
         res2 = await self.wait_for_completion(1)
         self.logger.debug(f"pre_authorisation_reversal(): completed. result: {res2}")
         res["return_code_completion"] = res2
+        if self.mqtt_client:
+            await self.mqtt_client.publish("homie/cardreader/pre_authorisation_reversal", payload=f"{res2}")
         return res
 
 
@@ -229,7 +253,7 @@ class PTConnection:
         self.logger.debug(f"end_of_day(): completed. result: {res2}")
         res["return_code_completion"] = res2
         if self.mqtt_client:
-            await self.mqtt_client.publish("end_of_day", payload="done")
+            await self.mqtt_client.publish("homie/cardreader/end_of_day", payload="done")
         return res
 
 

@@ -86,23 +86,23 @@ async def main():
                     await client.subscribe("#")
                     async for message in messages:
                         print(message.payload.decode())
-                        if message.topic.matches("end_of_day"):
+                        if message.topic.matches("homie/cardreader/cmd/end_of_day"):
                             await ptc.end_of_day()
-                        if message.topic.matches("au"):
+                        if message.topic.matches("homie/cardreader/cmd/auth"):
                             await ptc.authorization(int(message.payload.decode()))
-                        if message.topic.matches("pre"):
+                        if message.topic.matches("homie/cardreader/cmd/pre"):
                             preauth_res = await ptc.send_preauth(
                                 int(message.payload.decode())
                             )
                             await client.publish(
                                 "preauth_res", payload=f"{preauth_res}"
                             )
-                        if message.topic.matches("list"):
+                        if message.topic.matches("homie/cardreader/cmd/list"):
                             rcpt_no, list_rcpt_no = await ptc.query_pending_pre_auth()
                             await client.publish(
                                 "list_rcpt_no", payload=f"{list_rcpt_no}"
                             )
-                        if message.topic.matches("book"):
+                        if message.topic.matches("homie/cardreader/cmd/book"):
                             if "amount" in preauth_res:
                                 book_total_res = await ptc.book_total(
                                     preauth_res, int(message.payload.decode())
@@ -110,8 +110,7 @@ async def main():
                                 await client.publish(
                                     "book_total_res", payload=f"{book_total_res}"
                                 )
-                        if message.topic.matches("book_json"):
-                            #                            try:
+                        if message.topic.matches("homie/cardreader/cmd/book_json"):
                             data = json.loads(message.payload.decode())
                             if "amount_book" in data:
                                 book_total_res = await ptc.book_total(
@@ -120,10 +119,10 @@ async def main():
                                 await client.publish(
                                     "book_total_res", payload=f"{book_total_res}"
                                 )
-                        #                            except:
-                        #                                logger.error("Error during book_json.")
-                        if message.topic.matches("abort"):
+                        if message.topic.matches("homie/cardreader/cmd/abort"):
                             await ptc.abort()
+                        if message.topic.matches("homie/cardreader/cmd/pt_activate_service_menu"):
+                            await ptc.pt_activate_service_menu()
 
         except aiomqtt.MqttError as error:
             print(f'Error "{error}". Reconnecting in {reconnect_interval} seconds.')
