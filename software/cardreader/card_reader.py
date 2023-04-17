@@ -75,8 +75,10 @@ async def main():
     # filename = 'book_total.log'
     # res = parse_res_from_chatfile(filename)
 
-    mqtt_client = aiomqtt.Client(hostname="192.168.178.93", port=1884)
-    ptc = await make_pt_connection("192.168.179.167", 20007, mqtt_client, logger)
+#    mqtt_client = aiomqtt.Client(hostname="192.168.178.93", port=1884)
+    mqtt_client = aiomqtt.Client(hostname="192.168.180.2", port=1883)
+#    ptc = await make_pt_connection("192.168.179.167", 20007, mqtt_client, logger)
+    ptc = await make_pt_connection("192.168.180.230", 20007, mqtt_client, logger)
 
     reconnect_interval = 5  # In seconds
     while True:

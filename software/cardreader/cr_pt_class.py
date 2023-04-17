@@ -109,9 +109,9 @@ class PTConnection:
         for i in range(count):
             self.logger.debug(f"wait_for_completion(): Loop {i}")
             try:
-                msg = await asyncio.wait_for(self.recv_message(), timeout=10)
-#                msg = self.do_with_timeout(self.recv_message(),10)
-                
+#                msg = await asyncio.wait_for(self.recv_message(), timeout=10)
+                msg = await self.do_with_timeout(self.recv_message(),10)
+
                 if msg == b"\x06\x1E\x01\x6C":
                     self.logger.error(f"wait_for_completion(): No card within time window presented. Return: {fmt_bytes(msg)}") #Exception
                     res = 1
