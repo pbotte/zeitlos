@@ -200,7 +200,7 @@ def parse_bmps(msg):
         elif bmp == 0x29:
             res['terminal-id'] = parse_bcd(msg, 4)
         elif bmp == 0x3B:
-            res['auth-id'] = pop_bytes(msg, 8)
+            res['auth-id'] = pop_bytes(msg, 8).hex()
         elif bmp == 0x49:
             res['cc'] = parse_bcd(msg, 2)
         elif bmp == 0x4C:
@@ -216,7 +216,7 @@ def parse_bmps(msg):
         elif bmp == 0xBA:
             res['auth-id-param'] = pop_bytes(msg, 5)
         elif bmp == 0x2A:
-            res['VU-number'] = pop_bytes(msg, 15)
+            res['VU-number'] = pop_bytes(msg, 15).decode('windows-1252')
         elif bmp == 0x3C:
             res['additional text'] = parse_lvar(3, msg)
         elif bmp == 0x60:
@@ -226,7 +226,7 @@ def parse_bmps(msg):
         elif bmp == 0x88:
             res['turnover-no'] = parse_bcd(msg, 3)
         elif bmp == 0x8B:
-            res['card-name'] = parse_lvar(2, msg)
+            res['card-name'] = parse_lvar(2, msg).decode('windows-1252').replace("\x00","")
         elif bmp == 0x06:
             tlv = parse_tlv_containter(msg)
             for tag, val in tlv.items():
