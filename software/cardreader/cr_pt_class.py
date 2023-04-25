@@ -110,13 +110,25 @@ class PTConnection:
 
     async def wait_for_completion(self, count):
         res = 0
-        for i in range(count):
+        i = 0
+        while (i:=i+1) <= count:
             self.logger.debug(f"wait_for_completion(): Loop {i}")
             try:
 #                msg = await asyncio.wait_for(self.recv_message(), timeout=10)
                 msg = await self.do_with_timeout(self.recv_message(),10)
-
-                if msg == b"\x06\x1E\x01\x6C":
+                if msg.startswith(b"\x06\xD3"): # text block
+                    i -= 1
+                    if self.mqtt_client:
+                        skip_command_header(msg)
+                        if pop_byte(msg) != 0x06:
+                            raise Exception('Test block data does not start with 06')
+                        tlv = parse_tlv_containter(msg)
+                        if 0x25 in tlv and 7 in tlv[0x25]:
+                            await self.mqtt_client.publish("homie/cardreader/text_block",
+                                payload="\n".join(map(lambda l: l.decode(encoding=encoding), tlv[0x25][7])))
+                        else:
+                            self.logger.error("text block in 06 D3 message not found")
+                elif msg == b"\x06\x1E\x01\x6C":
                     self.logger.error(f"wait_for_completion(): No card within time window presented. Return: {fmt_bytes(msg)}") #Exception
                     res = 1
                 elif msg != b"\x06\x0F\x00":
