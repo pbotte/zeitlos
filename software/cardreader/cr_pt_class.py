@@ -5,6 +5,10 @@ import json
 from cr_helperfunctions import *
 from cr_chatfile import *
 
+
+encoding = 'latin-1'
+
+
 class PTConnection:
     def __init__(self, reader: asyncio.StreamReader, writer: asyncio.StreamWriter, mqtt_client: aiomqtt.Client = None, logger:logging=None):
         self.reader = reader
@@ -95,9 +99,9 @@ class PTConnection:
                 if text := tlv.get(0x24):
                     if line := text.get(0x07):
                         if type(line) == list:
-                            line_printout = ' '.join(x.decode() for x in line)
+                            line_printout = ' '.join(x.decode(encoding=encoding) for x in line)
                         else:
-                            line_printout = line.decode()
+                            line_printout = line.decode(encoding=encoding)
                         await self.mqtt_client.publish("homie/cardreader/text", payload=f'{{"text":{json.dumps(line_printout)}}}')
             msg = await self.recv_message()
         if not msg.startswith(b"\x04\x0F"):

@@ -87,14 +87,14 @@ async def main():
                 async with client.messages() as messages:
                     await client.subscribe("#")
                     async for message in messages:
-                        logger.debug(f"MQTT message: {message.payload.decode()}")
+                        logger.debug(f"MQTT message: {message.payload.decode(encoding=encoding)}")
                         if message.topic.matches("homie/cardreader/cmd/end_of_day"):
                             await ptc.end_of_day()
                         if message.topic.matches("homie/cardreader/cmd/auth"):
-                            await ptc.authorization(int(message.payload.decode()))
+                            await ptc.authorization(int(message.payload.decode(encoding=encoding)))
                         if message.topic.matches("homie/cardreader/cmd/pre"):
                             preauth_res = await ptc.send_preauth(
-                                int(message.payload.decode())
+                                int(message.payload.decode(encoding=encoding))
                             )
                             await client.publish(
                                 "preauth_res", payload=f"{preauth_res}"
@@ -107,13 +107,13 @@ async def main():
                         if message.topic.matches("homie/cardreader/cmd/book"):
                             if "amount" in preauth_res:
                                 book_total_res = await ptc.book_total(
-                                    preauth_res, int(message.payload.decode())
+                                    preauth_res, int(message.payload.decode(encoding=encoding))
                                 )
                                 await client.publish(
                                     "book_total_res", payload=f"{book_total_res}"
                                 )
                         if message.topic.matches("homie/cardreader/cmd/book_json"):
-                            data = json.loads(message.payload.decode())
+                            data = json.loads(message.payload.decode(encoding=encoding))
                             if "amount_book" in data:
                                 book_total_res = await ptc.book_total(
                                     data, data["amount_book"]
