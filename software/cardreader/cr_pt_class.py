@@ -99,9 +99,12 @@ class PTConnection:
                 if text := tlv.get(0x24):
                     if line := text.get(0x07):
                         if type(line) == list:
+<<<<<<< HEAD
                             line_printout = ' '.join(x.decode(encoding=encoding) for x in line)
                         else:
                             line_printout = line.decode(encoding=encoding)
+                        print(f"{line_printout=}")
+>>>>>>> 2129d3772906c32054af30d080b5cad2ac95875b
                         await self.mqtt_client.publish("homie/cardreader/text", payload=f'{{"text":{json.dumps(line_printout)}}}')
             msg = await self.recv_message()
         if not msg.startswith(b"\x04\x0F"):
