@@ -105,6 +105,20 @@ class PTConnection:
                         print(f"{line_printout=}")
                         await self.mqtt_client.publish("homie/cardreader/text", payload=f'{{"text":{json.dumps(line_printout)}}}')
             msg = await self.recv_message()
+
+        if msg.startswith(b"\x06\xD3"): # text block
+          if self.mqtt_client:
+                        skip_command_header(msg)
+                        if pop_byte(msg) != 0x06:
+                            raise Exception('Test block data does not start with 06')
+                        tlv = parse_tlv_containter(msg)
+                        if 0x25 in tlv and 7 in tlv[0x25]:
+                            await self.mqtt_client.publish("homie/cardreader/text_block",
+                                payload="\n".join(map(lambda l: l.decode(encoding=encoding), tlv[0x25][7])))
+                        else:
+                            self.logger.error("text block in 06 D3 message not found")
+          msg = await self.recv_message()
+
         if not msg.startswith(b"\x04\x0F"):
             raise Exception(f"Instead 04 0F receivd {fmt_bytes(msg)}")
         return parse_result_msg(msg, self.logger)

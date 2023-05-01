@@ -13,7 +13,7 @@ async def make_pt_connection(host, port, mqtt_client, logger):
 
     # registration
     msg = await ptc.send_query(
-        b"\x06\x00\x10\x00\x00\x00\x08\x09\x78\x03\x00\x06\x06\x26\x04\x0a\x02\x06\xd3"
+        b"\x06\x00\x10\x00\x00\x00\x9e\x09\x78\x03\x00\x06\x06\x26\x04\x0a\x02\x06\xd3"
     )
     check_and_skip_command_header(msg, b"\x06\x0F")
     tlv = None
@@ -76,7 +76,7 @@ async def main():
     # res = parse_res_from_chatfile(filename)
 
 #    mqtt_client = aiomqtt.Client(hostname="192.168.178.93", port=1884)
-    mqtt_client = aiomqtt.Client(hostname="192.168.180.3", port=1883)
+    mqtt_client = aiomqtt.Client(hostname="192.168.180.2", port=1883)
 #    ptc = await make_pt_connection("192.168.179.167", 20007, mqtt_client, logger)
     ptc = await make_pt_connection("192.168.180.230", 20007, mqtt_client, logger)
 
