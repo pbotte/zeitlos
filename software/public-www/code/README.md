@@ -9,6 +9,9 @@ Display some QR code to retrieve invoices as PDF. Call:
 
 ## invoice.php
 
+INSTALL: https://github.com/tecnickcom/tcpdf
+
+
 Erzeugt die Rechnung als PDF oder HTML output.
 
 ```
