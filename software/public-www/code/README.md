@@ -19,7 +19,12 @@ mit dem zusätzlichen Parameter `out=pdf` (default) oder `out=html` können die 
 
 Der Parameter `d=` übernimmt im JSON-format die Daten, in `c=` wird ein Check abgelegt.
 
-Beispiel Daten (für `d`):
+Das Datenformat: 
+- `p` enthält ein Array mit den Produkten. Jedes Produkt ist ein Array mit (Produktname, Anzahl, Einzelpreis, UST.-ID). Die UST.-ID kann sein 0=0%, 1=reduzierter Satz, 2= voller Satz.
+- `c` der Text vom Kartenterminal
+- `t` der Zeitpunkt der Rechnung als Unixtimestamp.
+
+Beispiel-Daten (für `d`):
 ```
 {"d":{"p":[["Produkt 1",1,42.5,0],["Produkt 2",5,5.2,1],["Birnen",3,2.2,2],["Produkt 3",3,10,2]],"c":"add card text","t": 1683378472}}
 ```
