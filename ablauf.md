@@ -1,33 +1,43 @@
 # Mögliche Zustände Shop_Controller
 ```mermaid
 graph TD
-  AA["Geräte Initialisierung (0)"]
-  A["Bereit, Kein Kunde im Laden (1)"]
-subgraph Kunde vor dem laden
-  AF["Fehler bei Authentifizierung (13)"]
-  B["Kunde authentifiziert / Waagen tara wird ausgeführt (2)"]
+subgraph Vorbereitung
+  AA["Geräte Initialisierung (0)"]:::StyleHighlightInit
+  G["Warten auf:\n Vorbereitung für nächsten Kunden\nKartenterminal bereit? (7)"]
+end  
+subgraph Kunde vor dem Laden
+  A["Bereit\nKein Kunde im Laden\nKartenterminal aktiv (1)"]:::StyleHighlight
+  AF["Fehler bei Kartenterminal (13)"]:::StyleHighlightError
+  AF2["Timeout Kartenterminal (16)"]
+  B["Kunde authentifiziert/\nWaagen tara wird ausgeführt (2)"]
   BB["Bitte Laden betreten (14)"]
 end
 subgraph Kunde im Laden am Einkaufen
   C["Kunde betritt/verlässt gerade den Laden (3)"]
   CC["Kunde möglicherweise im Laden (11)"]
-  CCC["Kunde sicher im Laden (12)"]
-  D["Möglicherweise: Einkauf finalisiert / Kunde nicht mehr im Laden (4)"]
-  Z["Kunde benötigt Hilfe (9)"]
+  CCC["Kunde sicher im Laden (12)"]:::StyleHighlight
+  D["Möglicherweise: Einkauf finalisiert /\nKunde nicht mehr im Laden (4)"]
+  Z["Kunde benötigt Hilfe (9)"]:::StyleHighlightError
 end
-  DD["Sicher: Kunde nicht mehr im Laden. Abrechnung wird vorbereitet (15)"]
-  E["Einkauf beendet und abgerechnet (5)"]
-  G["Warten auf: Vorbereitung für nächsten Kunden (7)"]
+
+subgraph Kunde vor dem Laden, Bezahlvorgang
+  DD["Sicher: Kunde nicht mehr im Laden.\nKartenterminal: buchen! (15)"]
+  DD2["Warten auf:\nKartenterminal Buchung erfolgreich (17)"]
+  E["Einkauf abgerechnet\nKassenbon-Anzeige (5)"]
+end
+
 subgraph Permanente Zustände
   W["Laden geschlossen (10)"]
-  Y["Technischer Fehler aufgetreten (8)"]
+  Y["Technischer Fehler aufgetreten (8)"]:::StyleHighlightError
 end
   AA ==> G
   AA --> |Timeout| Y
-  A ==> |gültiger QR-Code| B
-  A ==> |ungültiger QR-Code| AF
+  A ==> |Kartenterminal gültig| B
+  A ==> |Timeout von Terminal| AF2
+  AF2 ==> |Timeout, 1 Sek.| A
+  A ==> |Fehler vom Kartenterminal| AF
   B ==> |Waagen Tara erfolgreich| BB
-  AF --> |Timeout| A
+  AF --> |Timeout| G
   B --> |Timeout| Y
   BB --> |Timeout| G
   BB ==> |Türkontakt = offen| C
@@ -41,13 +51,18 @@ end
   D --> |Timeout: nach 5 Sek.| DD
   D ==> |Tür=offen| C
   D ==> |Distanzsensor=im Laden| CCC
-  DD ==> E
+  DD ==> DD2
+  DD2 ==> E
+  DD2 ==>|Fehler / Timeout| Y
   DD --> |Timeout| Y
-  E ==> G
-  E --> |Timeout| Y
+  E --> |Timeout, 60Sec.| G
   G ==> A
   G --> |Timeout| Y
-  
+
+classDef StyleHighlightInit fill:#0f0,color:#000
+classDef StyleHighlight fill:#f96,color:#000
+classDef StyleHighlightError fill:#f00,color:#000
+
 ```
 
 # Nicht ganz aktuell:
