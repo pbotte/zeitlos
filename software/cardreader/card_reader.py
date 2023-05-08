@@ -91,7 +91,10 @@ async def main():
                         if message.topic.matches("homie/cardreader/cmd/end_of_day"):
                             await ptc.end_of_day()
                         if message.topic.matches("homie/cardreader/cmd/auth"):
-                            await ptc.authorization(int(message.payload.decode(encoding=encoding)))
+                            res = await ptc.authorization(int(message.payload.decode(encoding=encoding)))
+                            await client.publish(
+                                "auth_res", payload=f"{res}"
+                            )
                         if message.topic.matches("homie/cardreader/cmd/pre"):
                             preauth_res = await ptc.send_preauth(
                                 int(message.payload.decode(encoding=encoding))

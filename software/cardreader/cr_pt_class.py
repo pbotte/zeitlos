@@ -28,6 +28,34 @@ class PTConnection:
         msg = await self.recv_message()
         if msg == b"\x84\x83\x00":
             raise Exception("Unsupported or unknown command!")
+
+        elif msg.startswith(b"\x06\xD3"): # text block
+                    if self.mqtt_client:
+                        skip_command_header(msg)
+                        if pop_byte(msg) != 0x06:
+                            raise Exception('Test block data does not start with 06')
+                        tlv = parse_tlv_containter(msg)
+                        if 0x25 in tlv and 7 in tlv[0x25]:
+                            await self.mqtt_client.publish("homie/cardreader/text_block",
+                                payload="\n".join(map(lambda l: l.decode(encoding=encoding), tlv[0x25][7])))
+                        else:
+                            self.logger.error("text block in 06 D3 message not found")
+
+        elif msg.startswith(b"\x04\xFF"):
+                  skip_command_header(msg)
+                  if self.mqtt_client and len(msg) > 3 and msg[2] == 6:
+                      del msg[:3]
+                      tlv = parse_tlv_containter(msg)
+                      if text := tlv.get(0x24):
+                          if line := text.get(0x07):
+                              if type(line) == list:
+                                  line_printout = ' '.join(x.decode(encoding=encoding) for x in line)
+                              else:
+                                  line_printout = line.decode(encoding=encoding)
+                              print(f"{line_printout=}")
+                              await self.mqtt_client.publish("homie/cardreader/text", payload=f'{{"text":{json.dumps(line_printout)}}}')
+
+
         elif msg != b"\x80\x00\x00":
             raise Exception(error.replace("%m", fmt_bytes(msg)))
 
@@ -129,8 +157,8 @@ class PTConnection:
         while (i:=i+1) <= count:
             self.logger.debug(f"wait_for_completion(): Loop {i}")
             try:
-#                msg = await asyncio.wait_for(self.recv_message(), timeout=10)
-                msg = await self.do_with_timeout(self.recv_message(),10)
+                msg = await asyncio.wait_for(self.recv_message(), timeout=10)
+#                msg = await self.do_with_timeout(self.recv_message(),10)
                 if msg.startswith(b"\x06\xD3"): # text block
                     i -= 1
                     if self.mqtt_client:
@@ -143,11 +171,30 @@ class PTConnection:
                                 payload="\n".join(map(lambda l: l.decode(encoding=encoding), tlv[0x25][7])))
                         else:
                             self.logger.error("text block in 06 D3 message not found")
+
+                elif msg.startswith(b"\x04\xFF"):
+                  skip_command_header(msg)
+                  if self.mqtt_client and len(msg) > 3 and msg[2] == 6:
+                      del msg[:3]
+                      tlv = parse_tlv_containter(msg)
+                      if text := tlv.get(0x24):
+                          if line := text.get(0x07):
+                              if type(line) == list:
+                                  line_printout = ' '.join(x.decode(encoding=encoding) for x in line)
+                              else:
+                                  line_printout = line.decode(encoding=encoding)
+                              print(f"{line_printout=}")
+                              await self.mqtt_client.publish("homie/cardreader/text", payload=f'{{"text":{json.dumps(line_printout)}}}')
+
                 elif msg == b"\x06\x1E\x01\x6C":
                     self.logger.error(f"wait_for_completion(): No card within time window presented. Return: {fmt_bytes(msg)}") #Exception
                     res = 1
-                elif msg != b"\x06\x0F\x00":
+                elif msg == b"\x06\x0F\x00":
+                    self.logger.error(f"wait_for_completion(): Received completion, with: {fmt_bytes(msg)}")
+                    res = 0 #payment completed, often in 2nd loop.
+                else:
                     self.logger.error(f"wait_for_completion(): Received not completion but {fmt_bytes(msg)}") #Exception
+                    #this often happens in the first loop, when some text data is received
                     res = 2
             except asyncio.TimeoutError:
                 self.logger.debug("wait_for_completion(): Gave up waiting, task canceled")
@@ -262,7 +309,7 @@ class PTConnection:
         self.logger.debug("authorization(): wait_for_and_parse_status")
         res = await self.wait_for_and_parse_status(msg)
         self.logger.debug(f"authorization(): wait_for_completion. result: {res}")
-        res2 = await self.wait_for_completion(1)
+        res2 = await self.wait_for_completion(2)
         self.logger.debug(f"authorization(): completed. result: {res2}")
         res["return_code_completion"] = res2
         if self.mqtt_client:
