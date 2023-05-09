@@ -46,7 +46,9 @@ $add_text = $data['d']['c'];
 if (array_key_exists('p', $data['d'])) {
   $rechnungs_posten = $data['d']['p'];
 }
-$timestamp = $data['d']['t'];
+if (array_key_exists('t', $data['d'])) {
+  $timestamp = $data['d']['t'];
+}
 
 
 //Auflistung verschiedenen Posten im Format [Produktbezeichnung, Menge, Einzelpreis, MWSt.-Klasse]

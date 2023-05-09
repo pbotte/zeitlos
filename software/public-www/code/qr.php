@@ -1,5 +1,5 @@
 <?php
-    include "qr/lib/full/qrlib.php";
+    include "../qr/qr/lib/full/qrlib.php";
  
     $errorCorrectionLevel = 'M';
     if (isset($_GET['level']) && in_array($_GET['level'], array('L','M','Q','H')))
