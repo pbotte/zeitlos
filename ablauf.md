@@ -36,6 +36,7 @@ end
   A ==> |Timeout von Terminal| AF2
   AF2 ==> |Timeout, 1 Sek.| A
   A ==> |Fehler vom Kartenterminal| AF
+  A ==> |Timeout nach > 60Sec. / Terminal erzeugt kein Timeout| Y
   B ==> |Waagen Tara erfolgreich| BB
   AF --> |Timeout| G
   B --> |Timeout| Y
@@ -56,7 +57,7 @@ end
   DD2 ==>|Fehler / Timeout| Y
   DD --> |Timeout| Y
   E --> |Timeout, 60Sec.| G
-  G ==> A
+  G ==> AF2
   G --> |Timeout| Y
 
 classDef StyleHighlightInit fill:#0f0,color:#000
