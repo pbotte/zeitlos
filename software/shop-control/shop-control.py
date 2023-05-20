@@ -83,6 +83,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe("homie/"+mqtt_client_name+"/retrieve_all")
         client.subscribe("homie/shop-track/+/distance")
         client.subscribe("homie/door/#")
+        client.subscribe("homie/cardreader/#")
 
         logger.debug("MQTT: Subscribed to all topics")
     else:
@@ -94,29 +95,45 @@ def on_disconnect(client, userdata, rc):
         logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
 
 shop_status = 0 # Needs to be different from 10, to make set_shop_status(10) later make work
-shop_status_descr = {0: "Geräte Initialisierung", 1: "Bereit, Kein Kunde im Laden", 2: "Kunde authentifiziert/Waagen tara",
-    3: "Kunde betritt/verlässt gerade den Laden", 4: "Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden",
-    5: "Einkauf beendet und abgerechnet", 6: "ungenutzt",
-    7: "Warten auf: Vorbereitung für nächsten Kunden", 8: "Technischer Fehler aufgetreten", 9: "Kunde benötigt Hilfe",
-    10: "Laden geschlossen", 11: "Kunde möglicherweise im Laden", 12:"Kunde sicher im Laden", 13:"Fehler bei Authentifizierung",
-    14: "Bitte Laden betreten", 15: "Kunde nicht mehr im Laden. Abrechnung wird vorbereitet." }
+shop_status_descr = {
+    0: "Geräte Initialisierung", 
+    1: "Bereit, Kein Kunde im Laden. Kartenterminal aktiv ", 
+    2: "Kunde authentifiziert/Waagen tara wird ausgeführt",
+    3: "Kunde betritt/verlässt gerade den Laden", 
+    4: "Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden",
+    5: "Einkauf abgerechnet, Kassenbon-Anzeige", 
+    6: "ungenutzt",
+    7: "Warten auf: Vorbereitung für nächsten Kunden. Kartenterminal bereit?", 
+    8: "Technischer Fehler aufgetreten", 
+    9: "Kunde benötigt Hilfe",
+    10: "Laden geschlossen", 
+    11: "Kunde möglicherweise im Laden", 
+    12: "Kunde sicher im Laden", 
+    13: "Fehler bei Kartenterminal",
+    14: "Bitte Laden betreten", 
+    15: "Sicher: Kunde nicht mehr im Laden. Kartenterminal: buchen!",
+    16: "Timeout Kartenterminal",
+    17: "Warten auf: Kartenterminal Buchung erfolgreich",
+    }
 shop_status_timeout = {
     0: {'time':10,'next':8}, #Geräte Initialisierung
-    1: None, #Bereit, Keine Kunde im Laden
-    2: {'time':10,'next':8}, #Kunde authentifiziert
+    1: {'time':120,'next':8}, #Bereit, Keine Kunde im Laden. Kartenterminal aktiv. Timeout da ein Timeout vom Terminal erwartet wird
+    2: {'time':10,'next':8}, #Kunde authentifiziert/Waagen tara wird ausgeführt
     3: {'time':60*10,'next':9}, #Kunde betritt/verlässt gerade den Laden
     4: {'time':5,'next':15}, #Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden
-    5: {'time':60,'next':8}, # Einkauf beendet und abgerechnet
+    5: {'time':60,'next':7}, # Einkauf abgerechnet, Kassenbon-Anzeige
     6: None, # Zustand aktuell nicht genutzt
     7: {'time':30,'next':8}, #Warten auf: Vorbereitung für nächsten Kunden
     8: None, # Technischer Fehler aufgetreten
     9: None, # Kunde benötigt Hilfe
     10: None, # Laden geschlossen
     11: {'time': 5,'next':4}, # Kunde möglicherweise im Laden? Falls 5 Sek. kein Kunde im Laden -> Wechsel zu 4
-    12: {'time':60*10,'next':9}, # Kunde sicher im Laden
-    13: {'time': 3,'next':1}, # Fehler bei Authentifizierung
-    14: {'time': 5,'next':7 }, #Bitte Laden betreten
-    15: {'time': 60,'next': 8} #Sicher: Kunde nicht mehr im Laden. Abrechnung wird vorbereitet
+    12: {'time':60*15,'next':9}, # Kunde sicher im Laden
+    13: {'time': 3,'next':7}, # Fehler bei Kartenterminal
+    14: {'time': 15,'next':15}, # Bitte Laden betreten
+    15: {'time': 60,'next': 8}, # Sicher: Kunde nicht mehr im Laden. Kartenterminal buchen!
+    16: {'time': 2,'next': 1}, # Timeout Kartenterminal
+    17: {'time': 30,'next': 8}, # Warten auf: Kartenterminal Buchung erfolgreich
     }
 shop_status_last_change_timestamp = time.time()
 
@@ -127,7 +144,7 @@ def set_shop_status(v):
         return
     shop_status = v
     shop_status_last_change_timestamp = time.time()
-    logger.info("Set Shop Status: {}".format(shop_status_descr[shop_status]))
+    logger.info(f"Set Shop Status to {shop_status}: {shop_status_descr[shop_status]}")
 
     client.publish("homie/"+mqtt_client_name+"/shop_status", shop_status, qos=1, retain=True)
     client.publish("homie/"+mqtt_client_name+"/shop_status_last_change_timestamp", shop_status_last_change_timestamp, qos=1, retain=True)
@@ -146,7 +163,7 @@ def on_message(client, userdata, message):
   try:
     mqtt_queue.put(message)
     m = message.payload.decode("utf-8")
-    logger.info("MQTT message received. Topic: "+message.topic+" Payload: "+m)
+    logger.debug("MQTT message received. Topic: "+message.topic+" Payload: "+m)
   except Exception as err:
     traceback.print_tb(err.__traceback__)
 
@@ -195,7 +212,7 @@ while loop_var:
 
       try:
         m = message.payload.decode("utf-8")
-        logger.info("Topic: "+message.topic+" Message: "+m)
+        logger.debug("Topic: "+message.topic+" Message: "+m)
 
         msplit = re.split("/", message.topic)
         if len(msplit) == 3 and msplit[2].lower() == "request_shop_status":
@@ -272,6 +289,46 @@ while loop_var:
         if message.topic.lower() == "homie/"+mqtt_client_name+"/retrieve_all":
           list_retrieve_scales = list(products_scales.keys())
           logger.info("Start retrieve all with: {}".format(list_retrieve_scales))
+
+        #Ergebnis vom Kartenlesegerät zu Preauth
+        if message.topic.lower() == "homie/cardreader/preauth_res":
+          logger.info("Preauth-Ergebnis vom Kartenlesegerät eingegangen. Nur beachten, falls Shop-Status == 1")
+          if shop_status == 1:
+            try:
+              m_json = json.loads(m)
+              # m enthält JSON: return_code_completion==0: Erfolgreich Preauth gesetzt
+              if "return_code_completion" in m_json:
+                if m_json["return_code_completion"] == 0: # Erfolgreich
+                  set_shop_status(2) #Kunde authentifiziert/Waagen tara wird ausgeführt
+                elif m_json["return_code_completion"] == 1: # Timeout
+                  set_shop_status(16) #Timeout Kartenterminal
+                else:
+                  logger.info(f"Kartenlesegerät gibt: {m_json['return_code_completion']}")
+                  set_shop_status(13) #Irgendein Fehler vom Kartenlesegerät
+              else:
+                logger.warning("Kartenlesegerät Rückgabe enthält kein 'return_code_completion'.")
+                set_shop_status(13) #Irgendein Fehler vom Kartenlesegerät
+            except:
+              logger.warning("Kartenlesegerät gibt kein JSON zurück, obwohl erwartet.")
+              set_shop_status(13) #Irgendein Fehler vom Kartenlesegerät
+          else:
+            logger.warning(f"{shop_status=}, daher kein Wechsel zu Zustand 16.")
+
+        #Ergebnis vom Kartenlesegerät zu Book
+        if message.topic.lower() == "homie/cardreader/book_total_res":
+          logger.info("Betrag buchen vom Preauth vom Kartenlesegerät eingegangen. Nur beachten, falls Shop-Status == 17")
+          if shop_status == 17:
+            try:
+              m_json = json.loads(m)
+              # Hier fehlt noch Code, der überprüft, ob es wirklich geklappt hat.
+              logger.info("Betrag wurde erfolgreih der Karte belastet.")
+              set_shop_status(5) #Anzeige des Belegs
+            except:
+              logger.warning("Kartenlesegerät gibt kein JSON zurück, obwohl erwartet.")
+              set_shop_status(8) #Technischer Fehler
+          else:
+            logger.warning(f"{shop_status=}. Die MQTT-Nachricht kommt unerwartet, daher Fehler!")
+            set_shop_status(8) #Technischer Fehler
 
 	      #mosquitto_pub -t 'homie/shop_controller/upload_all' -n
         if message.topic.lower() == "homie/"+mqtt_client_name+"/upload_all":
@@ -366,7 +423,7 @@ while loop_var:
         actualclientID = -1
         client.publish("homie/"+mqtt_client_name+"/prepare_for_next_customer", "1", qos=1, retain=False)
         if actProductsCount == 0: #no products withdrawn, all scales reset
-          next_shop_status = 1
+          next_shop_status = 16
         else:
           logger.info("Der Laden kann nicht nicht freigegeben werden, da noch {} Produkt(e) nicht zurückgesetzt wurden.".format(actProductsCount))
     elif shop_status == 8: #"Technischer Fehler aufgetreten"
@@ -402,10 +459,20 @@ while loop_var:
             logger.warning(f"Error while SQL INSERT: {e}")
           db_close()
 
-          next_shop_status = 5 # Weiter zu: Einkauf beendet und abgerechnet
+          # Book monay from reservation
+          total_money_tobook_incents_str = round(actBasket["total"]*100)
+          client.publish("homie/cardreader/cmd/book", total_money_tobook_incents_str, qos=1, retain=False)
+
+          next_shop_status = 17 # Weiter zu: Einkauf beendet und abgerechnet
         except:
           next_shop_status = 8
-          logger.warning("Errir while saving the basket in db")
+          logger.warning("Error while saving the basket in database.")
+    elif shop_status == 16: # Timeout Kartenterminal
+      logger.info(f"Kartenlesegerät erhält wieder den Anstoß, eine Preauth durchzuführen.")
+      client.publish("homie/cardreader/cmd/pre", "5000", qos=1, retain=False)
+      next_shop_status = 1
+    elif shop_status == 17: # Warten auf: Kartenterminal Buchung erfolgreich
+      pass # Rückmeldung Kartenlesegerät über MQTT-Message
     else:
         logger.error("Unbekannter shop_status Wert.")
 

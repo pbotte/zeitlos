@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 import asyncio
 import asyncio_mqtt as aiomqtt
 import logging
@@ -10,6 +12,7 @@ async def make_pt_connection(host, port, mqtt_client, logger):
     ptc = PTConnection(
         *(await asyncio.open_connection(host, port)), mqtt_client, logger
     )
+    logger.info(f'TCP connection to terminal established.')
 
     # registration
     msg = await ptc.send_query(
@@ -66,6 +69,8 @@ async def make_pt_connection(host, port, mqtt_client, logger):
         logger.warning(f"terminal not ready - error status {fmt_bytes(msg[0])}")
         pass
 
+    logger.info(f'terminal ready.')
+
     return ptc
 
 
@@ -76,9 +81,9 @@ async def main():
     # res = parse_res_from_chatfile(filename)
 
 #    mqtt_client = aiomqtt.Client(hostname="192.168.178.93", port=1884)
-    mqtt_client = aiomqtt.Client(hostname="192.168.180.2", port=1883)
+    mqtt_client = aiomqtt.Client(hostname="localhost", port=1883)
 #    ptc = await make_pt_connection("192.168.179.167", 20007, mqtt_client, logger)
-    ptc = await make_pt_connection("192.168.180.230", 20007, mqtt_client, logger)
+    ptc = await make_pt_connection("192.168.10.44", 20007, mqtt_client, logger)
 
     reconnect_interval = 5  # In seconds
     while True:
@@ -87,25 +92,25 @@ async def main():
                 async with client.messages() as messages:
                     await client.subscribe("#")
                     async for message in messages:
-                        logger.debug(f"MQTT message: {message.payload.decode(encoding=encoding)}")
+                    #    logger.debug(f"MQTT message: {message.payload.decode(encoding=encoding)}")
                         if message.topic.matches("homie/cardreader/cmd/end_of_day"):
                             await ptc.end_of_day()
                         if message.topic.matches("homie/cardreader/cmd/auth"):
                             res = await ptc.authorization(int(message.payload.decode(encoding=encoding)))
                             await client.publish(
-                                "auth_res", payload=f"{res}"
+                                "homie/cardreader/auth_res", payload=f"{json.dumps(res)}"
                             )
                         if message.topic.matches("homie/cardreader/cmd/pre"):
                             preauth_res = await ptc.send_preauth(
                                 int(message.payload.decode(encoding=encoding))
                             )
                             await client.publish(
-                                "preauth_res", payload=f"{preauth_res}"
+                                "homie/cardreader/preauth_res", payload=f"{json.dumps(preauth_res)}"
                             )
                         if message.topic.matches("homie/cardreader/cmd/list"):
                             rcpt_no, list_rcpt_no = await ptc.query_pending_pre_auth()
                             await client.publish(
-                                "list_rcpt_no", payload=f"{list_rcpt_no}"
+                                "homie/cardreader/list_rcpt_no", payload=f"{list_rcpt_no}"
                             )
                         if message.topic.matches("homie/cardreader/cmd/book"):
                             if "amount" in preauth_res:
@@ -113,8 +118,10 @@ async def main():
                                     preauth_res, int(message.payload.decode(encoding=encoding))
                                 )
                                 await client.publish(
-                                    "book_total_res", payload=f"{book_total_res}"
+                                    "homie/cardreader/book_total_res", payload=f"{json.dumps(book_total_res)}"
                                 )
+                            else:
+                                logger.warning(f'No data from last preauth in memory available Stop.')
                         if message.topic.matches("homie/cardreader/cmd/book_json"):
                             data = json.loads(message.payload.decode(encoding=encoding))
                             if "amount_book" in data:
@@ -122,7 +129,7 @@ async def main():
                                     data, data["amount_book"]
                                 )
                                 await client.publish(
-                                    "book_total_res", payload=f"{book_total_res}"
+                                    "homie/cardreader/book_total_res", payload=f"{json.dumps(book_total_res)}"
                                 )
                         if message.topic.matches("homie/cardreader/cmd/abort"):
                             await ptc.abort()

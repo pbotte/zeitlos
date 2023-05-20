@@ -52,8 +52,8 @@ class PTConnection:
                                   line_printout = ' '.join(x.decode(encoding=encoding) for x in line)
                               else:
                                   line_printout = line.decode(encoding=encoding)
-                              print(f"{line_printout=}")
-                              await self.mqtt_client.publish("homie/cardreader/text", payload=f'{{"text":{json.dumps(line_printout)}}}')
+                              self.logger.info(f"{line_printout=}")
+                              await self.mqtt_client.publish("homie/cardreader/text", payload=f'{json.dumps(line_printout)}')
 
 
         elif msg != b"\x80\x00\x00":
@@ -130,8 +130,8 @@ class PTConnection:
                             line_printout = ' '.join(x.decode(encoding=encoding) for x in line)
                         else:
                             line_printout = line.decode(encoding=encoding)
-                        print(f"{line_printout=}")
-                        await self.mqtt_client.publish("homie/cardreader/text", payload=f'{{"text":{json.dumps(line_printout)}}}')
+                        self.logger.info(f"{line_printout=}")
+                        await self.mqtt_client.publish("homie/cardreader/text", payload=f'{json.dumps(line_printout)}')
             msg = await self.recv_message()
 
         if msg.startswith(b"\x06\xD3"): # text block
@@ -183,14 +183,14 @@ class PTConnection:
                                   line_printout = ' '.join(x.decode(encoding=encoding) for x in line)
                               else:
                                   line_printout = line.decode(encoding=encoding)
-                              print(f"{line_printout=}")
-                              await self.mqtt_client.publish("homie/cardreader/text", payload=f'{{"text":{json.dumps(line_printout)}}}')
+                              self.logger.info(f"{line_printout=}")
+                              await self.mqtt_client.publish("homie/cardreader/text", payload=f'{json.dumps(line_printout)}')
 
                 elif msg == b"\x06\x1E\x01\x6C":
-                    self.logger.error(f"wait_for_completion(): No card within time window presented. Return: {fmt_bytes(msg)}") #Exception
+                    self.logger.info(f"wait_for_completion(): No card within time window presented. Return: {fmt_bytes(msg)}") #Exception
                     res = 1
                 elif msg == b"\x06\x0F\x00":
-                    self.logger.error(f"wait_for_completion(): Received completion, with: {fmt_bytes(msg)}")
+                    self.logger.warning(f"wait_for_completion(): Received completion, with: {fmt_bytes(msg)}")
                     res = 0 #payment completed, often in 2nd loop.
                 else:
                     self.logger.error(f"wait_for_completion(): Received not completion but {fmt_bytes(msg)}") #Exception
