@@ -34,7 +34,8 @@ end
   Z0 --> |Timeout| Z8
   A ==> |Kartenterminal gültig| B
   A ==> |Timeout von Terminal| AF2
-  AF2 ==> |Timeout, 1 Sek.| A
+  AF2 ==> |Timeout, 120 Sek.| Z8
+  AF2 ==> |Wenn busy==False, neues Pre-Auth senden| A
   A ==> |Fehler vom Kartenterminal| AF
   A ==> |Timeout nach > 60Sec. / Terminal erzeugt kein Timeout| Z8
   B ==> |Waagen Tara erfolgreich| Z14
