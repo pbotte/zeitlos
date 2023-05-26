@@ -120,7 +120,9 @@ shop_status_timeout = {
     1: {'time':120,'next':8}, #Bereit, Keine Kunde im Laden. Kartenterminal aktiv. Timeout da ein Timeout vom Terminal erwartet wird
     2: {'time':10,'next':8}, #Kunde authentifiziert/Waagen tara wird ausgeführt
     3: {'time':60*10,'next':9}, #Kunde betritt/verlässt gerade den Laden
-    4: {'time':5,'next':15}, #Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden
+    4: {'time':10,'next':15}, # Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden
+                              # Falls die Sensoren nicht alles abdecken oder durch IR-Licht gestört werden, 
+                              # dann hier einen größeren Zeit-Wert sicherheitshalber angeben.
     5: {'time':60,'next':7}, # Einkauf abgerechnet, Kassenbon-Anzeige
     6: None, # Zustand aktuell nicht genutzt
     7: {'time':30,'next':8}, #Warten auf: Vorbereitung für nächsten Kunden
@@ -132,7 +134,7 @@ shop_status_timeout = {
     13: {'time': 3,'next':7}, # Fehler bei Kartenterminal
     14: {'time': 15,'next':15}, # Bitte Laden betreten
     15: {'time': 60,'next': 8}, # Sicher: Kunde nicht mehr im Laden. Kartenterminal buchen!
-    16: {'time': 2,'next': 1}, # Timeout Kartenterminal
+    16: {'time': 120,'next': 8}, # Timeout Kartenterminal
     17: {'time': 30,'next': 8}, # Warten auf: Kartenterminal Buchung erfolgreich
     }
 shop_status_last_change_timestamp = time.time()
@@ -150,6 +152,8 @@ def set_shop_status(v):
     client.publish("homie/"+mqtt_client_name+"/shop_status_last_change_timestamp", shop_status_last_change_timestamp, qos=1, retain=True)
 
 
+cardreader_busy = False # set by MQTT messages from cardreader. When true, do not submit any task to cardreader and simply wait
+cardreader_last_textblock = "" # MQTT messages from cardread typically in receipe style from homie/cardreader/text_block
 
 actualclientID = -1
 actBasket = {"data": {}, "total": 0}
@@ -226,7 +230,7 @@ while loop_var:
         # distance reading to know person presence
         if len(msplit) == 4 and msplit[1].lower() == "shop-track"  and msplit[3].lower() == "distance":
             last_reading_distances[msplit[2].lower()] = float(m)
-            status_no_person_in_shop = all( value > 2000 for value in last_reading_distances.values()  ) #all returns true if all elements are true
+            status_no_person_in_shop = all( value > 1750 for value in last_reading_distances.values()  ) #all returns true if all elements are true
 
         # products withdrawal
         if len(msplit) == 4 and msplit[3].lower() == "withdrawal_units":
@@ -289,6 +293,16 @@ while loop_var:
         if message.topic.lower() == "homie/"+mqtt_client_name+"/retrieve_all":
           list_retrieve_scales = list(products_scales.keys())
           logger.info("Start retrieve all with: {}".format(list_retrieve_scales))
+
+        #Kartenlesegerät busy als globale Variable zur Verfügung stellen
+        if message.topic.lower() == "homie/cardreader/busy":
+          cardreader_busy = True if m == "1" else False
+          logger.debug(f"cardreader busy variable set to {cardreader_busy}")
+
+        # Receive receipes from Kartenlesegerät
+        if message.topic.lower() == "homie/cardreader/text_block":
+          cardreader_last_textblock = m
+          logger.debug(f"cardreader cardreader_last_textblock variable set to {cardreader_last_textblock}")
 
         #Ergebnis vom Kartenlesegerät zu Preauth
         if message.topic.lower() == "homie/cardreader/preauth_res":
@@ -418,6 +432,7 @@ while loop_var:
     elif shop_status == 6: # ungenutzter Zustand
         next_shop_status = 7
     elif shop_status == 7: #"Warten auf: Vorbereitung für nächsten Kunden"
+        cardreader_last_textblock = "" # this typically stores receipes from the card terminal, clear it for new customer
         client.publish("homie/"+mqtt_client_name+"/actualclient/id", -1, qos=1, retain=True)
         client.publish("homie/shop_controller/generic_pir/innen_licht", '{"v":0,"type":"Generic_PIR"}', qos=1, retain=False)
         actualclientID = -1
@@ -468,13 +483,16 @@ while loop_var:
           next_shop_status = 8
           logger.warning("Error while saving the basket in database.")
     elif shop_status == 16: # Timeout Kartenterminal
-      logger.info(f"Kartenlesegerät erhält wieder den Anstoß, eine Preauth durchzuführen.")
-      client.publish("homie/cardreader/cmd/pre", "5000", qos=1, retain=False)
-      next_shop_status = 1
+      if cardreader_busy == False:
+        logger.info(f"Kartenlesegerät erhält wieder den Anstoß, eine Preauth durchzuführen.")
+        client.publish("homie/cardreader/cmd/pre", "5000", qos=1, retain=False)
+        next_shop_status = 1
+      else:
+        logger.warning(f"Kein Pre-Auth an Kartenlesegerät gesendet, da {cardreader_busy=}. Warten.")
     elif shop_status == 17: # Warten auf: Kartenterminal Buchung erfolgreich
       pass # Rückmeldung Kartenlesegerät über MQTT-Message
     else:
-        logger.error("Unbekannter shop_status Wert.")
+      logger.error(f"Unbekannter {shop_status=} Wert.")
 
     ########################
     # check for time out of actual state

@@ -3,11 +3,12 @@ $debugClientStrSuffix = "";
 if (array_key_exists('debug', $_GET)) {
 	$debugClientStrSuffix = 'debug';
 }
+
 ?>
 <html>
 <style>
 
-    /*
+/*
 Prevent bluring of images = QR images
 see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-small-images-when-zoomed-in
 */
@@ -155,6 +156,27 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 
 
     <script>
+        var statusData = [
+            { message: "Initialisierung, bitte warten.", backgroundColor: "white" },
+            { message: "Laden ist frei.<br><br><font size=\"50\">Halten Sie Ihre Girocard, Kreditkarte oder Handy mit aktivierter Bezahlfunktion vor das Kartenlesegerät rechts der Türe.</p>", backgroundColor: "#44ff44" },
+            { message: "Authentifiziert.<br>Laden wird vorbereitet.", backgroundColor: "#44ff44" },
+            { message: "Laden wird gerade betreten / verlassen.<br>Bitte warten.", backgroundColor: "white" },
+            { message: "Überprüfung, ob Laden belegt.<br>Bitte warten..", backgroundColor: "white" },
+            { message: "Einkauf abgerechnet, Kassenbonanzeige.", backgroundColor: "white" },
+            { message: "-", backgroundColor: "white" },
+            { message: "Vorbereitung. Bitte warten.", backgroundColor: "white" },
+            { message: "Ein technischer Fehler ist aufgetreten.", backgroundColor: "#FF4444" },
+            { message: "Kunde benötigt Hilfe.", backgroundColor: "#FF4444" },
+            { message: "Laden geschlossen.", backgroundColor: "#FF4444" },
+            { message: "Überprüfung, ob Laden belegt.<br>Bitte warten.", backgroundColor: "white" },
+            { message: "Laden belegt.<br>Bitte warten.", backgroundColor: "white" },
+            { message: "Fehler beim Kartenterminal.", backgroundColor: "#FF4444" },
+            { message: "Bitte den Laden betreten", backgroundColor: "#44ff44" },
+            { message: "Abrechnung wird vorbereitet.", backgroundColor: "white" },
+            { message: "Kartenterminal: Zeit abgelaufen.", backgroundColor: "white" }, 
+            { message: "Warten auf Kartenterminal.", backgroundColor: "white" }
+        ];
+
         var connected_flag = 0;
         var shop_status = 0; //client in shop
         var host = "192.168.10.10"; //shop-master
@@ -173,75 +195,13 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         setInterval(function () { if (connected_flag == 0) MQTTconnect() }, 5 * 1000);
 
         setInterval(function () {
-          switch (shop_status) {
-            case 0:
-              document.getElementById("mytext").innerHTML = "Initialisierung, bitte warten.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
-              break;
-            case 1:
-              document.getElementById("mytext").innerHTML = "Laden ist frei.<br><br><font size=\"50\">Öffnen Sie <u>hemmes24.de/einlass</u><br><img src=\"https://www.hemmes24.de/qr/qr.php?size=10&text=http://www.hemmes24.de/einlass\"><br> mit Ihrem Mobiltelefon und zeigen Sie den QR-Code vor der Kamera im Loch.</font></p><p>&nbsp;<br><img src=\"images/demoscan.gif\"> <br>&#x21E9;</p>";
-              document.getElementById("fullTable").style.backgroundColor = "#44ff44";
-              break;
-            case 2:
-              document.getElementById("mytext").innerHTML = "Authentifiziert.<br>Laden wird vorbereitet.";
-              document.getElementById("fullTable").style.backgroundColor = "#44ff44";
-              break;
-            case 3:
-              document.getElementById("mytext").innerHTML = "Laden wird gerade betreten / verlassen.<br>Bitte warten.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
-              break;
-            case 4:
-              document.getElementById("mytext").innerHTML = "Überprüfung, ob Laden belegt.<br>Bitte warten..";
-              document.getElementById("fullTable").style.backgroundColor = "white";
-              break;
-            case 5:
-              document.getElementById("mytext").innerHTML = "Einkauf beendet und abgerechnet.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
-              break;
-            case 6:
-              document.getElementById("mytext").innerHTML = "-";
-              document.getElementById("fullTable").style.backgroundColor = "white";
-              break;
-            case 7:
-              document.getElementById("mytext").innerHTML = "Vorbereitung. Bitte warten.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
-              break;
-            case 8:
-              document.getElementById("mytext").innerHTML = "Ein technischer Fehler ist aufgetreten.";
-              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
-              break;
-            case 9:
-              document.getElementById("mytext").innerHTML = "Kunde benötigt Hilfe.";
-              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
-              break;
-            case 10:
-              document.getElementById("mytext").innerHTML = "Laden geschlossen.";
-              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
-              break;
-            case 11:
-              document.getElementById("mytext").innerHTML = "Überprüfung, ob Laden belegt.<br>Bitte warten.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
-              break;
-            case 12:
-              document.getElementById("mytext").innerHTML = "Laden belegt.<br>Bitte warten.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
-              break;
-            case 13:
-              document.getElementById("mytext").innerHTML = "Fehler bei Authentifizierung.<br><br>Ist der QR-Code schon zu alt?";
-              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
-              break;
-            case 14:
-              document.getElementById("mytext").innerHTML = "Bitte den Laden betreten";
-              document.getElementById("fullTable").style.backgroundColor = "44ff44";
-              break;
-            case 15:
-              document.getElementById("mytext").innerHTML = "Abrechnung wird vorbereitet.";
-              document.getElementById("fullTable").style.backgroundColor = "white";
-              break;
-            default:
-              document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";
-              document.getElementById("fullTable").style.backgroundColor = "#FF4444";
-              break;
+          if ((shop_status >= 0) && (shop_status < statusData.length)) {
+            document.getElementById("mytext").innerHTML = statusData[shop_status].message;
+            document.getElementById("fullTable").style.backgroundColor = statusData[shop_status].backgroundColor;
+          } else {
+            // Wenn shop_status außerhalb des gültigen Bereichs liegt
+            document.getElementById("mytext").innerHTML = "Ungültiger Zustand.";
+            document.getElementById("fullTable").style.backgroundColor = "red";
           }
 
         }, 100);

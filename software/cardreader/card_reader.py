@@ -89,30 +89,40 @@ async def main():
     while True:
         try:
             async with mqtt_client as client:
+                await client.publish("homie/cardreader/busy", payload="0", retain=True)
                 async with client.messages() as messages:
-                    await client.subscribe("#")
+                    await client.subscribe("homie/cardreader/cmd/#")
                     async for message in messages:
                     #    logger.debug(f"MQTT message: {message.payload.decode(encoding=encoding)}")
                         if message.topic.matches("homie/cardreader/cmd/end_of_day"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="1")
                             await ptc.end_of_day()
-                        if message.topic.matches("homie/cardreader/cmd/auth"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="0")
+                        elif message.topic.matches("homie/cardreader/cmd/auth"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="1")
                             res = await ptc.authorization(int(message.payload.decode(encoding=encoding)))
                             await client.publish(
                                 "homie/cardreader/auth_res", payload=f"{json.dumps(res)}"
                             )
-                        if message.topic.matches("homie/cardreader/cmd/pre"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="0")
+                        elif message.topic.matches("homie/cardreader/cmd/pre"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="1")
                             preauth_res = await ptc.send_preauth(
                                 int(message.payload.decode(encoding=encoding))
                             )
                             await client.publish(
                                 "homie/cardreader/preauth_res", payload=f"{json.dumps(preauth_res)}"
                             )
-                        if message.topic.matches("homie/cardreader/cmd/list"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="0")
+                        elif message.topic.matches("homie/cardreader/cmd/list"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="1")
                             rcpt_no, list_rcpt_no = await ptc.query_pending_pre_auth()
                             await client.publish(
                                 "homie/cardreader/list_rcpt_no", payload=f"{list_rcpt_no}"
                             )
-                        if message.topic.matches("homie/cardreader/cmd/book"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="0")
+                        elif message.topic.matches("homie/cardreader/cmd/book"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="1")
                             if "amount" in preauth_res:
                                 book_total_res = await ptc.book_total(
                                     preauth_res, int(message.payload.decode(encoding=encoding))
@@ -122,7 +132,9 @@ async def main():
                                 )
                             else:
                                 logger.warning(f'No data from last preauth in memory available Stop.')
-                        if message.topic.matches("homie/cardreader/cmd/book_json"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="0")
+                        elif message.topic.matches("homie/cardreader/cmd/book_json"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="1")
                             data = json.loads(message.payload.decode(encoding=encoding))
                             if "amount_book" in data:
                                 book_total_res = await ptc.book_total(
@@ -131,10 +143,17 @@ async def main():
                                 await client.publish(
                                     "homie/cardreader/book_total_res", payload=f"{json.dumps(book_total_res)}"
                                 )
-                        if message.topic.matches("homie/cardreader/cmd/abort"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="0")
+                        elif message.topic.matches("homie/cardreader/cmd/abort"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="1")
                             await ptc.abort()
-                        if message.topic.matches("homie/cardreader/cmd/pt_activate_service_menu"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="0")
+                        elif message.topic.matches("homie/cardreader/cmd/pt_activate_service_menu"):
+                            await client.publish("homie/cardreader/busy", retain=True, payload="1")
                             await ptc.pt_activate_service_menu()
+                            await client.publish("homie/cardreader/busy", retain=True, payload="0")
+                        else:
+                            logger.info(f'MQTT message received but not processed: {message.topic}')
 
         except aiomqtt.MqttError as error:
             logger.error(f'Error "{error}". Reconnecting in {reconnect_interval} seconds.')
