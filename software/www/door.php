@@ -225,6 +225,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         var SECRETSTR= "blablablaskfjshfushdfisuh5487wzfisaubsidab";
         var str_to_check = SECRETSTR + base64EncodedData;
         var correct_check_str = crc32(str_to_check).toString(16);
+        correct_check_str = correct_check_str.padStart(8, "0"); //put leading "0" if too short
         //document.write("\n"+correct_check_str.toString(16));
 
 

@@ -81,109 +81,111 @@ $html = nl2br(trim($rechnungs_header));
   
 
 if (isset($rechnungs_posten)) {
-	$html .= '
-	<br>
+	if (count($rechnungs_posten)>0) {
+		$html .= '
+		<br>
 
-	<hr>
-	<table cellpadding="1" cellspacing="0" style="width: 100%;" border="0">
-	  <tr>
-	    <td>Kasse</td>
-	    <td style="text-align: right;">Zeitpunkt</td>
-	  </tr>
-	  <tr>
-	    <td>001</td>
-	    <td style="text-align: right;">'.date('d.m.y H:i:s', $timestamp).'</td>
-	  </tr>
-	</table>
-	<hr>';
-	$html .='
-	<br>&nbsp;
-	<br>
+		<hr>
+		<table cellpadding="1" cellspacing="0" style="width: 100%;" border="0">
+		<tr>
+			<td>Kasse</td>
+			<td style="text-align: right;">Zeitpunkt</td>
+		</tr>
+		<tr>
+			<td>001</td>
+			<td style="text-align: right;">'.date('d.m.y H:i:s', $timestamp).'</td>
+		</tr>
+		</table>
+		<hr>';
+		$html .='
+		<br>&nbsp;
+		<br>
 
-	<table cellpadding="1" cellspacing="0" style="width: 100%;" border="0">
-	 <tr style="background-color: #cccccc; padding:1px;">
-	 <td style="padding:1px;" width="70%"><b>Ihr Einkauf</b></td>
-	 <td style="text-align: right;" width="30%"><b>€&nbsp;&nbsp;&nbsp;</b></td>
-	 </tr>';
- 
- 
- 
- 
-	$gesamtpreis = 0;
-	$USt_sum = array(0,0,0); //0%, reduced tax, full tax rate
+		<table cellpadding="1" cellspacing="0" style="width: 100%;" border="0">
+		<tr style="background-color: #cccccc; padding:1px;">
+		<td style="padding:1px;" width="70%"><b>Ihr Einkauf</b></td>
+		<td style="text-align: right;" width="30%"><b>€&nbsp;&nbsp;&nbsp;</b></td>
+		</tr>';
+	
+	
+	
+	
+		$gesamtpreis = 0;
+		$USt_sum = array(0,0,0); //0%, reduced tax, full tax rate
 
-	foreach($rechnungs_posten as $posten) {
-	  $menge = $posten[1];
-	  $einzelpreis = $posten[2];
-	  $preis = $menge*$einzelpreis;
-	  $gesamtpreis += $preis;
-  
-  
-	  if ($posten[3] == 0) {
-	    $USt_sum[$posten[3]] += $preis;
-	  } elseif ($posten[3] == 1) {
-	    $USt_sum[$posten[3]] += $preis;
-	  } else {
-	    $USt_sum[$posten[3]] += $preis;
-	  }
-  
-	  $html .= '<tr>
-	                <td>'.$posten[1].'x '.$posten[0];
-	  if ($posten[1] > 1) { 
-	 	$html .= ' à '.number_format($posten[2], 2, ',', '').'€';
-	  }
-	  $html .= '</td>
-	                <td style="text-align: right;">'.number_format($preis, 2, ',', '').'&nbsp;'.$posten[3].'</td>
-	              </tr>';
+		foreach($rechnungs_posten as $posten) {
+		$menge = $posten[1];
+		$einzelpreis = $posten[2];
+		$preis = $menge*$einzelpreis;
+		$gesamtpreis += $preis;
+	
+	
+		if ($posten[3] == 0) {
+			$USt_sum[$posten[3]] += $preis;
+		} elseif ($posten[3] == 1) {
+			$USt_sum[$posten[3]] += $preis;
+		} else {
+			$USt_sum[$posten[3]] += $preis;
+		}
+	
+		$html .= '<tr>
+						<td>'.$posten[1].'x '.$posten[0];
+		if ($posten[1] > 1) { 
+			$html .= ' à '.number_format($posten[2], 2, ',', '').'€';
+		}
+		$html .= '</td>
+						<td style="text-align: right;">'.number_format($preis, 2, ',', '').'&nbsp;'.$posten[3].'</td>
+					</tr>';
+		}
+		$html .="</table>";
+	
+	
+		$html .= '
+		<hr>
+		<table cellpadding="5" cellspacing="0" style="width: 100%;" border="0">
+		<tr>
+		<td colspan="3"><b>Summe:</b></td>
+		<td style="text-align: center;"><b>'.number_format($gesamtpreis, 2, ',', '').'</b></td>
+		</tr>
+		</table>
+
+		<br>
+
+		<p align="center">Vielen Dank für Ihren Einkauf!</p>
+
+		<br><br>
+
+		<hr>
+		<table cellpadding="1" cellspacing="0" style="width: 100%;" border="0">
+		<tr>
+			<td>UST</td>
+			<td style="text-align: right;">Netto</td>
+			<td style="text-align: right;">Steuer</td>
+			<td style="text-align: right;">Brutto</td>
+		</tr>
+		<tr>
+			<td>0 = 0%</td>
+			<td style="text-align: right;">'.number_format($USt_sum[0]*(1-0.00), 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($USt_sum[0]*0 , 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($USt_sum[0] , 2, ',', '').'</td>
+		</tr>
+		<tr>
+			<td>1 = 7%</td>
+			<td style="text-align: right;">'.number_format($USt_sum[1]*(1-0.07), 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($USt_sum[1]*0.07, 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($USt_sum[1], 2, ',', '').'</td>
+		</tr>
+		<tr>
+			<td>2 = 19%</td>
+			<td style="text-align: right;">'.number_format($USt_sum[2]*(1-0.19), 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($USt_sum[2]*0.19, 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($USt_sum[2], 2, ',', '').'</td>
+		</tr>
+		</table>
+		<hr>
+
+		';
 	}
-	$html .="</table>";
- 
- 
-	$html .= '
-	<hr>
-	<table cellpadding="5" cellspacing="0" style="width: 100%;" border="0">
-	 <tr>
-	 <td colspan="3"><b>Summe:</b></td>
-	 <td style="text-align: center;"><b>'.number_format($gesamtpreis, 2, ',', '').'</b></td>
-	 </tr>
-	</table>
-
-	<br>
-
-	<p align="center">Vielen Dank für Ihren Einkauf!</p>
-
-	<br><br>
-
-	<hr>
-	<table cellpadding="1" cellspacing="0" style="width: 100%;" border="0">
-	  <tr>
-	    <td>UST</td>
-	    <td style="text-align: right;">Netto</td>
-	    <td style="text-align: right;">Steuer</td>
-	    <td style="text-align: right;">Brutto</td>
-	  </tr>
-	  <tr>
-	    <td>0 = 0%</td>
-	    <td style="text-align: right;">'.number_format($USt_sum[0]*(1-0.00), 2, ',', '').'</td>
-	    <td style="text-align: right;">'.number_format($USt_sum[0]*0 , 2, ',', '').'</td>
-	    <td style="text-align: right;">'.number_format($USt_sum[0] , 2, ',', '').'</td>
-	  </tr>
-	  <tr>
-	    <td>1 = 7%</td>
-	    <td style="text-align: right;">'.number_format($USt_sum[1]*(1-0.07), 2, ',', '').'</td>
-	    <td style="text-align: right;">'.number_format($USt_sum[1]*0.07, 2, ',', '').'</td>
-	    <td style="text-align: right;">'.number_format($USt_sum[1], 2, ',', '').'</td>
-	  </tr>
-	  <tr>
-	    <td>2 = 19%</td>
-	    <td style="text-align: right;">'.number_format($USt_sum[2]*(1-0.19), 2, ',', '').'</td>
-	    <td style="text-align: right;">'.number_format($USt_sum[2]*0.19, 2, ',', '').'</td>
-	    <td style="text-align: right;">'.number_format($USt_sum[2], 2, ',', '').'</td>
-	  </tr>
-	</table>
-	<hr>
-
-	';
 } 
 
  
