@@ -2257,5 +2257,33 @@
                 "7a8c10bbe26682ad"
             ]
         ]
+    },
+    {
+        "id": "453308a07b8fa760",
+        "type": "ui_button",
+        "z": "5f8b5286451f333f",
+        "name": "",
+        "group": "8ee2a8be9e79749a",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Setze Kassenbon Anzeige",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "5",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 190,
+        "y": 260,
+        "wires": [
+            [
+                "910414beb817d5b9"
+            ]
+        ]
     }
 ]

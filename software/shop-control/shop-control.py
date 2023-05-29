@@ -156,7 +156,7 @@ cardreader_busy = False # set by MQTT messages from cardreader. When true, do no
 cardreader_last_textblock = "" # MQTT messages from cardread typically in receipe style from homie/cardreader/text_block
 
 actualclientID = -1
-actBasket = {"data": {}, "total": 0}
+actBasket = {"data": {}, "total": 0, "products_count": 0}
 status_no_person_in_shop = None # if all readings from homie/shop-track/+/distance are > 2000, then False, else True
 status_door_closed = None
 last_reading_distances = {}
@@ -302,7 +302,7 @@ while loop_var:
         # Receive receipes from Kartenlesegerät
         if message.topic.lower() == "homie/cardreader/text_block":
           cardreader_last_textblock = m
-          logger.debug(f"cardreader cardreader_last_textblock variable set to {cardreader_last_textblock}")
+          logger.info(f"cardreader cardreader_last_textblock variable set to {cardreader_last_textblock}")
 
         #Ergebnis vom Kartenlesegerät zu Preauth
         if message.topic.lower() == "homie/cardreader/preauth_res":
@@ -323,7 +323,7 @@ while loop_var:
                 logger.warning("Kartenlesegerät Rückgabe enthält kein 'return_code_completion'.")
                 set_shop_status(13) #Irgendein Fehler vom Kartenlesegerät
             except:
-              logger.warning("Kartenlesegerät gibt kein JSON zurück, obwohl erwartet.")
+              logger.warning(f"Kartenlesegerät gibt kein JSON zurück, obwohl erwartet: {m=}")
               set_shop_status(13) #Irgendein Fehler vom Kartenlesegerät
           else:
             logger.warning(f"{shop_status=}, daher kein Wechsel zu Zustand 16.")
@@ -336,9 +336,20 @@ while loop_var:
               m_json = json.loads(m)
               # Hier fehlt noch Code, der überprüft, ob es wirklich geklappt hat.
               logger.info("Betrag wurde erfolgreih der Karte belastet.")
+              
+              # prepare invoice_json to be sent for outside customer display
+              p = []
+              ab = actBasket["data"]
+              for i in ab:
+                 v=ab[i]
+                 p.append([v["ProductName"], v["withdrawal_units"], v["PricePerUnit"], 1]) # TODO: variable VAT support: 0:0%, 1:7%, 2:19%
+              a={'d': {"p":p, 'c': cardreader_last_textblock, 't':int(time.time())}}
+              logger.info(f"Kassenbon: {a=}")
+              client.publish("homie/shop_controller/invoice_json", json.dumps(a), qos=1, retain=True)
+
               set_shop_status(5) #Anzeige des Belegs
             except:
-              logger.warning("Kartenlesegerät gibt kein JSON zurück, obwohl erwartet.")
+              logger.warning(f"Kartenlesegerät gibt kein gültiges JSON zurück oder anderer Fehler: {m=}")
               set_shop_status(8) #Technischer Fehler
           else:
             logger.warning(f"{shop_status=}. Die MQTT-Nachricht kommt unerwartet, daher Fehler!")
@@ -427,12 +438,13 @@ while loop_var:
         #Tür==offen: Wechsel zu 3 über MQTT-Message
         if status_no_person_in_shop == False:
           next_shop_status = 12
-    elif shop_status == 5: #"Einkauf beendet und abgerechnet"
-        next_shop_status = 7
+    elif shop_status == 5: #"Kassenbonanzeige
+        pass # geht über timout weiter zum nächsten Zustand
     elif shop_status == 6: # ungenutzter Zustand
         next_shop_status = 7
     elif shop_status == 7: #"Warten auf: Vorbereitung für nächsten Kunden"
         cardreader_last_textblock = "" # this typically stores receipes from the card terminal, clear it for new customer
+        client.publish("homie/shop_controller/invoice_json", "", qos=1, retain=True)
         client.publish("homie/"+mqtt_client_name+"/actualclient/id", -1, qos=1, retain=True)
         client.publish("homie/shop_controller/generic_pir/innen_licht", '{"v":0,"type":"Generic_PIR"}', qos=1, retain=False)
         actualclientID = -1

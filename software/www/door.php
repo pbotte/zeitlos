@@ -5,6 +5,28 @@ if (array_key_exists('debug', $_GET)) {
 }
 
 ?>
+<?php
+/*
+GENERATE Codes and CRC in Python
+
+import base64
+import gzip
+import zlib
+
+data_str = "hallo"
+
+compressed_data = zlib.compress(data_str.encode(), level=9, wbits=15)
+encoded_data = base64.urlsafe_b64encode(compressed_data).rstrip(b'=').decode()
+
+s = ":".join("{:02x}".format(c) for c in compressed_data)
+print(s)
+
+translation_table = str.maketrans('+/', '-_')
+encoded_data = encoded_data.translate(translation_table)
+
+print(encoded_data)
+*/
+?>
 <html>
 <style>
 
@@ -80,6 +102,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
     <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>-->
     <script src="/mqttws31.min.js" type="text/javascript"></script>
 
+    <script src="pako/dist/pako.min.js"></script>
+    
     <script type="text/javascript">
 
 
@@ -104,6 +128,11 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
                 console.log("trigger page reload via MQTT");
                 location.reload();
             }
+            if (r_message.destinationName == "homie/shop_controller/invoice_json") {
+                invoice_json = r_message.payloadString;
+                console.log("new invoice_json", invoice_json);
+            }
+            
         }
 
         function onConnected(recon, url) {
@@ -117,6 +146,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             connected_flag = 1
             console.log("connected_flag= ", connected_flag);
             mqtt.subscribe("homie/shop_controller/shop_status");
+            mqtt.subscribe("homie/shop_controller/invoice_json");
             mqtt.subscribe("homie/shop_controller/triggerHTMLPagesReload");
         }
 
@@ -134,6 +164,33 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 
     </script>
 
+    <script>
+		//From https://stackoverflow.com/questions/18638900/javascript-crc32
+		var makeCRCTable = function(){
+            var c;
+            var crcTable = [];
+            for(var n =0; n < 256; n++){
+                c = n;
+                for(var k =0; k < 8; k++){
+                    c = ((c&1) ? (0xEDB88320 ^ (c >>> 1)) : (c >>> 1));
+                }
+                crcTable[n] = c;
+            }
+            return crcTable;
+        }
+
+        var crc32 = function(str) {
+            var crcTable = window.crcTable || (window.crcTable = makeCRCTable());
+            var crc = 0 ^ (-1);
+
+            for (var i = 0; i < str.length; i++ ) {
+                crc = (crc >>> 8) ^ crcTable[(crc ^ str.charCodeAt(i)) & 0xFF];
+            }
+
+            return (crc ^ (-1)) >>> 0;
+        };
+	</script>
+
 </head>
 
 <body>
@@ -144,7 +201,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             <p>&nbsp;</p>
           </td>
           <td style="width: 0%; height: 100%; text-align: center; background-color: white; vertical-align: center;" id="fullTable">
-            <h1 align="center" id="mytext">...</h1>
+            <div align="center" id="mytext">Verbinden...</div>
           </td>
           <td style="width: 10%; background-color: white; ">
             <p>&nbsp;</p>
@@ -154,15 +211,40 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
       </tbody>
     </table>
 
+    <script>
+    function encodeDataString(data_str) {
+        var c1 = pako.deflate(data_str, { level: 9 , windowBits:15});
+
+        var base64EncodedData = btoa(String.fromCharCode.apply(null, c1))
+            .replace(/\+/g, '-')
+            .replace(/\//g, '_')
+            .replace(/=+$/, '');
+
+        //document.write(base64EncodedData);
+
+        var SECRETSTR= "blablablaskfjshfushdfisuh5487wzfisaubsidab";
+        var str_to_check = SECRETSTR + base64EncodedData;
+        var correct_check_str = crc32(str_to_check).toString(16);
+        //document.write("\n"+correct_check_str.toString(16));
+
+
+        const iframe = document.getElementById('myIframe');
+        console.log('/invoice.php?d='+base64EncodedData+'&c='+correct_check_str+'&out=html');
+        iframe.src = '/invoice.php?d='+base64EncodedData+'&c='+correct_check_str+'&out=html';
+
+        const qrpic = document.getElementById('qrpic');
+        qrpic.src="/qr.php?t=https://www.hemmes24.de/code/invoice2.php?d%3D"+base64EncodedData+"%26c%3D"+correct_check_str;
+    }
+    </script>
 
     <script>
         var statusData = [
             { message: "Initialisierung, bitte warten.", backgroundColor: "white" },
-            { message: "Laden ist frei.<br><br><font size=\"50\">Halten Sie Ihre Girocard, Kreditkarte oder Handy mit aktivierter Bezahlfunktion vor das Kartenlesegerät rechts der Türe.</p>", backgroundColor: "#44ff44" },
+            { message: "Laden ist frei.<br><br><font size=\"50\">Halten Sie Ihre Girocard, Kreditkarte oder Handy mit aktivierter Bezahlfunktion vor das Kartenlesegerät rechts der Türe.</font>", backgroundColor: "#44ff44" },
             { message: "Authentifiziert.<br>Laden wird vorbereitet.", backgroundColor: "#44ff44" },
             { message: "Laden wird gerade betreten / verlassen.<br>Bitte warten.", backgroundColor: "white" },
             { message: "Überprüfung, ob Laden belegt.<br>Bitte warten..", backgroundColor: "white" },
-            { message: "Einkauf abgerechnet, Kassenbonanzeige.", backgroundColor: "white" },
+            { message: '<font size=\"30\">Kassenbon<br>Anzeige für 60 Sekunden.</font> <p align="right"><img id="qrpic"></p><iframe id="myIframe" width="600" height="950" style="-webkit-transform:scale(1.5);-moz-transform-scale(1.5);" frameBorder="0"></iframe>', backgroundColor: "white" },
             { message: "-", backgroundColor: "white" },
             { message: "Vorbereitung. Bitte warten.", backgroundColor: "white" },
             { message: "Ein technischer Fehler ist aufgetreten.", backgroundColor: "#FF4444" },
@@ -179,6 +261,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 
         var connected_flag = 0;
         var shop_status = 0; //client in shop
+        var invoice_json = ""; 
         var host = "192.168.10.10"; //shop-master
         var port = 9001;
         console.log("Set up the MQTT client to connect to " + host + ":" + port);
@@ -194,17 +277,26 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 
         setInterval(function () { if (connected_flag == 0) MQTTconnect() }, 5 * 1000);
 
+        var last_shop_status = -1;
         setInterval(function () {
-          if ((shop_status >= 0) && (shop_status < statusData.length)) {
-            document.getElementById("mytext").innerHTML = statusData[shop_status].message;
-            document.getElementById("fullTable").style.backgroundColor = statusData[shop_status].backgroundColor;
-          } else {
-            // Wenn shop_status außerhalb des gültigen Bereichs liegt
-            document.getElementById("mytext").innerHTML = "Ungültiger Zustand.";
-            document.getElementById("fullTable").style.backgroundColor = "red";
-          }
+            if (last_shop_status != shop_status) { //nur, wenn sich der Zustand geändert hat.
+                if ((shop_status >= 0) && (shop_status < statusData.length)) {
+                    if (shop_status == 5) { //Kassenbonanzeige
+                        document.getElementById("mytext").innerHTML = statusData[shop_status].message;
+                        encodeDataString(invoice_json);
+                    } else {
+                        document.getElementById("mytext").innerHTML = '<h1 align="center">'+statusData[shop_status].message+'</h1>';
+                    }
+                    document.getElementById("fullTable").style.backgroundColor = statusData[shop_status].backgroundColor;
+                } else {
+                    // Wenn shop_status außerhalb des gültigen Bereichs liegt
+                    document.getElementById("mytext").innerHTML = "Ungültiger Zustand.";
+                    document.getElementById("fullTable").style.backgroundColor = "red";
+                }
 
-        }, 100);
+                last_shop_status = shop_status;
+            }
+         }, 500);
 
     </script>
 

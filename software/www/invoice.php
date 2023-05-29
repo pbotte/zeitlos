@@ -201,7 +201,7 @@ $html .= $rechnungs_footer;
  
  
 // TCPDF Library laden
-require_once('../tcpdf/tcpdf.php');
+require_once('tcpdf/tcpdf.php');
  
 // Erstellung des PDF Dokuments
 // $pdf = new TCPDF(PDF_PAGE_ORIENTATION, PDF_UNIT, PDF_PAGE_FORMAT, true, 'UTF-8', false);
