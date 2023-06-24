@@ -4,7 +4,7 @@ After=network.target syslog.target
 
 [Service]
 WorkingDirectory=/home/pi/zeitlos/software/lidar/
-ExecStart=/home/pi/zeitlos/software/lidar/lidar-readout.py -v 0
+ExecStart=/home/pi/zeitlos/software/lidar/lidar-readout.py -v -b 192.168.10.10 0
 Restart=always
 RestartSec=15
 User=pi
