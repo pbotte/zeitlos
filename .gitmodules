@@ -1,3 +1,9 @@
 [submodule "software/www/qr"]
 	path = software/www/qr
 	url = https://git.code.sf.net/p/phpqrcode/git
+[submodule "software/www/tcpdf"]
+	path = software/www/tcpdf
+	url = https://github.com/tecnickcom/TCPDF.git
+[submodule "software/www/pako"]
+	path = software/www/pako
+	url = https://github.com/nodeca/pako.git
