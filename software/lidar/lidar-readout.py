@@ -6,11 +6,11 @@ import time
 import logging
 import argparse
 import traceback
-import math
 import re
 import signal #to catch interrupts and exit gracefully
 import queue
 import sdnotify # to call systemd-notify
+import subprocess
 
 
 logging.basicConfig(level=logging.WARNING,
@@ -23,8 +23,6 @@ parser.add_argument("-v", "--verbosity",
                     help="increase output verbosity", default=0, action="count")
 parser.add_argument("-b", "--mqtt-broker-host",
                     help="MQTT broker hostname. default=localhost", default="localhost")
-parser.add_argument("-t", "--timeout",
-                    help="timeout in seconds. default=1h", default=100*60*60, type=int)
 args = parser.parse_args()
 logger.setLevel(logging.WARNING-(args.verbosity * 10 if args.verbosity <= 2 else 20))
 
@@ -34,7 +32,7 @@ mqtt_client_name = "lidar_readout_"+args.instance
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logger.info("MQTT connected OK. Return code "+str(rc))
-        client.subscribe("homie/cardreader/#")
+        #client.subscribe("homie/cardreader/#")
 
         logger.debug("MQTT: Subscribed to all topics")
     else:
@@ -75,9 +73,14 @@ client.publish("homie/"+mqtt_client_name+"/state", 'online', qos=1, retain=True)
 #client.publish("homie/"+mqtt_client_name+"/shop_overview/products_scales", json.dumps(products_scales), qos=1, retain=True)
 
 loop_var = True
+# press twice CTRL+C to all kill readout
 def signal_handler(sig, frame):
   global loop_var
   logger.info('You pressed Ctrl+C! Preparing for graceful exit.')
+  if not loop_var:
+    kill_external_readout("-9")
+  else:
+    logger.info("Hint: Press 2nd time Ctrl+C to also terminate forcefully external readout.")
   loop_var = False
 signal.signal(signal.SIGINT, signal_handler)
 
@@ -87,7 +90,37 @@ n.notify("READY=1")
 count = 1 #some watchdog counter
 
 
-while loop_var:
+##################################################
+
+pattern = r"theta: (.*?) Dist: (.*?) Q: (\d*)"
+pattern_start = r"S  theta: (.*?) Dist: (.*?) Q: (\d*)"
+
+data = []
+
+
+last_notify = time.time()
+scan_data_counter = 0
+
+def kill_external_readout(param="-15"):
+  logger.info("killall started.")
+  try:
+    command = ["/usr/bin/killall", param, "ultra_simple"]
+    subprocess.run(command)
+    logger.info("killall called.")
+  finally:
+    pass
+  logger.info("killall done.")
+
+kill_external_readout()
+
+try:
+  command = ["/home/pi/rplidar_sdk/output/Linux/Release/ultra_simple", "--channel", "--serial",  "/dev/ttyUSB0", "115200"]
+  process = subprocess.Popen(command, stdout=subprocess.PIPE, universal_newlines=True)
+  logger.info("subprocess started.")
+
+  #####################################################
+
+  while loop_var:
     ###########################################################################
     # Process MQTT messages
     # important: process them here in the loop, not asyncron in call_back routine
@@ -120,15 +153,40 @@ while loop_var:
         traceback.print_tb(err.__traceback__)
     ############################################################################
 
+#    logger.debug("started readline")
+    line = process.stdout.readline()
+#    logger.debug("read line: ", line)
+    if not line:
+        logger.warning("readline empty")
+        loop_var = False
+    else:
+      matches = re.findall(pattern_start, line.strip())
+      if len(matches) > 0: #start gefunden
+        scan_data_counter += 1
+        client.publish("homie/"+mqtt_client_name+"/data", json.dumps(data), qos=1)
+        logger.info(f"data packet #{scan_data_counter} sent. New data incoming...")
+        data = []
+      else:
+        matches = re.findall(pattern, line.strip())
 
-    #inform systemd via sdnotify we are still alive
-    n.notify("STATUS=Count is {}".format(count))
-    n.notify("WATCHDOG=1")
-    count += 1
+      if len(matches) > 0:
+        if float(matches[0][1]) > 0: #if distance >0
+          data.append([float(matches[0][0]), float(matches[0][1]), int(matches[0][2]) ])
 
 
+      if time.time()-last_notify > 1:
+        #inform systemd via sdnotify we are still alive
+        n.notify("STATUS=Count is {}".format(count))
+        n.notify("WATCHDOG=1")
+        count += 1
+        last_notify = time.time()
 
-    time.sleep(1-math.modf(time.time())[0])  # make the loop run every second
+
+#    time.sleep(0.001)
+#    time.sleep(1-math.modf(time.time())[0])  # make the loop run every second
+
+finally:
+    process.terminate()
 
 
 
