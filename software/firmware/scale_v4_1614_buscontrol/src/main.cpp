@@ -58,13 +58,16 @@ void loop(){
     }
     else if(c == 's') {
       Serial.print("Read from 0x0");
-      Wire.requestFrom(10, 1);    // request 1 byte from peripheral device #0
+      uint8_t n = Wire.requestFrom(10, 1);    // request 1 byte from peripheral device #0
       Serial.print("(");
       Serial.print(Wire.available());
+      Serial.print(", ");
+      Serial.print(n);
       Serial.print(")");
       while (Wire.available()) { // peripheral may send less than requested
         char c = Wire.read(); // receive a byte as character
-        Serial.print(c);         // print the character
+        Serial.print("0x");
+        Serial.print(c,HEX);         // print the character
       }
        // TODO: Check for return value to detect errors
     }

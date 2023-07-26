@@ -42,6 +42,27 @@ long averaged_reading_sum = 0;                     // helper variable to average
 long averaged_reading = 0;                         // regularly updated: averaged_reading_sum/NUMBER_OF_SCALE_READINGS_BUFFER
 long last_scale_raw_reading = 0;                   // raw value from ADC
 
+/// Watchdog, see: https://github.com/SpenceKonde/megaTinyCore/blob/master/megaavr/extras/Ref_Reset.md
+void wdt_enable() {
+  _PROTECTED_WRITE(WDT.CTRLA,WDT_PERIOD_8KCLK_gc); // no window, 8 seconds
+}
+
+void wdt_reset() {
+  __asm__ __volatile__ ("wdr"::);
+}
+
+void wdt_disable() {
+  _PROTECTED_WRITE(WDT.CTRLA,0);
+}
+/// Watchdog end
+
+/// Reset Device via Software
+void resetViaSWR() {
+  _PROTECTED_WRITE(RSTCTRL.SWRR,1);
+}
+/// END Reset
+
+
 void receiveEvent(int numBytes)
 {
   uint8_t addr = Wire.getIncomingAddress();   // get the address that triggered this function
@@ -75,7 +96,7 @@ void requestHandler() {
   Serial.println(addr, HEX);
 
 //  if (addr == 0) {
-//        Wire.write(50);
+        Wire.write(0x00);
 //  }
 //  for (byte i = 0; i < 2; i++) {
 //    Wire.write("hello");
@@ -85,6 +106,8 @@ void requestHandler() {
 
 void setup()
 {
+  wdt_enable();
+
   for (byte i = 0; i < NUMBER_OF_SCALE_READINGS_BUFFER; i++)
     last_scale_raw_readings[i] = 0;
 
@@ -95,6 +118,27 @@ void setup()
   sw.begin();
 
   Serial.begin(115200);
+  uint8_t reset_flags;
+  reset_flags = RSTCTRL.RSTFR;   // Read flags
+  if (reset_flags & RSTCTRL_UPDIRF_bm) {
+    Serial.println("Reset by UPDI (code just upoloaded now)");
+  }
+  if (reset_flags & RSTCTRL_WDRF_bm) {
+    Serial.println("reset by WDT timeout");
+  }
+  if (reset_flags & RSTCTRL_SWRF_bm) {
+    Serial.println("reset at request of user code.");
+  }
+  if (reset_flags & RSTCTRL_EXTRF_bm) {
+    Serial.println("Reset because reset pin brought low");
+  }
+  if (reset_flags & RSTCTRL_BORF_bm) {
+    Serial.println("Reset by voltage brownout");
+  }
+  if (reset_flags & RSTCTRL_PORF_bm) {
+    Serial.println("Reset by power on");
+  }
+
   Serial.println("Qwiic Scale Example");
 
   //  Wire.begin(); //This line won't compile on an Uno. This example is for other platforms that have multiple I2C ports.
@@ -144,5 +188,7 @@ void loop()
 
     //Serial.print("Reading (avg): ");
     //Serial.println(averaged_reading);
+
+    wdt_reset();
   }
 }
