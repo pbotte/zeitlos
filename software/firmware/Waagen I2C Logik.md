@@ -28,7 +28,7 @@
   - `0x8` (erste freie Adresse nach den reservierten Bereich), r/w: Rückmeldung ob MAC-Adresse kleiner der gesuchten.
   - (individuelle) Adresse, `9..119`: 
     - Lesen (Abhängig von Register): 
-      - 4 Bytes, Waagenwerte, 1Byte LED Status, ODER
+      - 4 Bytes, Waagenwerte ODER
       - 7 Bytes, MAC Adresse und LED-Status
     - Schreiben: 
       - `0x00` nächtes Lesen enthält Waagen-Wert
