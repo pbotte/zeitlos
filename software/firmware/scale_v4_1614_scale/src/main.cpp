@@ -1,39 +1,24 @@
-/*
-  Use the Qwiic Scale to read load cells and scales
-  By: Nathan Seidle @ SparkFun Electronics
-  Date: March 3rd, 2019
-  License: This code is public domain but you buy me a beer if you use this
-  and we meet someday (Beerware license).
-
-  The NAU7802 supports up to 400kHz. You can also pass different wire ports
-  into the library.
-
-  SparkFun labored with love to create this code. Feel like supporting open
-  source? Buy a board from SparkFun!
-  https://www.sparkfun.com/products/15242
-
-  Hardware Connections:
-  Plug a Qwiic cable into the Qwiic Scale and a RedBoard Qwiic
-  If you don't have a platform with a Qwiic connection use the SparkFun Qwiic Breadboard Jumper (https://www.sparkfun.com/products/14425)
-  Open the serial monitor at 9600 baud to see the output
-*/
-
-// Funktioniert mit geänderter Library
+// Scale
 
 #include <Wire.h>
 #include <SoftWire.h>
 #include <AsyncDelay.h>
+#include <version.h>
+#include <EEPROM.h>
 
+// Soft I2C START
 SoftWire sw(6, 7);
 // These buffers must be at least as large as the largest read or write you perform.
 char swTxBuffer[16];
 char swRxBuffer[16];
 
 AsyncDelay readInterval;
+// Soft I2C END
 
+// NAU Start
+// Funktioniert mit Soft I2C nur mit geänderter Library
 #include "SparkFun_Qwiic_Scale_NAU7802_Arduino_Library.h" // Click here to get the library: http://librarymanager/All#SparkFun_NAU8702
 
-// NAU
 NAU7802 myScale;                          // Create instance of the NAU7802 class
 #define NUMBER_OF_SCALE_READINGS_BUFFER 8 // should multiple of 2^N for fast division
 long last_scale_raw_readings[NUMBER_OF_SCALE_READINGS_BUFFER];
@@ -41,72 +26,239 @@ byte last_scale_raw_readings_ringbuffer_index = 0; // points to the actual index
 long averaged_reading_sum = 0;                     // helper variable to average all entries in last_scale_raw_readings. needs to be divided by NUMBER_OF_SCALE_READINGS_BUFFER to get real average
 long averaged_reading = 0;                         // regularly updated: averaged_reading_sum/NUMBER_OF_SCALE_READINGS_BUFFER
 long last_scale_raw_reading = 0;                   // raw value from ADC
+// NAU END
+
+// Data from EEPROM
+byte eeprom_i2c_address;
+byte eeprom_mac_address[6];
+
+bool answer_bit = false; // If set to false, device will not answer on I2C address 0x8
+byte register_select_readout = 0;
+byte register_compare_mac_address[6];
 
 /// Watchdog, see: https://github.com/SpenceKonde/megaTinyCore/blob/master/megaavr/extras/Ref_Reset.md
-void wdt_enable() {
-  _PROTECTED_WRITE(WDT.CTRLA,WDT_PERIOD_8KCLK_gc); // no window, 8 seconds
+void wdt_enable()
+{
+  _PROTECTED_WRITE(WDT.CTRLA, WDT_PERIOD_8KCLK_gc); // no window, 8 seconds
 }
 
-void wdt_reset() {
-  __asm__ __volatile__ ("wdr"::);
+void wdt_reset()
+{
+  __asm__ __volatile__("wdr" ::);
 }
 
-void wdt_disable() {
-  _PROTECTED_WRITE(WDT.CTRLA,0);
+void wdt_disable()
+{
+  _PROTECTED_WRITE(WDT.CTRLA, 0);
 }
 /// Watchdog end
 
 /// Reset Device via Software
-void resetViaSWR() {
-  _PROTECTED_WRITE(RSTCTRL.SWRR,1);
+void resetViaSWR()
+{
+  _PROTECTED_WRITE(RSTCTRL.SWRR, 1);
 }
 /// END Reset
 
-
+// Write request handler, expected: Wire.read
 void receiveEvent(int numBytes)
 {
-  uint8_t addr = Wire.getIncomingAddress();   // get the address that triggered this function
-  addr = addr >> 1; //shift to the address bits, not r/w bit.
-  Serial.println(addr, HEX);
+  uint8_t addr = Wire.getIncomingAddress(); // get the address that triggered this function
+  addr = addr >> 1;                         // shift to the address bits, not r/w bit.
 
-  while (Wire.available())
-  {
-    char c = Wire.read();
-    Serial.print("Neu: (0x");
-    Serial.print(c, HEX);
-    Serial.print("): ");
-    Serial.println(c);
+  Serial.print("Write by master on address: 0x");
+  Serial.print(addr, HEX);
+  Serial.print(" length: ");
+  Serial.println(numBytes);
 
-    if (c == 'H')
+  if (addr == 0x0)
+  { // General call address
+    // while (Wire.available())
+    if (numBytes >= 1)
     {
-      digitalWrite(LED_BUILTIN, HIGH);
+      char c = Wire.read();
+      Serial.print("data: 0x");
+      Serial.println(c, HEX);
+      Serial.flush();
+
+      if (c == 0x00)
+      {             // Reset scale
+        Serial.println("Restart scale");
+        Serial.flush();
+        delay(100); // To allow serial data flush
+        resetViaSWR();
+      }
+      if (c == 0x01)
+      { // Reset answer bit
+        answer_bit = true;
+      }
+      if ((c == 0x02) && (numBytes == 8))
+      { // Set I2C address, 8 bytes: 0x2 6bytes MAC address and 1byte I2C address
+        byte temp_mac_address[6];
+        for (byte i = 0; i < 6; i++)
+        {
+          temp_mac_address[i] = Wire.read();
+        }
+        byte temp_i2c_address = Wire.read();
+
+        // check
+        bool equal = true;
+        for (byte i = 0; i < 6; i++)
+        {
+          if (eeprom_mac_address[i] != temp_mac_address[i])
+          {
+            equal = false;
+          }
+        }
+
+        // Set I2C address
+        if (equal)
+        {
+          answer_bit = false;
+          EEPROM.write(6, temp_i2c_address);
+          Serial.print("New I2C address set to: ");
+          Serial.print(temp_i2c_address);
+          Serial.println(". Restarting...");
+          Serial.flush();
+          // restart to take effect
+          delay(100); // To allow serial data flush
+          resetViaSWR();
+        }
+      }
+      if (c == 0x04)
+      {
+        digitalWrite(LED_BUILTIN, LOW); // Switch off
+      }
+      if (c == 0x05)
+      {
+        digitalWrite(LED_BUILTIN, HIGH); // Switch on
+      }
     }
-    else if (c == 'L')
-    {
-      digitalWrite(LED_BUILTIN, LOW);
+  }
+
+  if (addr == 0x8)
+  {
+    byte c = Wire.read();
+
+    if ((c == 0) && (numBytes == 7)) //cmd = 0, +6 bytes
+    { // I2C command includes 7bytes: 0x0 and 6 bytes for mac address
+      for (byte i = 0; i < 6; i++)
+      {
+        register_compare_mac_address[i] = Wire.read();
+      }
+    }
+  }
+
+  if (addr == eeprom_i2c_address)
+  {
+    byte c = Wire.read();
+
+    if (c == 0x00)
+    { // nächtes Lesen enthält Waagen-Wert
+      register_select_readout = 0;
+      Serial.println("register_select_readout set to 0.");
+    }
+    if (c == 0x01)
+    { // nächtes Lesen enthält MAC-Adresse und LED-Status
+      register_select_readout = 1;
+      Serial.println("register_select_readout set to 1.");
+    }
+    if (c == 0x02)
+    {                                 // LED aus
+      digitalWrite(LED_BUILTIN, LOW); // Switch off
+    }
+    if (c == 0x03)
+    {                                  // LED on
+      digitalWrite(LED_BUILTIN, HIGH); // Switch on
     }
   }
 }
 
-
-void requestHandler() {
+// Read request handler, expected: Wire.write
+void requestHandler()
+{
   uint8_t bytes_read = Wire.getBytesRead();
-  uint8_t addr = Wire.getIncomingAddress();   // get the address that triggered this function
-  addr = addr >> 1; //shift to the address bits, not r/w bit.
+  uint8_t addr = Wire.getIncomingAddress(); // get the address that triggered this function
+  addr = addr >> 1;                         // shift to the address bits, not r/w bit.
+
+  Serial.print("Read by master on address: 0x");
   Serial.println(addr, HEX);
 
-//  if (addr == 0) {
-        Wire.write(0x00);
-//  }
-//  for (byte i = 0; i < 2; i++) {
-//    Wire.write("hello");
-//  }
+  if ( (addr == 8) && (answer_bit) )
+  {
+    bool result_e_l_c = false; // true if eeprom_mac_address < register_compare_mac_address
+    for (byte i = 0; i < 6; i++)
+    {
+      Serial.print("Compare: ");
+      Serial.print((uint8_t) eeprom_mac_address[i], HEX);
+      Serial.print(" with ");
+      Serial.println((uint8_t) register_compare_mac_address[i], HEX);
+      if (eeprom_mac_address[i] > register_compare_mac_address[i])
+      {
+        break; // skip for loop
+      }
+      if (eeprom_mac_address[i] < register_compare_mac_address[i])
+      {
+        result_e_l_c = true;
+        break; // skip for loop
+      }
+    }
 
+    if (result_e_l_c)
+    {
+      Wire.write(0x00); // dominant on I2C bus
+    }
+    else
+    {
+      Wire.write(0xFF);
+    }
+  }
+
+  if (addr == eeprom_i2c_address)
+  {
+    if (register_select_readout == 0)
+    { // 4 Bytes, Waagenwerte
+      Wire.write((byte *) &averaged_reading, sizeof(averaged_reading));
+    }
+
+    if (register_select_readout == 1)
+    { // 7 Bytes, MAC Adresse und LED-Status
+      for (byte i = 0; i < 6; i++)
+      {
+        Wire.write(eeprom_mac_address[i]);
+      }
+      Wire.write(digitalRead(LED_BUILTIN));
+    }
+  }
 }
 
 void setup()
 {
+  // Sleep at the beginning, to make sure voltages are stabilised,
+  // see: https://github.com/SpenceKonde/megaTinyCore/tree/master/megaavr/libraries/EEPROM
+  delay(100);
+
+  // Enable Watchdog
   wdt_enable();
+/*
+  // DEBUG
+    EEPROM.write(0,0x0);
+    EEPROM.write(1,0x0);
+    EEPROM.write(2,0x0);
+    EEPROM.write(3,0x0);
+    EEPROM.write(4,0xbe);
+    EEPROM.write(5,0xef);
+
+    EEPROM.write(6,0x9);
+  */
+  // DEBUG END
+
+  // Read I2C address and MAC address
+  for (byte i = 0; i < 6; i++)
+  {
+    eeprom_mac_address[i] = EEPROM.read(i);
+  }
+  eeprom_i2c_address = EEPROM.read(6);
 
   for (byte i = 0; i < NUMBER_OF_SCALE_READINGS_BUFFER; i++)
     last_scale_raw_readings[i] = 0;
@@ -118,50 +270,42 @@ void setup()
   sw.begin();
 
   Serial.begin(115200);
-  uint8_t reset_flags;
-  reset_flags = RSTCTRL.RSTFR;   // Read flags
-  if (reset_flags & RSTCTRL_UPDIRF_bm) {
-    Serial.println("Reset by UPDI (code just upoloaded now)");
-  }
-  if (reset_flags & RSTCTRL_WDRF_bm) {
-    Serial.println("reset by WDT timeout");
-  }
-  if (reset_flags & RSTCTRL_SWRF_bm) {
-    Serial.println("reset at request of user code.");
-  }
-  if (reset_flags & RSTCTRL_EXTRF_bm) {
-    Serial.println("Reset because reset pin brought low");
-  }
-  if (reset_flags & RSTCTRL_BORF_bm) {
-    Serial.println("Reset by voltage brownout");
-  }
-  if (reset_flags & RSTCTRL_PORF_bm) {
-    Serial.println("Reset by power on");
-  }
 
-  Serial.println("Qwiic Scale Example");
-
-  //  Wire.begin(); //This line won't compile on an Uno. This example is for other platforms that have multiple I2C ports.
-  //  Wire.setClock(400000); //We can increase I2C clock speed to 400kHz, the NAU7802 supports it
-
-  if (myScale.begin(sw) == false) // Pass the Wire port to the library
+  Serial.print("scale version: ");
+  Serial.println(VERSION);
+  Serial.print("MAC address:");
+  for (byte i = 0; i < 6; i++)
   {
-    Serial.println("Scale not detected. Please check wiring. ");
-    //while (1)
-      ;
+    Serial.print(" 0x");
+    Serial.print(eeprom_mac_address[i], HEX);
   }
-  Serial.println("Scale detected!");
+  Serial.println();
+  Serial.print("I2C address: ");
+  Serial.print(eeprom_i2c_address);
+  Serial.print("(dec) 0x");
+  Serial.print(eeprom_i2c_address, HEX);
+  Serial.println("(hex)");
+
+  Serial.print("Scale detected: ");
+  if (myScale.begin(sw) == false)
+  {
+    Serial.println("NOT okay. ");
+    // while (1); //Make the wathdog perform reset
+  }
+  else
+  {
+    Serial.println("okay");
+  }
 
   ///**************************************
-  Wire.swap(1); //Select the right pins
+  Wire.swap(1); // Select the right pins
 
   // Initializing slave with secondary address
   // 1st argument: 1st address to listen to
   // 2nd argument: listen to general broadcast or "general call" (address 0x00)
   // 3rd argument: bits 7-1: second address if bit 0 is set true
   //               or bit mask of an address if bit 0 is set false
-  Wire.begin(0x5, true, WIRE_ALT_ADDRESS(10));
-  Wire.setClock(1000);
+  Wire.begin(eeprom_i2c_address, true, WIRE_ALT_ADDRESS(8));
 
   // Handler für das I2C-Empfangsereignis festlegen (siehe unten)
   Wire.onReceive(receiveEvent);
@@ -169,6 +313,8 @@ void setup()
 
   pinMode(LED_BUILTIN, OUTPUT);
   digitalWrite(LED_BUILTIN, LOW); // Bord-LED
+
+  answer_bit = false; // Do not answer to requests on I2C address 0x8
 }
 
 void loop()
@@ -186,8 +332,8 @@ void loop()
     averaged_reading_sum += last_scale_raw_reading;
     averaged_reading = averaged_reading_sum / NUMBER_OF_SCALE_READINGS_BUFFER;
 
-    //Serial.print("Reading (avg): ");
-    //Serial.println(averaged_reading);
+    // Serial.print("Reading (avg): ");
+    // Serial.println(averaged_reading);
 
     wdt_reset();
   }

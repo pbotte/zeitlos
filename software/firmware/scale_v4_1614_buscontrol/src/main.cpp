@@ -1,105 +1,125 @@
+// Seriell <-> I2C Adapter
+// Commands:
+// Commands start with "r"/"w" and end with single character "\n"
+//
+// write to I2C address 0xC1 data: 0x01 0x02 0x03
+// wC1010203\n
+//
+// read from I2C address 0xC2 max 17 (=0x11) characters
+// rC211\n
+
 #include <Wire.h> //I2C-Bibliothek
 
-void setup(){
+#define VALUES_LENGTH 16
+byte values[VALUES_LENGTH];
+#define BUFFER_LENGTH VALUES_LENGTH * 2 + 1
+char buffer[BUFFER_LENGTH];
+
+void setup()
+{
   Serial.begin(115200);
-  Wire.begin(); //I2C-Aktivierung
-    Wire.setClock(1000);
+  Serial.setTimeout(10000);
+  Wire.begin(); // I2C-Aktivierung
+  byte res = Wire.setClock(1000);
+  Serial.print("Set I2C clock to 1000Hz, return value: ");
+  Serial.println(res);
 }
 
-void loop(){
-  while( Serial.available() ) {
-    char c = Serial.read();
-    
-    if(c == 'H') {
-      Serial.print("H gefunden");
-      Wire.beginTransmission(5); //I2C: an Adresse 5 senden
-      Wire.write('H');
-      Wire.endTransmission();
-    }
-    else if(c == 'L') {
-      Serial.print("Low gefunden");
-      Wire.beginTransmission(5);
-      Wire.write('L');
-      Wire.endTransmission();
-    }
-    if(c == 'h') {
-      Serial.print("h gefunden");
-      Wire.beginTransmission(6); //I2C: an Adresse 5 senden
-      Wire.write('H');
-      Wire.endTransmission();
-    }
-    else if(c == 'l') {
-      Serial.print("low gefunden");
-      Wire.beginTransmission(6);
-      Wire.write('L');
-      Wire.endTransmission();
+void loop()
+{
+  if (Serial.available())
+  {
+    byte len = Serial.readBytesUntil('\n', buffer, BUFFER_LENGTH);
+
+    // Reformat all bytes except the first
+    byte i = 1;
+    byte len_values = 0;
+    while (
+        (i < BUFFER_LENGTH) && (((buffer[i] >= '0') && (buffer[i] <= '9')) ||
+                                ((buffer[i] >= 'A') && (buffer[i] <= 'F'))))
+    {
+      // Make 'A' come next after '9'
+      if (buffer[i] > '9')
+        buffer[i] = buffer[i] - 'A' + '9'+1;
+      // Substract '0' from every value
+      buffer[i] -= '0';
+      i++;
+      len = i;
+      if (i%2==1) len_values++;
     }
 
-    if(c == 'x') {
-      Serial.print("h gefunden");
-      Wire.beginTransmission(0x64); //I2C: an Adresse 5 senden
-      Wire.write('H');
-      Wire.endTransmission();
-    }
-    else if(c == 'c') {
-      Serial.print("low gefunden");
-      Wire.beginTransmission(0x64);
-      Wire.write('L');
-      Wire.endTransmission();
+    for (byte i = 0; i < VALUES_LENGTH; i++)
+    {
+      values[i] = (buffer[i * 2 + 1] << 4) + (buffer[i * 2 + 2]);
     }
 
-    if(c == 'a') {
-      Serial.print("Broadcast 0x000000");
-      Wire.beginTransmission(0x0);
-      for (byte k=0; k<6; k++) {
-        Wire.write(0x0);
+    // Print debug output
+    Serial.print("Summary: cmd: ");
+    Serial.print(buffer[0]);
+
+    Serial.print(" values:");
+    for (byte i = 0; i < len_values; i++)
+    {
+      Serial.print(" 0x");
+      Serial.print(values[i], HEX);
+    }
+    Serial.println();
+
+    // Process commands
+    if (buffer[0] == 'r') // read cmd
+    {
+      if (len_values == 2)
+      {
+        Serial.print("Read from 0x");
+        Serial.print((uint8_t)values[0], HEX);
+        Serial.print(" number of char: ");
+        Serial.println((uint8_t)values[1]);
+
+        uint8_t n = Wire.requestFrom(values[0], values[1]);
+        Serial.print("(");
+        Serial.print(Wire.available());
+        Serial.print(", ");
+        Serial.print(n);
+        Serial.print(")");
+
+        while (Wire.available())
+        {                       // peripheral may send less than requested
+          char c = Wire.read(); // receive a byte as character
+          Serial.print(" 0x");
+          Serial.print((uint8_t)c, HEX); // print the character
+        }
+        Serial.println();
       }
-      Wire.endTransmission();
-    }
-    else if(c == 's') {
-      Serial.print("Read from 0x0");
-      uint8_t n = Wire.requestFrom(10, 1);    // request 1 byte from peripheral device #0
-      Serial.print("(");
-      Serial.print(Wire.available());
-      Serial.print(", ");
-      Serial.print(n);
-      Serial.print(")");
-      while (Wire.available()) { // peripheral may send less than requested
-        char c = Wire.read(); // receive a byte as character
-        Serial.print("0x");
-        Serial.print(c,HEX);         // print the character
+      else
+      {
+        Serial.print("ERROR: number of characters is ");
+        Serial.print(len);
+        Serial.println(" but expected 5.");
       }
-       // TODO: Check for return value to detect errors
     }
+    else if (buffer[0] == 'w') // write cmd
+    {
+      Serial.print("Write ");
+      Serial.print(len_values-1);
+      Serial.print(" values to 0x");
+      Serial.print((uint8_t)values[0], HEX);
+      Serial.print(":");
 
-    if(c == 'e') {
-      Serial.print("e gefunden");
-
-      Wire.requestFrom(5, 6);    // request 6 bytes from peripheral device #8
-      Serial.print("(");
-      Serial.print(Wire.available());
-      Serial.print(")");
-      while (Wire.available()) { // peripheral may send less than requested
-        char c = Wire.read(); // receive a byte as character
-        Serial.print(c);         // print the character
+      for (byte i = 1; i < len_values; i++)
+      {
+        Serial.print(" 0x");
+        Serial.print((uint8_t)values[i], HEX);
       }
+      Serial.println();
 
-    }
-    if(c == 'r') {
-      Serial.print("r gefunden (nix lesen test)");
-      Wire.requestFrom(4, 6);    // request 6 bytes from peripheral device #8
-       // TODO: Check for return value to detect errors
-      Serial.print("(");
-      Serial.print(Wire.available());
-      Serial.print(")");
-      while (Wire.available()) { // peripheral may send less than requested
-        char c = Wire.read(); // receive a byte as character
-        Serial.print(c);         // print the character
+      Wire.beginTransmission(values[0]);
+      for (byte i = 1; i < len_values; i++)
+      {
+        Wire.write(values[i]);
       }
-
+      byte res = Wire.endTransmission();
+      Serial.print("Return code: ");
+      Serial.println(res);
     }
-
-    Serial.print("Gefunden: ");
-    Serial.println(c);
   }
 }
