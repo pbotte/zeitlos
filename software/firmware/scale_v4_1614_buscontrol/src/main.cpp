@@ -30,6 +30,7 @@ void loop()
   if (Serial.available())
   {
     byte len = Serial.readBytesUntil('\n', buffer, BUFFER_LENGTH);
+//    Serial.println(buffer);
 
     // Reformat all bytes except the first
     byte i = 1;
@@ -54,63 +55,74 @@ void loop()
     }
 
     // Print debug output
-    Serial.print("Summary: cmd: ");
+    //Serial.print("Summary: cmd: ");
     Serial.print(buffer[0]);
+    //Serial.print(" ");
 
-    Serial.print(" values:");
-    for (byte i = 0; i < len_values; i++)
-    {
-      Serial.print(" 0x");
-      Serial.print(values[i], HEX);
-    }
-    Serial.println();
+    //Serial.print(" values:");
+    // for (byte i = 0; i < len_values; i++)
+    // {
+    //   // Serial.print(" ");
+    //   if ((uint8_t)values[i] <= 0xf) {
+    //     Serial.print("0");
+    //   }
+    //   Serial.print((uint8_t)values[i], HEX);
+    // }
+    // Serial.print(" ");
 
     // Process commands
     if (buffer[0] == 'r') // read cmd
     {
       if (len_values == 2)
       {
-        Serial.print("Read from 0x");
-        Serial.print((uint8_t)values[0], HEX);
-        Serial.print(" number of char: ");
-        Serial.println((uint8_t)values[1]);
+        // Serial.print("Read from 0x");
+        // Serial.print((uint8_t)values[0], HEX);
+        // Serial.print(" number of char: ");
+        // Serial.println((uint8_t)values[1]);
 
+        Serial.print(" ");
         uint8_t n = Wire.requestFrom(values[0], values[1]);
-        Serial.print("(");
-        Serial.print(Wire.available());
-        Serial.print(", ");
-        Serial.print(n);
-        Serial.print(")");
+        // Serial.print("(");
+        // Serial.print(Wire.available());
+        // Serial.print(", ");
+          if ((uint8_t)n <= 0xf) {
+            Serial.print("0");
+          }
+        Serial.print((uint8_t)n, HEX);
+        // Serial.print(")");
 
         while (Wire.available())
         {                       // peripheral may send less than requested
           char c = Wire.read(); // receive a byte as character
-          Serial.print(" 0x");
+          Serial.print(" ");
+          if ((uint8_t)c <= 0xf) {
+            Serial.print("0");
+          }
           Serial.print((uint8_t)c, HEX); // print the character
         }
-        Serial.println();
+        // Serial.println();
       }
       else
       {
-        Serial.print("ERROR: number of characters is ");
+        Serial.print(" ERROR: number of characters is ");
         Serial.print(len);
-        Serial.println(" but expected 5.");
+        Serial.print(" but expected 5.");
       }
     }
     else if (buffer[0] == 'w') // write cmd
     {
-      Serial.print("Write ");
-      Serial.print(len_values-1);
-      Serial.print(" values to 0x");
-      Serial.print((uint8_t)values[0], HEX);
-      Serial.print(":");
+      // Serial.print("Write ");
+      // Serial.print(len_values-1);
+      // Serial.print(" values to 0x");
+      // Serial.print((uint8_t)values[0], HEX);
+      // Serial.print(":");
 
       for (byte i = 1; i < len_values; i++)
       {
-        Serial.print(" 0x");
-        Serial.print((uint8_t)values[i], HEX);
+        // Serial.print(" 0x");
+        // Serial.print((uint8_t)values[i], HEX);
       }
-      Serial.println();
+      // Serial.print(" ");
 
       Wire.beginTransmission(values[0]);
       for (byte i = 1; i < len_values; i++)
@@ -118,8 +130,17 @@ void loop()
         Wire.write(values[i]);
       }
       byte res = Wire.endTransmission();
-      Serial.print("Return code: ");
-      Serial.println(res);
+      //Serial.print("Return code: ");
+      Serial.print(" ");
+      if (res <= 0xf) {
+        Serial.print("0");
+      }
+      Serial.print((uint8_t)res, HEX);
+    } 
+    else 
+    {
+      Serial.print("error");
     }
+    Serial.println();
   }
 }

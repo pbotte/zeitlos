@@ -33,6 +33,7 @@ byte eeprom_i2c_address;
 byte eeprom_mac_address[6];
 
 bool answer_bit = false; // If set to false, device will not answer on I2C address 0x8
+bool update_i2c_address_from_eeprom = false;
 byte register_select_readout = 0;
 byte register_compare_mac_address[6];
 
@@ -54,6 +55,8 @@ void wdt_disable()
 /// Watchdog end
 
 /// Reset Device via Software
+// Better do not use during I2C access: No ack to I2C will be send!
+//Better let the watchdog bite
 void resetViaSWR()
 {
   _PROTECTED_WRITE(RSTCTRL.SWRR, 1);
@@ -86,7 +89,11 @@ void receiveEvent(int numBytes)
         Serial.println("Restart scale");
         Serial.flush();
         delay(100); // To allow serial data flush
-        resetViaSWR();
+        while (true) {
+          delay(1);
+        }
+        //resetViaSWR(); // Better do not use: No ack to I2C will be send
+        //Better let the watchdog bite
       }
       if (c == 0x01)
       { // Reset answer bit
@@ -120,9 +127,14 @@ void receiveEvent(int numBytes)
           Serial.print(temp_i2c_address);
           Serial.println(". Restarting...");
           Serial.flush();
-          // restart to take effect
-          delay(100); // To allow serial data flush
-          resetViaSWR();
+          update_i2c_address_from_eeprom = true; //set flag to update later in loop, to complete actual I2C request
+        }
+      }
+      if ((c == 3) && (numBytes == 7)) //set reference MAC address
+      {
+        for (byte i = 0; i < 6; i++)
+        {
+          register_compare_mac_address[i] = Wire.read();
         }
       }
       if (c == 0x04)
@@ -132,19 +144,6 @@ void receiveEvent(int numBytes)
       if (c == 0x05)
       {
         digitalWrite(LED_BUILTIN, HIGH); // Switch on
-      }
-    }
-  }
-
-  if (addr == 0x8)
-  {
-    byte c = Wire.read();
-
-    if ((c == 0) && (numBytes == 7)) //cmd = 0, +6 bytes
-    { // I2C command includes 7bytes: 0x0 and 6 bytes for mac address
-      for (byte i = 0; i < 6; i++)
-      {
-        register_compare_mac_address[i] = Wire.read();
       }
     }
   }
@@ -186,7 +185,7 @@ void requestHandler()
 
   if ( (addr == 8) && (answer_bit) )
   {
-    bool result_e_l_c = false; // true if eeprom_mac_address < register_compare_mac_address
+    bool result_e_l_c = true; // true if eeprom_mac_address <= register_compare_mac_address
     for (byte i = 0; i < 6; i++)
     {
       Serial.print("Compare: ");
@@ -195,6 +194,7 @@ void requestHandler()
       Serial.println((uint8_t) register_compare_mac_address[i], HEX);
       if (eeprom_mac_address[i] > register_compare_mac_address[i])
       {
+        result_e_l_c = false;
         break; // skip for loop
       }
       if (eeprom_mac_address[i] < register_compare_mac_address[i])
@@ -319,6 +319,12 @@ void setup()
 
 void loop()
 {
+  if (update_i2c_address_from_eeprom) {
+    eeprom_i2c_address = EEPROM.read(6);
+    Wire.begin(eeprom_i2c_address, true, WIRE_ALT_ADDRESS(8));
+    update_i2c_address_from_eeprom = false;
+  }
+
   if (myScale.available())
   {
     last_scale_raw_reading = myScale.getReading();
