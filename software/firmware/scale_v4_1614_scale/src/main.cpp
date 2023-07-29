@@ -34,13 +34,14 @@ byte eeprom_mac_address[6];
 
 bool answer_bit = false; // If set to false, device will not answer on I2C address 0x8
 bool update_i2c_address_from_eeprom = false;
+bool restart_at_next_possibility = false;
 byte register_select_readout = 0;
 byte register_compare_mac_address[6];
 
 /// Watchdog, see: https://github.com/SpenceKonde/megaTinyCore/blob/master/megaavr/extras/Ref_Reset.md
 void wdt_enable()
 {
-  _PROTECTED_WRITE(WDT.CTRLA, WDT_PERIOD_8KCLK_gc); // no window, 8 seconds
+  _PROTECTED_WRITE(WDT.CTRLA, WDT_PERIOD_4KCLK_gc); // no window, 4 seconds
 }
 
 void wdt_reset()
@@ -89,11 +90,7 @@ void receiveEvent(int numBytes)
         Serial.println("Restart scale");
         Serial.flush();
         delay(100); // To allow serial data flush
-        while (true) {
-          delay(1);
-        }
-        //resetViaSWR(); // Better do not use: No ack to I2C will be send
-        //Better let the watchdog bite
+        restart_at_next_possibility = true;
       }
       if (c == 0x01)
       { // Reset answer bit
@@ -319,6 +316,11 @@ void setup()
 
 void loop()
 {
+  if (restart_at_next_possibility) {
+    Wire.end();
+    while (true) ;
+    resetViaSWR();
+  }
   if (update_i2c_address_from_eeprom) {
     eeprom_i2c_address = EEPROM.read(6);
     Wire.begin(eeprom_i2c_address, true, WIRE_ALT_ADDRESS(8));

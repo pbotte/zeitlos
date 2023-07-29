@@ -4,9 +4,6 @@ import re
 
 min = 0x0
 max = 0xffff_ffff_ffff
-weitere_a = (0xbeef, 0x1_beef)
-#weitere_a = (0x1_beef,)
-#weitere_a = ()
 
 def send_and_recv(str_to_send, echo_out = False, print_return = False):
     if echo_out:
@@ -40,39 +37,27 @@ def send_and_recv(str_to_send, echo_out = False, print_return = False):
     else:
         print(f"Invalid data from serial: {out}")
 
-
     return (command, ret_val)
 
-
-def get_bus_return(adresse, referenz):
-    bus_return = 0x00 if adresse <= referenz else 0xff
-    for v in weitere_a:
-        if bus_return == 0xff: bus_return = 0x00 if v <= referenz else 0xff
-    return bus_return
 
 def bin_search():
     l = min
     r = max
     i = 0
-    adresse = 0xffff_ffff_ffff
-
     while i<52:
         m = l + (r-l)//2
 
-        #bus_return = 0x00 if adresse <= m else 0xff
-        bus_return = get_bus_return(adresse, m)
-        print(f"i: {i} {l:014_X} {m:014_X} {r:014_X}: {bus_return:2_X}")
+        #print(f"i: {i} {l:014_X} {m:014_X} {r:014_X}")
         str_to_send = f"w0003{m:#013X}".replace("X","")
         #print(str_to_send)
-        print(send_and_recv(str_to_send))
+        send_and_recv(str_to_send)
 
         str_to_send = f"r0801"
         #print(str_to_send)
 
         res = send_and_recv(str_to_send)
-        print(res)
+        #print(res)
 
-#        if bus_return==0x00:
         if res[1][1] == 0x00:
             if r-l<=1: return m #Ausgabe, falls 0 gesucht wurde
             r = m
@@ -82,7 +67,7 @@ def bin_search():
 
         i+=1
 
-    return False #nichts gefunden. Waage kaputtgegangen?
+    return False #nichts gefunden. Waage während des Suchlaufs kaputtgegangen?
 
 
 ser = serial.Serial(
@@ -94,32 +79,31 @@ ser.isOpen()
 
 # Waagen Neustart
 send_and_recv("w0000")
-time.sleep(10)
+print("Warte auf Waagen, bis sie den Neustart ausgeführt haben. 8 Sekunden ...")
+time.sleep(8)
+
+#alle LEDs an
+send_and_recv("w0005")
+time.sleep(0.9)
 #Antwort bit setzen
 send_and_recv("w0001")
 time.sleep(.1)
-#alle LEDs an
-send_and_recv("w0005")
-time.sleep(1)
 #alle LEDs aus
 send_and_recv("w0004")
 time.sleep(.1)
-
-#print(bin_search(0x000000000000))
-#print(bin_search(0x000000000001))
-#print(f"{bin_search(0x00000000beef):014_x}")
 
 anzahl_waagen = 0
 weiter_suchen = True
 while weiter_suchen:
     #test, ob noch waagen ohne neue I2C Adresse
+    print(f"Suche nach weiteren Waage. ", end="")
     m = 0xffff_ffff_ffff
     str_to_send = f"w0003{m:#013X}".replace("X","")
-    print(send_and_recv(str_to_send))
+    send_and_recv(str_to_send)
 
     str_to_send = f"r0801"
     res = send_and_recv(str_to_send)
-    print(f"Suche nach weiteren Waage: {res}")
+    print(f"Rückgabewerte der Suche: {res}")
 
     weiter_suchen = True if res[1][0] > 0 else False
 
@@ -128,17 +112,17 @@ while weiter_suchen:
         neue_i2c_adresse = anzahl_waagen + 8 #ab Adresse 9 geht's los
 
         res2 = bin_search()
-        print(f"{res2:014_X}")
+        print(f"Waage mit MAC {res2:014_X} gefunden.")
 
-        print(f"Setze: {res2:014_X} auf I2C Adresse {neue_i2c_adresse:02X}")
+        print(f"Setze Wagge (Suchlauf {anzahl_waagen}): {res2:014_X} auf I2C Adresse {neue_i2c_adresse:02X}")
         res2 = send_and_recv(f"w0002{res2:012X}{neue_i2c_adresse:02X}")
-        print(f"{res2}")
+        print(f"Rückgabewert Schreiben I2C Adresse: {res2}")
         time.sleep(0.5)
         #individuelle LED an
         send_and_recv(f"w{neue_i2c_adresse:02X}03")
-        time.sleep(2)
+        time.sleep(0.1)
 
-    print(f"gefundene Waagen Anzahl: {anzahl_waagen}")
+print(f"gefundene Waagen Anzahl: {anzahl_waagen}")
 
 
 ser.close()
