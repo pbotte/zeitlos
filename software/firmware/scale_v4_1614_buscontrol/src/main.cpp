@@ -23,6 +23,31 @@ void setup()
   byte res = Wire.setClock(1000);
   Serial.print("Set I2C clock to 1000Hz, return value: ");
   Serial.println(res);
+
+  //SIGROW.SERNUM0 .. SERNUM9, eg:
+  // 30 54 43 30 39 53 F7 75 13 45
+  // 30 54 43 30 39 53 D7 FA 13 46
+  Serial.print("ATTiny chip serial: ");
+  Serial.print(SIGROW.SERNUM0, HEX);
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM1, HEX);
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM2, HEX);
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM3, HEX);
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM4, HEX);
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM5, HEX);
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM6, HEX);
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM7, HEX);
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM8, HEX);
+  Serial.print(" ");
+  Serial.println(SIGROW.SERNUM9, HEX);
+
 }
 
 void loop()

@@ -8,10 +8,9 @@
 ## Generelle Logik
 
 - Daten in EEPROM:
-  - EEPROM, byte 0-5: MAC-Adresse
-  - EEPROM, byte 6: I2C-Adresse (7bit)
+  - EEPROM, byte 0: I2C-Adresse (7bit)
 
-- Alle Waagen haben eine 6x 8bit MAC-Adresse. Die ersten 3 Bytes sind "Hersteller" spezifisch, die hinteren 3 Bytes sind fortlaufend für jede produzierte Waage.
+- Alle Waagen haben eine 6x 8bit MAC-Adresse. Sie wird aus der Chip Seriennummer abgeleitet.
 
 - I2C Bus-Geschwindigkeit: sollte so niedrig sein, dass er auch als "Feldbus" über die langen Distanzen funktionieren kann. 
   - Evtl. die Widerstände niedriger wählen, siehe auch https://www.nxp.com/docs/en/application-note/AN10216.pdf Slide 41 auf Seite 17. 

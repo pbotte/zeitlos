@@ -30,7 +30,8 @@ long last_scale_raw_reading = 0;                   // raw value from ADC
 
 // Data from EEPROM
 byte eeprom_i2c_address;
-byte eeprom_mac_address[6];
+// Data from serial number chip
+byte device_mac_address[6];
 
 bool answer_bit = false; // If set to false, device will not answer on I2C address 0x8
 bool update_i2c_address_from_eeprom = false;
@@ -109,7 +110,7 @@ void receiveEvent(int numBytes)
         bool equal = true;
         for (byte i = 0; i < 6; i++)
         {
-          if (eeprom_mac_address[i] != temp_mac_address[i])
+          if (device_mac_address[i] != temp_mac_address[i])
           {
             equal = false;
           }
@@ -119,7 +120,7 @@ void receiveEvent(int numBytes)
         if (equal)
         {
           answer_bit = false;
-          EEPROM.write(6, temp_i2c_address);
+          EEPROM.write(0, temp_i2c_address);
           Serial.print("New I2C address set to: ");
           Serial.print(temp_i2c_address);
           Serial.println(". Restarting...");
@@ -182,19 +183,19 @@ void requestHandler()
 
   if ( (addr == 8) && (answer_bit) )
   {
-    bool result_e_l_c = true; // true if eeprom_mac_address <= register_compare_mac_address
+    bool result_e_l_c = true; // true if device_mac_address <= register_compare_mac_address
     for (byte i = 0; i < 6; i++)
     {
       Serial.print("Compare: ");
-      Serial.print((uint8_t) eeprom_mac_address[i], HEX);
+      Serial.print((uint8_t) device_mac_address[i], HEX);
       Serial.print(" with ");
       Serial.println((uint8_t) register_compare_mac_address[i], HEX);
-      if (eeprom_mac_address[i] > register_compare_mac_address[i])
+      if (device_mac_address[i] > register_compare_mac_address[i])
       {
         result_e_l_c = false;
         break; // skip for loop
       }
-      if (eeprom_mac_address[i] < register_compare_mac_address[i])
+      if (device_mac_address[i] < register_compare_mac_address[i])
       {
         result_e_l_c = true;
         break; // skip for loop
@@ -222,12 +223,13 @@ void requestHandler()
     { // 7 Bytes, MAC Adresse und LED-Status
       for (byte i = 0; i < 6; i++)
       {
-        Wire.write(eeprom_mac_address[i]);
+        Wire.write(device_mac_address[i]);
       }
       Wire.write(digitalRead(LED_BUILTIN));
     }
   }
 }
+
 
 void setup()
 {
@@ -237,25 +239,46 @@ void setup()
 
   // Enable Watchdog
   wdt_enable();
-/*
-  // DEBUG
-    EEPROM.write(0,0x0);
-    EEPROM.write(1,0x0);
-    EEPROM.write(2,0x0);
-    EEPROM.write(3,0x0);
-    EEPROM.write(4,0xbe);
-    EEPROM.write(5,0xef);
 
-    EEPROM.write(6,0x9);
-  */
-  // DEBUG END
+  Serial.begin(115200);
+  Serial.print("scale version: ");
+  Serial.println(VERSION);
 
-  // Read I2C address and MAC address
-  for (byte i = 0; i < 6; i++)
-  {
-    eeprom_mac_address[i] = EEPROM.read(i);
-  }
-  eeprom_i2c_address = EEPROM.read(6);
+  //SIGROW.SERNUM0 .. SERNUM9, eg:
+  // 30 54 43 30 39 53 F7 75 13 45
+  // 30 54 43 30 39 53 D7 FA 13 46
+  // see: https://microchip.my.site.com/s/article/Serial-number-in-AVR---Mega-Tiny-devices
+  Serial.print("ATTiny chip serial: ");
+  Serial.print(SIGROW.SERNUM0, HEX); //Lot Number 2nd Char
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM1, HEX); //Lot Number 1st Char
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM2, HEX); //Lot Number 4th Char
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM3, HEX); //Lot Number 3rd Char
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM4, HEX); //Lot Number 6th Char
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM5, HEX); //Lot Number 5th Char
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM6, HEX); //Reserved
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM7, HEX); //Wafer Number
+  Serial.print(" ");
+  Serial.print(SIGROW.SERNUM8, HEX); //Y-coordinate
+  Serial.print(" ");
+  Serial.println(SIGROW.SERNUM9, HEX); //X-coordinate
+
+  // Set mac address
+  device_mac_address[0] = SIGROW.SERNUM2; //Lot Number 4th Char
+  device_mac_address[1] = SIGROW.SERNUM5; //Lot Number 5th Char
+  device_mac_address[2] = SIGROW.SERNUM4; //Lot Number 6th Char
+  device_mac_address[3] = SIGROW.SERNUM7; //Wafer Number
+  device_mac_address[4] = SIGROW.SERNUM8; //Y-coordinate
+  device_mac_address[5] = SIGROW.SERNUM9; //X-coordinate
+
+  // Read I2C address
+  eeprom_i2c_address = EEPROM.read(0);
 
   for (byte i = 0; i < NUMBER_OF_SCALE_READINGS_BUFFER; i++)
     last_scale_raw_readings[i] = 0;
@@ -266,15 +289,11 @@ void setup()
   sw.setTimeout_ms(200);
   sw.begin();
 
-  Serial.begin(115200);
-
-  Serial.print("scale version: ");
-  Serial.println(VERSION);
   Serial.print("MAC address:");
   for (byte i = 0; i < 6; i++)
   {
     Serial.print(" 0x");
-    Serial.print(eeprom_mac_address[i], HEX);
+    Serial.print(device_mac_address[i], HEX);
   }
   Serial.println();
   Serial.print("I2C address: ");
@@ -322,7 +341,7 @@ void loop()
     resetViaSWR();
   }
   if (update_i2c_address_from_eeprom) {
-    eeprom_i2c_address = EEPROM.read(6);
+    eeprom_i2c_address = EEPROM.read(0);
     Wire.begin(eeprom_i2c_address, true, WIRE_ALT_ADDRESS(8));
     update_i2c_address_from_eeprom = false;
   }
