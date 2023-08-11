@@ -48,7 +48,7 @@ def bin_search():
         m = l + (r-l)//2
 
         #print(f"i: {i} {l:014_X} {m:014_X} {r:014_X}")
-        str_to_send = f"w0003{m:#013X}".replace("X","")
+        str_to_send = f"w0003{m:#014X}".replace("0X","")
         #print(str_to_send)
         send_and_recv(str_to_send)
 
@@ -98,7 +98,7 @@ while weiter_suchen:
     #test, ob noch waagen ohne neue I2C Adresse
     print(f"Suche nach weiteren Waage. ", end="")
     m = 0xffff_ffff_ffff
-    str_to_send = f"w0003{m:#013X}".replace("X","")
+    str_to_send = f"w0003{m:#014X}".replace("0X","")
     send_and_recv(str_to_send)
 
     str_to_send = f"r0801"
@@ -123,6 +123,16 @@ while weiter_suchen:
         time.sleep(0.1)
 
 print(f"gefundene Waagen Anzahl: {anzahl_waagen}")
+
+while False:
+    str_to_send = f"r0904"
+    res = send_and_recv(str_to_send)
+    print(f"Rückgabewert: {res} ", end="")
+    
+    v = res[1]
+    v = v[1] + (v[2]<<8) + (v[3]<<16) + (v[4]<<24)
+    print(f"{v}")
+    time.sleep(0.1)
 
 
 ser.close()
