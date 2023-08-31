@@ -1,6 +1,7 @@
 import serial
 import time
 import re
+import struct
 
 min = 0x0
 max = 0xffff_ffff_ffff
@@ -119,19 +120,29 @@ while weiter_suchen:
         print(f"Rückgabewert Schreiben I2C Adresse: {res2}")
         time.sleep(0.5)
         #individuelle LED an
-        send_and_recv(f"w{neue_i2c_adresse:02X}03")
+        res3 = send_and_recv(f"w{neue_i2c_adresse:02X}03")
+        print(f"Rückgabewert Schreiben I2C LED an: {res3}")
         time.sleep(0.1)
 
 print(f"gefundene Waagen Anzahl: {anzahl_waagen}")
 
-while False:
+while True:
     str_to_send = f"r0904"
     res = send_and_recv(str_to_send)
-    print(f"Rückgabewert: {res} ", end="")
-    
-    v = res[1]
-    v = v[1] + (v[2]<<8) + (v[3]<<16) + (v[4]<<24)
-    print(f"{v}")
+    if res[1][0] == 4:
+        v = struct.unpack('<l',bytes(res[1][1:5]))[0]
+        print(f"\t{v}", end="\t")
+    else:
+        print(f"Fehler beim Lesen: {res}")
+
+    str_to_send = f"r0A04"
+    res = send_and_recv(str_to_send)
+    if res[1][0] == 4:
+        v = struct.unpack('<l',bytes(res[1][1:5]))[0]
+        print(f"\t{v}")
+    else:
+        print(f"Fehler beim Lesen: {res}")
+
     time.sleep(0.1)
 
 

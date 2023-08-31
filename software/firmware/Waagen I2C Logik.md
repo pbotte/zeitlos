@@ -36,6 +36,7 @@ Alle Waagen hören lesend auf:
 | `9..119` | w | `0x01` | 0 | nächtes Lesen enthält MAC-Adresse und LED-Status |
 | `9..119` | w | `0x02` | 0 | LED aus |
 | `9..119` | w | `0x03` | 0 | LED an |
+| `9..119` | w | `0x04` | 0 | Start Chip Self Test |
 
 
 ## Einschalten der Waagen
@@ -58,13 +59,8 @@ Alle Waagen hören lesend auf:
 6. Der Master sendet nun an Adresse `0x0` ein "I2C Adresse setzen"-Kommando (`0x02`) mit der MAC-Adresse und der I2C-Adresse (8 Bytes).
   - Die Waage speichert sie ins EEPROM. 
   - Die Waage setzt bei sich das Antwort-Bit und antwortet damit bei zukündigen Broadcasts nur noch mit `0xFF`
-  - Anschließend (`Wire.begin`) oder neustart via `resetViaSWR()`
+  - Anschließend (`Wire.begin`) oder Neustart via `resetViaSWR()`
 7. Die Suche geht so lang weiter (zurück zu Punkt 2) wie bei einem Broadcast mit der Adresse 0xFFFFFFFFFFFF noch mind. eine Waage antwortet.
 
 ToDO: Falls die Mehrheit der Waagen mit 0xFF die eine antwortende Waage mit 0x0 elektrisch überstimmen sollte, dann muss der I2C-Bus kurzzeitig bei manchen Waagen deaktiviert und auf "z" gesetzt werden. 
-
-
-## Weitere Funktionen
-
-- Master sendet auf Adresse `0x0` und Daten `0x0`: Waagen Restart
 

@@ -58,12 +58,143 @@ void wdt_disable()
 
 /// Reset Device via Software
 // Better do not use during I2C access: No ack to I2C will be send!
-//Better let the watchdog bite
+// Better let the watchdog bite
 void resetViaSWR()
 {
   _PROTECTED_WRITE(RSTCTRL.SWRR, 1);
 }
 /// END Reset
+
+//*********** CHIP Self Test Routines Start ****************
+// Chip self test
+// Hints from here: https://forum.arduino.cc/t/reading-the-system-voltage-on-the-new-attiny-1-series/644885/7
+#define chip_test_RESULTCOUNT 4
+int16_t chip_test_results[chip_test_RESULTCOUNT];
+int32_t chip_test_sum;
+int16_t chip_test_average;
+#define chip_test_results_i2c_buffer_LENGTH 11
+int16_t chip_test_results_i2c_buffer[chip_test_results_i2c_buffer_LENGTH];
+
+void chip_test_showHex(unsigned char b)
+{
+  if (b <= 0xf)
+    Serial.print("0");
+  Serial.print(b, HEX);
+}
+
+void chip_test_printRegisters()
+{
+  Serial.print("ADC0.MUXPOS: ");
+  chip_test_showHex(ADC0.MUXPOS);
+  Serial.print("  ADC0.CTRLC: ");
+  chip_test_showHex(ADC0.CTRLC);
+  Serial.print("  VREF.CTRLA: ");
+  chip_test_showHex(VREF.CTRLA);
+  Serial.println();
+}
+
+int16_t chip_test_runTest_without_expected(uint8_t reference, uint8_t pin)
+{
+  // clearResults
+  for (byte x = 0; x < chip_test_RESULTCOUNT; x++)
+  {
+    chip_test_results[x] = -1;
+  }
+  chip_test_sum = 0;
+  chip_test_average = 0;
+
+  // Start test
+  Serial.print("Now testing pin 0x");
+  chip_test_showHex(pin);
+  Serial.println();
+  analogReference(reference);
+  for (byte x = 0; x < chip_test_RESULTCOUNT; x++)
+  {
+    chip_test_results[x] = analogRead(pin);
+  }
+  chip_test_printRegisters();
+  for (byte x = 0; x < chip_test_RESULTCOUNT; x++)
+  {
+    chip_test_sum += chip_test_results[x];
+  }
+  Serial.print("Average: ");
+  chip_test_average = chip_test_sum / chip_test_RESULTCOUNT;
+  Serial.println(chip_test_average);
+  return chip_test_average;
+}
+
+int8_t chip_test_runTest(uint8_t reference, uint8_t pin, int16_t expected)
+{
+  chip_test_runTest_without_expected(reference, pin);
+  Serial.print("Expected: ");
+  Serial.println(expected);
+  int16_t diff = expected - chip_test_average;
+  if (diff < 0)
+  {
+    diff -= 2 * diff;
+  }
+  if (diff < 8)
+  {
+    Serial.println("PASS\n");
+    // return 0;
+  }
+  return chip_test_average;
+}
+
+void chip_test_prepare()
+{
+  Serial.println("testAnalogReference");
+  analogWrite(PIN_A6, 127); // Output 50% of max voltage from DAC, DAC VREF = 0.55 V, so this is 0.275 V
+  Serial.println("Initial state of ADC registers: ");
+  chip_test_printRegisters();
+}
+
+void chip_test_perform()
+{
+  Serial.println("START START START START START START START START START START");
+  Serial.println("Start Test with VREF=0.55V");
+  chip_test_results_i2c_buffer[0] = 508; // chip_test_runTest(INTERNAL0V55,ADC_DAC0, 508);
+
+  Serial.println("Start Test with VREF= 1.1V");
+  chip_test_results_i2c_buffer[1] = chip_test_runTest(INTERNAL1V1, ADC_DAC0, 254);
+
+  Serial.println("Start Test with VREF= 1.5V");
+  chip_test_results_i2c_buffer[2] = chip_test_runTest(INTERNAL1V5, ADC_DAC0, 186);
+
+  Serial.println("Start Test with VREF= 2.5VV");
+  chip_test_results_i2c_buffer[3] = chip_test_runTest(INTERNAL2V5, ADC_DAC0, 112);
+
+  Serial.println("Start Test with VREF= 4.34V");
+  chip_test_results_i2c_buffer[4] = chip_test_runTest(INTERNAL4V34, ADC_DAC0, 64);
+
+  Serial.println("Start Test with VREF= Vcc 5.0V");
+  int16_t vscale = chip_test_runTest_without_expected(VDD, ADC_DAC0);
+  chip_test_results_i2c_buffer[5] = vscale;
+  Serial.print("Voltage is: ");
+  Serial.print(chip_test_average * 89);
+  Serial.println("mV\n");
+
+  Serial.println("Start Test with VREF= Vcc (5.0V) Internal Ref 0.55V");
+  VREF.CTRLA = VREF_ADC0REFSEL_0V55_gc;
+  chip_test_results_i2c_buffer[6] = chip_test_runTest(VDD, ADC_INTREF, (113L * vscale) / 56);
+
+  Serial.println("Start Test with VREF= Vcc (5.0V) Internal Ref 1.1V");
+  VREF.CTRLA = VREF_ADC0REFSEL_1V1_gc;
+  chip_test_results_i2c_buffer[7] = chip_test_runTest(VDD, ADC_INTREF, (225L * vscale) / 56);
+
+  Serial.println("Start Test with VREF= Vcc (5.0V) Internal Ref 1.5V");
+  VREF.CTRLA = VREF_ADC0REFSEL_1V5_gc;
+  chip_test_results_i2c_buffer[8] = chip_test_runTest(VDD, ADC_INTREF, (307L * vscale) / 56);
+
+  Serial.println("Start Test with VREF= Vcc (5.0V) Internal Ref 2.5V");
+  VREF.CTRLA = VREF_ADC0REFSEL_2V5_gc;
+  chip_test_results_i2c_buffer[9] = chip_test_runTest(VDD, ADC_INTREF, (512L * vscale) / 56);
+
+  Serial.println("Start Test with VREF= Vcc (5.0V) Internal Ref 4.34V");
+  VREF.CTRLA = VREF_ADC0REFSEL_4V34_gc;
+  chip_test_results_i2c_buffer[10] = chip_test_runTest(VDD, ADC_INTREF, (888L * vscale) / 56);
+}
+//*********** CHIP Self Test End *****
 
 // Write request handler, expected: Wire.read
 void receiveEvent(int numBytes)
@@ -87,7 +218,7 @@ void receiveEvent(int numBytes)
       Serial.flush();
 
       if (c == 0x00)
-      {             // Reset scale
+      { // Reset scale
         Serial.println("Restart scale");
         Serial.flush();
         delay(100); // To allow serial data flush
@@ -125,10 +256,10 @@ void receiveEvent(int numBytes)
           Serial.print(temp_i2c_address);
           Serial.println(". Restarting...");
           Serial.flush();
-          update_i2c_address_from_eeprom = true; //set flag to update later in loop, to complete actual I2C request
+          update_i2c_address_from_eeprom = true; // set flag to update later in loop, to complete actual I2C request
         }
       }
-      if ((c == 3) && (numBytes == 7)) //set reference MAC address
+      if ((c == 3) && (numBytes == 7)) // set reference MAC address
       {
         for (byte i = 0; i < 6; i++)
         {
@@ -168,6 +299,12 @@ void receiveEvent(int numBytes)
     {                                  // LED on
       digitalWrite(LED_BUILTIN, HIGH); // Switch on
     }
+    if (c == 0x04)
+    { // nächtes Lesen enthält Ergebnis des Selst Tests
+      register_select_readout = 2;
+      Serial.println("register_select_readout set to 2.");
+      chip_test_prepare();
+    }
   }
 }
 
@@ -181,15 +318,15 @@ void requestHandler()
   Serial.print("Read by master on address: 0x");
   Serial.println(addr, HEX);
 
-  if ( (addr == 8) && (answer_bit) )
+  if ((addr == 8) && (answer_bit))
   {
     bool result_e_l_c = true; // true if device_mac_address <= register_compare_mac_address
     for (byte i = 0; i < 6; i++)
     {
       Serial.print("Compare: ");
-      Serial.print((uint8_t) device_mac_address[i], HEX);
+      Serial.print((uint8_t)device_mac_address[i], HEX);
       Serial.print(" with ");
-      Serial.println((uint8_t) register_compare_mac_address[i], HEX);
+      Serial.println((uint8_t)register_compare_mac_address[i], HEX);
       if (device_mac_address[i] > register_compare_mac_address[i])
       {
         result_e_l_c = false;
@@ -216,7 +353,7 @@ void requestHandler()
   {
     if (register_select_readout == 0)
     { // 4 Bytes, Waagenwerte
-      Wire.write((byte *) &averaged_reading, sizeof(averaged_reading));
+      Wire.write((byte *)&averaged_reading, sizeof(averaged_reading));
     }
 
     if (register_select_readout == 1)
@@ -227,9 +364,17 @@ void requestHandler()
       }
       Wire.write(digitalRead(LED_BUILTIN));
     }
+
+    if (register_select_readout == 2)
+    { // chip_test_results_i2c_buffer_LENGTH *2 Bytes: RESULTS FROM SELF TEST
+      for (byte i = 0; i < chip_test_results_i2c_buffer_LENGTH; i++)
+      {
+        Wire.write((chip_test_results_i2c_buffer[i] >> 8) & 0xFF);
+        Wire.write((chip_test_results_i2c_buffer[i]) & 0xFF);
+      }
+    }
   }
 }
-
 
 void setup()
 {
@@ -244,38 +389,39 @@ void setup()
   Serial.print("scale version: ");
   Serial.println(VERSION);
 
-  //SIGROW.SERNUM0 .. SERNUM9, eg:
-  // 30 54 43 30 39 53 F7 75 13 45
-  // 30 54 43 30 39 53 D7 FA 13 46
-  // see: https://microchip.my.site.com/s/article/Serial-number-in-AVR---Mega-Tiny-devices
+  // SIGROW.SERNUM0 .. SERNUM9, eg:
+  //  30 54 43 30 39 53 F7 75 13 45
+  //  30 54 43 30 39 53 D7 FA 13 46
+  //  30 54 43 30 39 53 77 F1 13 38
+  //  see: https://microchip.my.site.com/s/article/Serial-number-in-AVR---Mega-Tiny-devices
   Serial.print("ATTiny chip serial: ");
-  Serial.print(SIGROW.SERNUM0, HEX); //Lot Number 2nd Char
+  Serial.print(SIGROW.SERNUM0, HEX); // Lot Number 2nd Char
   Serial.print(" ");
-  Serial.print(SIGROW.SERNUM1, HEX); //Lot Number 1st Char
+  Serial.print(SIGROW.SERNUM1, HEX); // Lot Number 1st Char
   Serial.print(" ");
-  Serial.print(SIGROW.SERNUM2, HEX); //Lot Number 4th Char
+  Serial.print(SIGROW.SERNUM2, HEX); // Lot Number 4th Char
   Serial.print(" ");
-  Serial.print(SIGROW.SERNUM3, HEX); //Lot Number 3rd Char
+  Serial.print(SIGROW.SERNUM3, HEX); // Lot Number 3rd Char
   Serial.print(" ");
-  Serial.print(SIGROW.SERNUM4, HEX); //Lot Number 6th Char
+  Serial.print(SIGROW.SERNUM4, HEX); // Lot Number 6th Char
   Serial.print(" ");
-  Serial.print(SIGROW.SERNUM5, HEX); //Lot Number 5th Char
+  Serial.print(SIGROW.SERNUM5, HEX); // Lot Number 5th Char
   Serial.print(" ");
-  Serial.print(SIGROW.SERNUM6, HEX); //Reserved
+  Serial.print(SIGROW.SERNUM6, HEX); // Reserved
   Serial.print(" ");
-  Serial.print(SIGROW.SERNUM7, HEX); //Wafer Number
+  Serial.print(SIGROW.SERNUM7, HEX); // Wafer Number
   Serial.print(" ");
-  Serial.print(SIGROW.SERNUM8, HEX); //Y-coordinate
+  Serial.print(SIGROW.SERNUM8, HEX); // Y-coordinate
   Serial.print(" ");
-  Serial.println(SIGROW.SERNUM9, HEX); //X-coordinate
+  Serial.println(SIGROW.SERNUM9, HEX); // X-coordinate
 
   // Set mac address
-  device_mac_address[0] = SIGROW.SERNUM2; //Lot Number 4th Char
-  device_mac_address[1] = SIGROW.SERNUM5; //Lot Number 5th Char
-  device_mac_address[2] = SIGROW.SERNUM4; //Lot Number 6th Char
-  device_mac_address[3] = SIGROW.SERNUM7; //Wafer Number
-  device_mac_address[4] = SIGROW.SERNUM8; //Y-coordinate
-  device_mac_address[5] = SIGROW.SERNUM9; //X-coordinate
+  device_mac_address[0] = SIGROW.SERNUM2; // Lot Number 4th Char
+  device_mac_address[1] = SIGROW.SERNUM5; // Lot Number 5th Char
+  device_mac_address[2] = SIGROW.SERNUM4; // Lot Number 6th Char
+  device_mac_address[3] = SIGROW.SERNUM7; // Wafer Number
+  device_mac_address[4] = SIGROW.SERNUM8; // Y-coordinate
+  device_mac_address[5] = SIGROW.SERNUM9; // X-coordinate
 
   // Read I2C address
   eeprom_i2c_address = EEPROM.read(0);
@@ -335,15 +481,23 @@ void setup()
 
 void loop()
 {
-  if (restart_at_next_possibility) {
+  if (restart_at_next_possibility)
+  {
     Wire.end();
-    while (true) ;
+    while (true)
+      ;
     resetViaSWR();
   }
-  if (update_i2c_address_from_eeprom) {
+  if (update_i2c_address_from_eeprom)
+  {
     eeprom_i2c_address = EEPROM.read(0);
     Wire.begin(eeprom_i2c_address, true, WIRE_ALT_ADDRESS(8));
     update_i2c_address_from_eeprom = false;
+  }
+
+  if (register_select_readout == 2)
+  { // Perform self test now!
+    chip_test_perform();
   }
 
   if (myScale.available())

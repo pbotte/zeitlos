@@ -67,6 +67,9 @@ classDef StyleHighlightError fill:#f00,color:#000
 
 ```
 
+
+
+
 # Nicht ganz aktuell:
 
 ## Einkauf
@@ -91,17 +94,3 @@ sequenceDiagram
 ```
 
 
-## Bestückung
-```mermaid
-sequenceDiagram
-    actor Verkäufer
-    participant Zugangskontrolle
-    participant shopcontroller
-    participant Waagen
-    participant Einkaufsanzeige
-    Verkäufer->>Zugangskontrolle: Authentifikation
-    Zugangskontrolle->>Verkäufer: Einlass
-    Verkäufer->>Waagen: Legt neue Produkte auf Waagen
-    Waagen->>Waagen: Produktmenge darf angepasst werden
-    Zugangskontrolle->>Verkäufer: Geschäft verlassen.
-```
