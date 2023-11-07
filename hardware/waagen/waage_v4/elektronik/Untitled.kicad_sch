@@ -667,6 +667,11 @@
     (uuid fe8bf804-69ae-44ef-879c-370584720ced)
   )
 
+  (text "PA6 - do not use. used for interenal chip tests" (at 123.19 92.71 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 2e1165fa-544b-40a3-9b18-a2f551fd9f75)
+  )
+
   (label "SDA_0" (at 82.55 78.74 0) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 5fb50ee5-f6c5-49dd-b137-c39b249cf40b)
