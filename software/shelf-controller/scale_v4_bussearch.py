@@ -72,7 +72,7 @@ def bin_search():
 
 
 ser = serial.Serial(
-    port='/dev/cu.usbserial-AE01DTXS',
+    port='/dev/tty.usbserial-14110',
     baudrate=115200,
     timeout=1,
 )
@@ -83,9 +83,9 @@ send_and_recv("w0000")
 print("Warte auf Waagen, bis sie den Neustart ausgeführt haben. 8 Sekunden ...")
 time.sleep(8)
 
-#alle LEDs an
-send_and_recv("w0005")
-time.sleep(0.9)
+##alle LEDs an
+#send_and_recv("w0005")
+#time.sleep(0.9)
 #Antwort bit setzen
 send_and_recv("w0001")
 time.sleep(.1)
@@ -119,9 +119,13 @@ while weiter_suchen:
         res2 = send_and_recv(f"w0002{res2:012X}{neue_i2c_adresse:02X}")
         print(f"Rückgabewert Schreiben I2C Adresse: {res2}")
         time.sleep(0.5)
-        #individuelle LED an
+        #individuelle kurz LED an
         res3 = send_and_recv(f"w{neue_i2c_adresse:02X}03")
         print(f"Rückgabewert Schreiben I2C LED an: {res3}")
+        time.sleep(0.5)
+        #individuelle wieder LED aus
+        res3 = send_and_recv(f"w{neue_i2c_adresse:02X}02")
+        print(f"Rückgabewert Schreiben I2C LED aus: {res3}")
         time.sleep(0.1)
 
 print(f"gefundene Waagen Anzahl: {anzahl_waagen}")
@@ -131,17 +135,17 @@ while True:
     res = send_and_recv(str_to_send)
     if res[1][0] == 4:
         v = struct.unpack('<l',bytes(res[1][1:5]))[0]
-        print(f"\t{v}", end="\t")
+        print(f"\t{v}", end="\n")
     else:
         print(f"Fehler beim Lesen: {res}")
 
-    str_to_send = f"r0A04"
-    res = send_and_recv(str_to_send)
-    if res[1][0] == 4:
-        v = struct.unpack('<l',bytes(res[1][1:5]))[0]
-        print(f"\t{v}")
-    else:
-        print(f"Fehler beim Lesen: {res}")
+#    str_to_send = f"r0A04"
+#    res = send_and_recv(str_to_send)
+#    if res[1][0] == 4:
+#        v = struct.unpack('<l',bytes(res[1][1:5]))[0]
+#        print(f"\t{v}")
+#    else:
+#        print(f"Fehler beim Lesen: {res}")
 
     time.sleep(0.1)
 
