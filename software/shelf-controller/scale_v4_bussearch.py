@@ -4,18 +4,35 @@ import serial
 import time
 import re
 import struct
+import logging, argparse
 
 min = 0x0
 max = 0xffff_ffff_ffff
 
+
+logging.basicConfig(format="%(asctime)-15s %(levelname)-8s  %(message)s")
+logger = logging.getLogger("Shelf Readout")
+
+parser = argparse.ArgumentParser(description='Shelf Readout.')
+parser.add_argument("-v", "--verbosity", help="increase output verbosity", default=0, action="count")
+parser.add_argument("-b", "--mqtt-broker-host", help="MQTT broker hostname", default="localhost")
+parser.add_argument("serial_device_name", help="eg /dev/ttyUSB0", type=str)
+parser.add_argument("mqtt_client_name", help="MQTT client name. Needs to be unique in the MQTT namespace, eg shelf01.", type=str)
+args = parser.parse_args()
+logger.setLevel(logging.WARNING-(args.verbosity*10 if args.verbosity <=2 else 20) )
+
+
+
+
+#######################################################################
+
 def send_and_recv(str_to_send, echo_out = False, print_return = False):
-    if echo_out:
-        print(f"<<{str_to_send}")
+    logger.debug(f"<<{str_to_send}")
     ser.write(str_to_send.encode() + b'\n')
 
     out = ser.readline().decode().strip()
     if out != '' and print_return:
-        print (f">>{out}")
+        logger.debug(f">>{out}")
 
     # analyse output
     # Define the regular expression pattern to capture the relevant parts
@@ -38,7 +55,7 @@ def send_and_recv(str_to_send, echo_out = False, print_return = False):
             ret_val = ret_val + [decimal_number]
             #print(decimal_number)
     else:
-        print(f"Invalid data from serial: {out}")
+        logger.warning(f"Invalid data from serial: {out}")
 
     return (command, ret_val)
 
@@ -73,20 +90,16 @@ def bin_search():
     return False #nichts gefunden. Waage während des Suchlaufs kaputtgegangen?
 
 
-ser = serial.Serial(
-    port='/dev/tty.usbserial-14110',
-    baudrate=115200,
-    timeout=1,
-)
+ser = serial.Serial(port=args.serial_device_name, baudrate=115200, timeout=1 )
 ser.isOpen()
 
 # Waagen Neustart
 send_and_recv("w0000")
-print("Warte auf Waagen, bis sie den Neustart ausgeführt haben. 8 Sekunden ...")
+logger.info("Warte auf Waagen, bis sie den Neustart ausgeführt haben. 8 Sekunden ...")
 time.sleep(8)
 
 ##alle LEDs an
-#send_and_recv("w0005")
+send_and_recv("w0005")
 #time.sleep(0.9)
 #Antwort bit setzen
 send_and_recv("w0001")
@@ -99,14 +112,14 @@ anzahl_waagen = 0
 weiter_suchen = True
 while weiter_suchen:
     #test, ob noch waagen ohne neue I2C Adresse
-    print(f"Suche nach weiteren Waage. ", end="")
+    logger.info(f"Suche weitere Waagen. ")
     m = 0xffff_ffff_ffff
     str_to_send = f"w0003{m:#014X}".replace("0X","")
     send_and_recv(str_to_send)
 
     str_to_send = f"r0801"
     res = send_and_recv(str_to_send)
-    print(f"Rückgabewerte der Suche: {res}")
+    logger.info(f"Rückgabewerte der Suche: {res}")
 
     weiter_suchen = True if res[1][0] > 0 else False
 
@@ -115,31 +128,31 @@ while weiter_suchen:
         neue_i2c_adresse = anzahl_waagen + 8 #ab Adresse 9 geht's los
 
         res2 = bin_search()
-        print(f"Waage mit MAC {res2:014_X} gefunden.")
+        logger.info(f"Waage mit MAC {res2:014_X} gefunden.")
 
-        print(f"Setze Wagge (Suchlauf {anzahl_waagen}): {res2:014_X} auf I2C Adresse {neue_i2c_adresse:02X}")
+        logger.info(f"Setze Wagge (Suchlauf {anzahl_waagen}): {res2:014_X} auf I2C Adresse {neue_i2c_adresse:02X}")
         res2 = send_and_recv(f"w0002{res2:012X}{neue_i2c_adresse:02X}")
-        print(f"Rückgabewert Schreiben I2C Adresse: {res2}")
+        logger.info(f"Rückgabewert Schreiben I2C Adresse: {res2}")
         time.sleep(0.5)
         #individuelle kurz LED an
         res3 = send_and_recv(f"w{neue_i2c_adresse:02X}03")
-        print(f"Rückgabewert Schreiben I2C LED an: {res3}")
+        logger.info(f"Rückgabewert Schreiben I2C LED an: {res3}")
         time.sleep(0.5)
         #individuelle wieder LED aus
         res3 = send_and_recv(f"w{neue_i2c_adresse:02X}02")
-        print(f"Rückgabewert Schreiben I2C LED aus: {res3}")
+        logger.info(f"Rückgabewert Schreiben I2C LED aus: {res3}")
         time.sleep(0.1)
 
-print(f"gefundene Waagen Anzahl: {anzahl_waagen}")
+logger.info(f"gefundene Waagen Anzahl: {anzahl_waagen}")
 
 while True:
     str_to_send = f"r0904"
     res = send_and_recv(str_to_send)
     if res[1][0] == 4:
         v = struct.unpack('<l',bytes(res[1][1:5]))[0]
-        print(f"\t{v}", end="\n")
+        logger.info(f"Read:\t{v}")
     else:
-        print(f"Fehler beim Lesen: {res}")
+        logger.warning(f"Fehler beim Lesen: {res}")
 
 #    str_to_send = f"r0A04"
 #    res = send_and_recv(str_to_send)
