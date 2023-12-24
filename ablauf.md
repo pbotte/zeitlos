@@ -19,7 +19,7 @@ subgraph Kunde im Laden am Einkaufen
   D["Möglicherweise: Einkauf finalisiert /\nKunde nicht mehr im Laden (4)"]
 end
 
-subgraph Kunde vor dem Laden, Bezahlvorgang
+subgraph Kunde vor dem Laden: Bezahlvorgang
   Z15["Sicher: Kunde nicht mehr im Laden.\nKartenterminal: buchen! (15)"]
   DD2["Warten auf:\nKartenterminal Buchung erfolgreich (17)"]
   E["Einkauf abgerechnet\nKassenbon-Anzeige (5)"]
@@ -58,7 +58,7 @@ end
   DD2 ==>|Fehler / Timeout| Z8
   Z15 --> |Timeout| Z8
   E --> |Timeout, 60Sec.| Z7
-  Z7 ==> AF2
+  Z7 ==> |Ja| AF2
   Z7 --> |Timeout| Z8
 
 classDef StyleHighlightInit fill:#0f0,color:#000
@@ -66,31 +66,3 @@ classDef StyleHighlight fill:#f96,color:#000
 classDef StyleHighlightError fill:#f00,color:#000
 
 ```
-
-
-
-
-# Nicht ganz aktuell:
-
-## Einkauf
-
-```mermaid
-sequenceDiagram
-    actor Kunde
-    participant Zugangskontrolle
-    participant shopcontroller
-    participant Waagen
-    participant Einkaufsanzeige
-    Kunde->>Zugangskontrolle: Authentifikation (Girocard)
-    Zugangskontrolle->>Kunde: Vorabbuchung durchgeführt + Einlass
-    Zugangskontrolle->>shopcontroller: Kunde eingelassen
-    shopcontroller->>Waagen: Reset
-    shopcontroller->>Einkaufsanzeige: Reset
-    Kunde->>Waagen: Entnimmt Produkte
-    shopcontroller->>Einkaufsanzeige: Anzeige aktueller Einkauf
-    Waagen->>Waagen: Produkte dürfen auch wieder zurückgelegt werden
-    Zugangskontrolle->>shopcontroller: Geschäft verlassen, Einkauf beendet.
-    shopcontroller->>Kunde: Abbuchung des finalen Geldbetrags
-```
-
-

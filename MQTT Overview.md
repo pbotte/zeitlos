@@ -7,15 +7,15 @@ graph TD
   WC2["scale_v4_bussearch.py 2"] ==> |Rohdaten| WI
   WCN["scale_v4_bussearch.py N"] ==> |Rohdaten| WI
 
-  L1["Lidar 1"] --> |Serial| ST1
-  L2["Lidar 2"] --> |Serial| ST2
-  LN["Lidar N"] --> |Serial| STN
+  L1["Lidar 1..4"] --> |Serial| ST1
+  L2["Lidar 1..4"] --> |Serial| ST2
+  LN["Lidar 1..4"] --> |Serial| STN
 
-  ST1["Lidar Readout 1"] --> |Rohdaten| STI
-  ST2["Lidar Readout 2"] --> |Rohdaten| STI
-  STN["Lidar Readout N"] --> |Rohdaten| STI
+  ST1["Lidar Readout 1"] ==> |Rohdaten| STI
+  ST2["Lidar Readout 2"] ==> |Rohdaten| STI
+  STN["Lidar Readout N"] ==> |Rohdaten| STI
 
-  Türkontakt --> IOR
+  Türkontakt --> |Klingeldraht| IOR
 
   SC["Shop controller"]
 
@@ -35,11 +35,13 @@ subgraph Ausgabe
   MN["mqtt-2-ntfy"]
 
   Shelly["Shelly Rollladen-Controller"]
+
+  UW["Update Public Webpage"]
 end
 
-  SC --> Shelly --> Rollladen
+  SC ==> Shelly --> Rollladen
  
-  IOR --> SC
+  IOR ==> |offen/zu| SC
 
   DPC --> CD1
   DPC --> CD2
@@ -54,12 +56,16 @@ end
   FSR --> Türöffner
 
   WI ==> |Entnommene Ware| SC
-  STI ==> SC
+  STI ==> |Anz. Pixel>Schwelle| SC
   cardreader <==> SC
-  QCS --> SC
+  QCS ==> |Gescannter Code| SC
 
   SC ==> FSR
   SC ==> DPC
 
-  SC --> MN
+  SC ==> MN
+
+  SC ==> UW
+
+  NR["NodeRed"] <==> SC
 ```

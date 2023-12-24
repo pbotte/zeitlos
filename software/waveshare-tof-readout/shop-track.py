@@ -84,7 +84,7 @@ client.publish(
 client.loop_start()
 logger.info("MQTT loop started.")
 
-ser = serial.Serial(args.serial_device_name, 921600, timeout=0.1)
+ser = serial.Serial(args.serial_device_name, 115200, timeout=0.1)
 
 
 ##########
@@ -175,7 +175,8 @@ while WatchDogCounter > 0:
           logger.warning(f"Sensor {i} did not deliver data in the last 300ms.")
 
     #send data
-    client.publish('homie/'+args.mqtt_client_name+'/actreading', json.dumps(last_sensor_data), qos=0, retain=False)
+    client.publish('homie/'+args.mqtt_client_name+'/tof/actreading', json.dumps(last_sensor_data), qos=0, retain=False)
+    logger.info(f"act reading: {json.dumps(last_sensor_data)}")
     time_last_data_submit = time.time()
 
   WatchDogCounter -= 1
