@@ -106,6 +106,7 @@ def on_connect(client, userdata, flags, rc):
   if rc==0:
     logger.info("MQTT connected OK. Return code "+str(rc) )
     client.subscribe("homie/"+args.mqtt_client_name+"/cmd/#")
+    client.subscribe(f"homie/{args.mqtt_client_name}/cmd/scales/+/led")
     client.subscribe("homie/shop_controller/prepare_for_next_customer")
     logger.info("MQTT: Success, subscribed to all topics")
   else:
@@ -146,12 +147,13 @@ client.publish(f"homie/{args.mqtt_client_name}/state", '1', qos=1, retain=True)
 
 #Global information on all scales
 anzahl_waagen = 0
-waagen = {} #9: {'mac': "493037D20E1B", 'address': 9, 'slope': 1, 'zero':0, 'state': 0},}
+waagen = {} #index: i2c_add   eg: 9: {'mac': "493037D20E1B", 'address': 9, 'slope': 1, 'zero':0, 'state': 0, ...},}
+LUT_MAC_2_I2C_ADD = {} #LUT to get I2C address from MAC address
 
 
 ##############################################################################
 def signal_handler(sig, frame):
-    logger.info(f"You pressed Ctrl+C! Sendingn correct /state for all {anzahl_waagen} scales.")
+    logger.info(f"Programm terminating. Sending correct /state for all {anzahl_waagen} scales... (this takes 1 second.)")
 
     for w in waagen.items():
         client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/state", 0, qos=0, retain=True)
@@ -218,22 +220,37 @@ def search_waagen():
             res2 = bin_search()
             logger.info(f"Waage mit MAC {res2:014_X} gefunden.")
             waagen[neue_i2c_adresse] = {'mac': f"{res2:012X}", 'i2c_address': neue_i2c_adresse, 'slope': 1, 
-                                        'zero':0, 'state':0, 'stack': collections.deque(maxlen=10),
+                                        'zero':0, 'state':0, 
+                                        'stack': collections.deque(maxlen=10), #if maxlen is changed, check later for touch functionality that it still works
                                         'touched': 0}
+            LUT_MAC_2_I2C_ADD[f"{res2:012X}"] = neue_i2c_adresse
 
             logger.info(f"Setze Wagge (Suchlauf {anzahl_waagen}): {res2:014_X} auf I2C Adresse {neue_i2c_adresse:02X}")
             res2 = send_and_recv(f"w0002{res2:012X}{neue_i2c_adresse:02X}")
-            logger.info(f"Rückgabewert Schreiben I2C Adresse: {res2}")
+            logger.debug(f"Rückgabewert Schreiben I2C Adresse: {res2}")
 
             client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/state", 0, qos=0, retain=True)
             client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/i2c_address", neue_i2c_adresse, qos=0, retain=True)
 
+            time.sleep(0.5) # wait for electronics to set new i2c address
 
-            # time.sleep(0.5) # wait for electronics to set new i2c address
+            #read MAC, LED, BUILD_NUMBER and HARDWARE_REV
+            #set: prepare for next read
+            send_and_recv(f"w{neue_i2c_adresse:02X}01")
+            res4 = send_and_recv(f"r{neue_i2c_adresse:02X}0D") #read 13 characters from bus
+            if (res4[1][0] == 13): #13 characters expected
+                logger.info(f"MAC: {res4[1][1:7]}, LED: {res4[1][7]}, BUILD: {res4[1][8:12]}, Hardware: {res4[1][12:14]}")
+                BUILD_VERSION = (res4[1][8]<<24)+(res4[1][9]<<16)+(res4[1][10]<<8)+(res4[1][11])
+                HARDWARE_REV = (res4[1][12]<<8) + res4[1][13]
+                client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/firmware_version", BUILD_VERSION, qos=0, retain=True)
+                client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/hardware_version", HARDWARE_REV, qos=0, retain=True)
+            else:
+                logger.warning(f"Falsche Anzahl an Bytes zurück erhalten: {res4[1][0]}")
+            send_and_recv(f"w{neue_i2c_adresse:02X}00") #set back normal read mode
 
             #individuelle LED kurz an
             res3 = send_and_recv(f"w{neue_i2c_adresse:02X}03")
-            logger.info(f"Rückgabewert Schreiben I2C LED an: {res3}")
+            logger.debug(f"Rückgabewert Schreiben I2C LED an: {res3}")
             #time.sleep(0.5)
             #individuelle LED wieder aus
             #res3 = send_and_recv(f"w{neue_i2c_adresse:02X}02")
@@ -242,12 +259,23 @@ def search_waagen():
 
     logger.info(f"gefundene Waagen Anzahl: {anzahl_waagen}")
     logger.info(f"gefundene Waagen: {waagen}")
+    logger.info(f"{LUT_MAC_2_I2C_ADD=}")
     time.sleep(1)
 
     #alle LEDs aus
     send_and_recv("w0004")    
 
 search_waagen()
+
+#test string is float?
+def is_float(element: any) -> bool:
+    if element is None: 
+        return False
+    try:
+        float(element)
+        return True
+    except ValueError:
+        return False
 
 while True:
     while not mqtt_queue.empty():
@@ -280,6 +308,43 @@ while True:
             logger.info("Per MQTT empfangen: Neuer Waagen scan.")
             search_waagen()
 
+        if len(msplit) == 4 and msplit[2].lower() == "cmd" and msplit[3].lower() == "set_zero":
+            logger.info("Per MQTT empfangen: set_zero")
+            for w in waagen.items():
+                waagen[w[0]]['zero'] = statistics.mean(list(waagen[w[0]]['stack']))
+                logger.info(f"Waage {w[1]['mac']} Zero gesetzt auf: {waagen[w[0]]['zero']}")
+
+        if len(msplit) == 6 and msplit[2].lower() == "cmd" and msplit[3].lower() == "scales" and msplit[5].lower() == "set_slope":
+            logger.info(f"Per MQTT empfangen: individuelle Steigung der Waage {msplit[4].upper()} setzen: {m} kg")
+            if msplit[4].upper() in LUT_MAC_2_I2C_ADD:
+                i2c_address = LUT_MAC_2_I2C_ADD[msplit[4].upper()]
+
+                if is_float(m):
+                    # slope in kg / raw ticks
+                    waagen[i2c_address]['slope'] = float(m) / (
+                        statistics.mean(list(waagen[i2c_address]['stack'])) - waagen[i2c_address]['zero']
+                        )
+                    logger.info(f"Mittelwert: {statistics.mean(list(waagen[i2c_address]['stack']))} Differenz zur 0: {statistics.mean(list(waagen[i2c_address]['stack'])) - waagen[i2c_address]['zero']} Steigung: {waagen[i2c_address]['slope']}")
+                else:
+                    logger.warning(f"Value passed: '{m}' is no float.")
+            else:
+                logger.warning(f"MAC not in local list: {msplit[4].upper()}")
+
+        if len(msplit) == 6 and msplit[2].lower() == "cmd" and msplit[3].lower() == "scales" and msplit[5].lower() == "led":
+            logger.info(f"Per MQTT empfangen: individuelle LED von Waage {msplit[3].upper()} on/off: {m}")
+            if msplit[4].upper() in LUT_MAC_2_I2C_ADD:
+                i2c_address = LUT_MAC_2_I2C_ADD[msplit[4].upper()]
+                if m == "1":
+                    res3 = send_and_recv(f"w{i2c_address:02X}03")
+                else:
+                    res3 = send_and_recv(f"w{i2c_address:02X}02")
+                logger.info(f"Rückgabewert Schreiben I2C LED an: {res3}")
+            else:
+                logger.warning(f"MAC not in local list: {msplit[4].upper()}")
+
+
+            
+
     # Poll all scales for raw readings
     for w in waagen.items():
         i2c_address = w[1]['i2c_address']
@@ -291,7 +356,13 @@ while True:
             if debug:
                 client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/raw", v, qos=0, retain=False)
 
+            mass = ( v - waagen[w[0]]['zero'] ) * waagen[w[0]]['slope']
+            client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/mass", mass, qos=0, retain=False)
+            
             waagen[w[0]]['stack'].append(v)
+
+            #######################################################################
+            # check for touch functionality start
             if (len(waagen[w[0]]['stack'])>8): #some reading has to be in the stack
                 # check the last 3 readings and compare to the first in stack.
                 # mean(new)-mean(old) > 10*std-dev
@@ -302,9 +373,8 @@ while True:
                 act_touched = 1 if abs(act_distance_avg_new - act_distance_avg_old) > act_distance_stdev*10 else 0
                 if act_distance_stdev<10: act_distance_stdev=10 #to avoid too small std deviations
                 
-
                 if waagen[w[0]]['touched'] != act_touched:
-                    logger.info(f"touched changed for i2c address 0x{i2c_address:02X}: New: {act_distance_avg_new:.1f} Diff: {(act_distance_avg_new-act_distance_avg_old):.1f} Std: {act_distance_stdev:.1f}")
+                    logger.info(f"touched changed to {act_touched} for i2c address 0x{i2c_address:02X} mac {waagen[w[0]]['mac']}: New: {act_distance_avg_new:.1f} Diff: {(act_distance_avg_new-act_distance_avg_old):.1f} Std: {act_distance_stdev:.1f}")
                     client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/touched", act_touched, qos=0, retain=False)
                     waagen[w[0]]['touched'] = act_touched
 
@@ -312,6 +382,8 @@ while True:
                         send_and_recv(f"w{i2c_address:02X}03")
                     else:
                         send_and_recv(f"w{i2c_address:02X}02")
+            # check for touch functionality end
+            #######################################################################
 
         else:
             logger.warning(f"Fehler beim Lesen, Anzahl der gelesenen Bytes ist nicht 4. I2C address 0x{i2c_address:02X}, return: {res}")

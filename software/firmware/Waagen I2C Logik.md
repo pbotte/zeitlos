@@ -31,9 +31,9 @@ Alle Waagen hören lesend auf:
 | `0x00` | w | `0x04` | 0 | LEDs aller Waagen: aus |
 | `0x00` | w | `0x05` | 0 | LEDs aller Waagen: ein |
 | `0x08` | r | - | 1 | Rückmeldung ob MAC-Adresse kleiner gleich der gesuchten. |
-| `9..119` | r | - | <br>4 ODER<br>7 ODER<br>11 ODER<br>1 | Abhängig von Register: vgl. write `0x00`/`0x01`/`0x04`/`0x06` an `9..119`<br>Waagenwert (Byte 0..3) ODER<br>MAC-Adresse (Byte 0..5) und LED-Status (Byte 6) ODER <br>Ergebnis des Selbsttests ODER<br>EEPROM data (single byte) from selected address |
+| `9..119` | r | - | <br>4 ODER<br>13 ODER<br>11 ODER<br>1 | Abhängig von Register: vgl. write `0x00`/`0x01`/`0x04`/`0x06` an `9..119`<br>Waagenwert (Byte 0..3) ODER<br>MAC-Adresse (Byte 0..5) und LED-Status (Byte 6) und BUILD_NUMBER (Byte 7..10) und Hardware_Revision (Byte 11..12) ODER <br>Ergebnis des Selbsttests ODER<br>EEPROM data (single byte) from selected address |
 | `9..119` | w | `0x00` | 0 | nächtes Lesen enthält Waagen-Wert |
-| `9..119` | w | `0x01` | 0 | nächtes Lesen enthält MAC-Adresse und LED-Status |
+| `9..119` | w | `0x01` | 0 | nächtes Lesen enthält MAC-Adresse und LED-Status und BUILD_NUMBER und Hardware_Rev |
 | `9..119` | w | `0x02` | 0 | LED aus |
 | `9..119` | w | `0x03` | 0 | LED an |
 | `9..119` | w | `0x04` | 0 | Start Chip Self Test (read result in next step) |
