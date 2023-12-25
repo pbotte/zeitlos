@@ -313,7 +313,13 @@ void receiveEvent(int numBytes)
     //3rd = data byte
     if ( (c == 0x05) && (numBytes == 3) )
     {  //write to EEPROM
-      EEPROM.write(Wire.read(), Wire.read());
+      byte a = Wire.read();
+      byte v = Wire.read();
+      Serial.print("Write to EEPROM. address: ");
+      Serial.print(a);
+      Serial.print(" and value ");
+      Serial.println(v);
+      EEPROM.write(a, v);
     }
     //Prepare Read from EEPROM
     //2 bytes expected:
@@ -323,7 +329,7 @@ void receiveEvent(int numBytes)
     if ( (c == 0x06) && (numBytes == 2) )
     { 
       register_select_readout = 3;
-      register_eeprom_address_to_read = Wire.read()
+      register_eeprom_address_to_read = Wire.read();
     }
   }
 }
@@ -377,12 +383,20 @@ void requestHandler()
     }
 
     if (register_select_readout == 1)
-    { // 7 Bytes, MAC Adresse und LED-Status
+    { // 7 Bytes, MAC Adresse und LED-Status und 4 bytes BUILD_NUMBER und 2 bytes HARDWARE_REVISION
       for (byte i = 0; i < 6; i++)
       {
         Wire.write(device_mac_address[i]);
       }
       Wire.write(digitalRead(LED_BUILTIN));
+
+      Wire.write((byte)((((long int)BUILD_NUMBER)>>24) & 0xff));
+      Wire.write((byte)((((long int)BUILD_NUMBER)>>16) & 0xff));
+      Wire.write((byte)((((long int)BUILD_NUMBER)>>8) & 0xff));
+      Wire.write((byte)((((long int)BUILD_NUMBER)>>0) & 0xff));
+
+      Wire.write(0);//Hardware Revision
+      Wire.write(1);//Hardware Revision
     }
 
     if (register_select_readout == 2)
@@ -451,6 +465,7 @@ void setup()
 
   // Read I2C address
   eeprom_i2c_address = EEPROM.read(0);
+  if ((eeprom_i2c_address > 119) || (eeprom_i2c_address <9)) eeprom_i2c_address=119; //set default and valid i2c address
 
   for (byte i = 0; i < NUMBER_OF_SCALE_READINGS_BUFFER; i++)
     last_scale_raw_readings[i] = 0;
