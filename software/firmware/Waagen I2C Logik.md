@@ -31,12 +31,14 @@ Alle Waagen hören lesend auf:
 | `0x00` | w | `0x04` | 0 | LEDs aller Waagen: aus |
 | `0x00` | w | `0x05` | 0 | LEDs aller Waagen: ein |
 | `0x08` | r | - | 1 | Rückmeldung ob MAC-Adresse kleiner gleich der gesuchten. |
-| `9..119` | r | - | <br>4 ODER<br>7 | Abhängig von Register: vgl. write `0x00`/`0x01` an `9..119`<br>Waagenwert (Byte 0..3) ODER<br>MAC-Adresse (Byte 0..5) und LED-Status (Byte 6) |
+| `9..119` | r | - | <br>4 ODER<br>7 ODER<br>11 ODER<br>1 | Abhängig von Register: vgl. write `0x00`/`0x01`/`0x04`/`0x06` an `9..119`<br>Waagenwert (Byte 0..3) ODER<br>MAC-Adresse (Byte 0..5) und LED-Status (Byte 6) ODER <br>Ergebnis des Selbsttests ODER<br>EEPROM data (single byte) from selected address |
 | `9..119` | w | `0x00` | 0 | nächtes Lesen enthält Waagen-Wert |
 | `9..119` | w | `0x01` | 0 | nächtes Lesen enthält MAC-Adresse und LED-Status |
 | `9..119` | w | `0x02` | 0 | LED aus |
 | `9..119` | w | `0x03` | 0 | LED an |
-| `9..119` | w | `0x04` | 0 | Start Chip Self Test |
+| `9..119` | w | `0x04` | 0 | Start Chip Self Test (read result in next step) |
+| `9..119` | w | `0x05` | 2 | Write to EEPROM. 1st byte = address, 2nd byte = data byte |
+| `9..119` | w | `0x06` | 1 | Prepare read from EEPROM. 1st byte = address. After this command, read one byte from `9..119` |
 
 
 ## Einschalten der Waagen

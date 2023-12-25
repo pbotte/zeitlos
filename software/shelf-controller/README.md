@@ -2,24 +2,23 @@
 
 - MQTT-Client name: `shelf01`, etc.
 - MQTT-topic-prefix: `homie/shelf01`
-- MAC-Adresse von Scale (6x 8byte): `aabbccddeeff`
+- MAC-Adresse von Scale (6x byte): `aabbccddeeff`
 
 | R/W | MQTT Topic <br> (ohne Topic-prefix) | Retain | Typischer Wert | Aktion |
 | --- | --- |:---:| --- | --- |
 | W | `/state` | X | `0` oder `1` | online / offline, per Last-Will gesetzt |
-| R | `/cmd/start_search` | | | Erneut nach Waagen suchen |
-| R | `/cmd/write_calib_to_mqtt` | | | Schreibe: `calib/scale-aabbccddeeff`<br>`/scale_calibration_zero_in_raw` <br>und `calib/scale-aabbccddeeff`<br>`/scale_calibration_slope` |
-| W | `/scale-aabbccddeeff/state` | X | `0` oder `1` | online / offline (sollte jedoch `/state==0` sein, dann gelten diese Werte nur als historisch) |
-| W | `calib/scale-aabbccddeeff`<br>`/firmware_version` | X | `uint`  | Wird von der Waage ausgelesen |
-| W | `calib/scale-aabbccddeeff`<br>`/hardware_version` | X | `uint`  | Wird von der Waage ausgelesen |
-| W | `calib/scale-aabbccddeeff`<br>`/scale_calibration_zero_in_raw` | X | `32-bit uint`  | Waagen-Kalibration Roh-ADC-Wert bei 0kg auf Waage |
-| W | `calib/scale-aabbccddeeff`<br>`/scale_calibration_slope` | X | `double` | Waagen-Kalibration, Steigung nach Abzug des Roh-0kg-Werts, Ergebnis: kg |
-| W | `/scale-aabbccddeeff`<br>`/debug/i2c_address` | X | `9..117` (byte)  | I2C-Adresse der Waage, nur zur Info |
-| W | `/scale-aabbccddeeff`<br>`/debug/scale_product_id` | X | int  |  Doppelte-Überprüfung: Produkt korrekt zugeordnet, aus `homie/shop_controller/shop_overview/products_scales` |
-| W | `/scale-aabbccddeeff`<br>`/raw` | | `32-bit uint` | Roh-Messwert des ADCs (nur im Modus `-vv`) |
-| W | `/scale-aabbccddeeff`<br>`/mass` | | Wert in kg, double | Aktuelle Masse unter Anwendung der Kalibration ggf. unter Berücksichtigung der Temperatur |
-| W | `/scale-aabbccddeeff`<br>`/withdrawal_units` | X | int | Anzahl entnommener Produkte, berechnet aus Masse und Produktzuordnung
-| R | `homie/shop_controller/prepare_for_next_customer` | | `1` | Reagiert auf diesen Topic, um `/withdrawal_units` zurückzusetzen und den Roh-ADC-Wert ggf. mit einem Offset zu versehen (in der Zeit, in dem keine Entnahme stattfindet).
+| R | `/cmd/search` | | | Erneut nach Waagen suchen |
+| R | `/cmd/leds` | | `0`oder `1` | Setze alle LEDs am Bus an/aus |
+| R | `/cmd/restart` | | egal | Starte alle Waagen am Bus neu. Warte 8 Sekunden, bis dies sicher durchgeführt ist. |
+| W | `/scales/aabbccddeeff/state` | X | `0` oder `1` | online / offline (sollte jedoch `/state==0` sein, dann gelten diese Werte nur als historisch) |
+| W | `calib/scales/aabbccddeeff`<br>`/firmware_version` | X | `uint`  | Wird von der Waage ausgelesen |
+| W | `calib/scales/aabbccddeeff`<br>`/hardware_version` | X | `uint`  | Wird von der Waage ausgelesen |
+| W | `calib/scales/aabbccddeeff`<br>`/scale_calibration_zero_in_raw` | X | `32-bit uint`  | Waagen-Kalibration Roh-ADC-Wert bei 0kg auf Waage |
+| W | `calib/scales/aabbccddeeff`<br>`/scale_calibration_slope` | X | `double` | Waagen-Kalibration, Steigung nach Abzug des Roh-0kg-Werts, Ergebnis: kg |
+| W | `/scales/aabbccddeeff`<br>`/i2c_address` | X | `9..117` (byte)  | I2C-Adresse der Waage, nur zur Info |
+| W | `/scales/aabbccddeeff`<br>`/raw` | | `32-bit uint` | Roh-Messwert des ADCs (nur im Modus `-vv`) |
+| W | `/scales/aabbccddeeff`<br>`/mass` | | Wert in kg, double | Aktuelle Masse unter Anwendung der Kalibration ggf. unter Berücksichtigung der Temperatur |
+| W | `/scales/aabbccddeeff`<br>`/touched` | | `0`oder `1` | Wenn die Waage zuletzt mit dem Finger belastet wurde ODER eine Laständerung eintrat, dann soll hier eine `1` übermittelt werden. |
 
 ## Start von shelf-controller
 ```mermaid
@@ -36,7 +35,7 @@ sequenceDiagram
     Waage->>shelf-controller: Meldet sich zurück
     shelf-controller->>Waage: Fragt Waage nach Roh-Wert
     Waage->>shelf-controller: Gibt Roh-ADC-Messwert
-    shelf-controller->>shelf-controller: Wendet Kalibrierung von calib/scale-aabbccddeeff an,<br>Schreibt bei Entnahme/Hinzulegen die aktuelle Menge an:<br>scale-aabbccddeeff/units 
+    shelf-controller->>shelf-controller: Wendet Kalibrierung von calib/scale-aabbccddeeff an 
 ```
 
 ## Beispiele

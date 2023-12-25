@@ -38,6 +38,7 @@ bool update_i2c_address_from_eeprom = false;
 bool restart_at_next_possibility = false;
 byte register_select_readout = 0;
 byte register_compare_mac_address[6];
+byte register_eeprom_address_to_read = 0;
 
 /// Watchdog, see: https://github.com/SpenceKonde/megaTinyCore/blob/master/megaavr/extras/Ref_Reset.md
 void wdt_enable()
@@ -305,6 +306,25 @@ void receiveEvent(int numBytes)
       Serial.println("register_select_readout set to 2.");
       chip_test_prepare();
     }
+    //Write to EEPROM
+    //3 bytes expected:
+    //1st = 0x05
+    //2nd = address
+    //3rd = data byte
+    if ( (c == 0x05) && (numBytes == 3) )
+    {  //write to EEPROM
+      EEPROM.write(Wire.read(), Wire.read());
+    }
+    //Prepare Read from EEPROM
+    //2 bytes expected:
+    //1st = 0x05
+    //2nd = address
+    //After this command, read from i2c device to get data
+    if ( (c == 0x06) && (numBytes == 2) )
+    { 
+      register_select_readout = 3;
+      register_eeprom_address_to_read = Wire.read()
+    }
   }
 }
 
@@ -373,6 +393,12 @@ void requestHandler()
         Wire.write((chip_test_results_i2c_buffer[i]) & 0xFF);
       }
     }
+
+    if (register_select_readout == 3)
+    { //1 byte answer
+      Wire.write(EEPROM.read(register_eeprom_address_to_read));
+    }
+
   }
 }
 

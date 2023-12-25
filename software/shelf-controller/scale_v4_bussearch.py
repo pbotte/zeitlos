@@ -5,9 +5,13 @@ import time
 import re
 import struct
 import logging, argparse
+import json
+import paho.mqtt.client as paho
+import queue, traceback
+import signal
+import sys
+import collections, statistics
 
-min = 0x0
-max = 0xffff_ffff_ffff
 
 
 logging.basicConfig(format="%(asctime)-15s %(levelname)-8s  %(message)s")
@@ -21,6 +25,7 @@ parser.add_argument("mqtt_client_name", help="MQTT client name. Needs to be uniq
 args = parser.parse_args()
 logger.setLevel(logging.WARNING-(args.verbosity*10 if args.verbosity <=2 else 20) )
 
+debug = True if args.verbosity>1 else False
 
 
 
@@ -42,6 +47,7 @@ def send_and_recv(str_to_send, echo_out = False, print_return = False):
     match = re.match(pattern, out+"\n")
 
     ret_val = []
+    command = None
     if match:
         # Extract the captured groups
         command = match.group(1)     # 'r' or 'w'
@@ -61,6 +67,10 @@ def send_and_recv(str_to_send, echo_out = False, print_return = False):
 
 
 def bin_search():
+    # MAC addresses scan range
+    min = 0x0
+    max = 0xffff_ffff_ffff
+
     l = min
     r = max
     i = 0
@@ -90,6 +100,77 @@ def bin_search():
     return False #nichts gefunden. Waage während des Suchlaufs kaputtgegangen?
 
 
+#######################################################################
+# MQTT functions
+def on_connect(client, userdata, flags, rc):
+  if rc==0:
+    logger.info("MQTT connected OK. Return code "+str(rc) )
+    client.subscribe("homie/"+args.mqtt_client_name+"/cmd/#")
+    client.subscribe("homie/shop_controller/prepare_for_next_customer")
+    logger.info("MQTT: Success, subscribed to all topics")
+  else:
+    logger.error("Bad connection. Return code="+str(rc))
+
+def on_disconnect(client, userdata, rc):
+  if rc != 0:
+    logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
+
+mqtt_queue=queue.Queue()
+def on_message(client, userdata, message):
+  global mqtt_queue
+  try:
+    mqtt_queue.put(message)
+    m = message.payload.decode("utf-8")
+    logger.debug("MQTT message received. Topic: "+message.topic+" Payload: "+m)
+  except Exception as err:
+    traceback.print_tb(err.__traceback__)
+
+
+#connect to MQTT broker
+client= paho.Client(args.mqtt_client_name)
+client.on_message=on_message
+client.on_connect = on_connect
+client.on_disconnect = on_disconnect
+client.enable_logger(logger) #info: https://www.eclipse.org/paho/clients/python/docs/#callbacks
+logger.info("connecting to broker: "+args.mqtt_broker_host+". If it fails, check whether the broker is reachable. Check the -b option.")
+logger.info("Connecting to broker "+args.mqtt_broker_host)
+
+# start with MQTT connection and set last will
+logger.info(f"mqtt_client_name: {args.mqtt_client_name}")
+client.will_set(f"homie/{args.mqtt_client_name}/state", '0', qos=1, retain=True)
+client.connect(args.mqtt_broker_host)
+client.loop_start() #start loop to process received messages in separate thread
+logger.debug("MQTT Loop started.")
+client.publish(f"homie/{args.mqtt_client_name}/state", '1', qos=1, retain=True)
+
+
+#Global information on all scales
+anzahl_waagen = 0
+waagen = {} #9: {'mac': "493037D20E1B", 'address': 9, 'slope': 1, 'zero':0, 'state': 0},}
+
+
+##############################################################################
+def signal_handler(sig, frame):
+    logger.info(f"You pressed Ctrl+C! Sendingn correct /state for all {anzahl_waagen} scales.")
+
+    for w in waagen.items():
+        client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/state", 0, qos=0, retain=True)
+        waagen[w[0]]['state'] = 0
+
+    time.sleep(1) #to allow the published message to be delivered.
+
+    client.loop_stop()
+    client.disconnect()
+
+    ser.close()
+
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+##############################################################################
+
+
 ser = serial.Serial(port=args.serial_device_name, baudrate=115200, timeout=1 )
 ser.isOpen()
 
@@ -100,7 +181,7 @@ time.sleep(8)
 
 ##alle LEDs an
 send_and_recv("w0005")
-#time.sleep(0.9)
+time.sleep(0.9)
 #Antwort bit setzen
 send_and_recv("w0001")
 time.sleep(.1)
@@ -108,61 +189,141 @@ time.sleep(.1)
 send_and_recv("w0004")
 time.sleep(.1)
 
-anzahl_waagen = 0
-weiter_suchen = True
-while weiter_suchen:
-    #test, ob noch waagen ohne neue I2C Adresse
-    logger.info(f"Suche weitere Waagen. ")
-    m = 0xffff_ffff_ffff
-    str_to_send = f"w0003{m:#014X}".replace("0X","")
-    send_and_recv(str_to_send)
+def search_waagen():
+    #Antwort bit setzen
+    send_and_recv("w0001")
+    time.sleep(.1)
 
-    str_to_send = f"r0801"
-    res = send_and_recv(str_to_send)
-    logger.info(f"Rückgabewerte der Suche: {res}")
+    global anzahl_waagen, waagen
+    weiter_suchen = True
+    anzahl_waagen = 0
+    waagen = {} #9: {'mac': "4930_37D2_0E1B", 'address': 9, 'slope': 1, 'zero':0},}
+    while weiter_suchen:
+        #test, ob noch waagen ohne neue I2C Adresse
+        logger.info(f"Suche weitere Waagen. ")
+        m = 0xffff_ffff_ffff
+        str_to_send = f"w0003{m:#014X}".replace("0X","")
+        send_and_recv(str_to_send)
 
-    weiter_suchen = True if res[1][0] > 0 else False
+        str_to_send = f"r0801"
+        res = send_and_recv(str_to_send)
+        logger.info(f"Rückgabewerte der Suche: {res}")
 
-    if weiter_suchen: #welche haben sich gemeldet
-        anzahl_waagen += 1
-        neue_i2c_adresse = anzahl_waagen + 8 #ab Adresse 9 geht's los
+        weiter_suchen = True if res[1][0] > 0 else False
 
-        res2 = bin_search()
-        logger.info(f"Waage mit MAC {res2:014_X} gefunden.")
+        if weiter_suchen: #welche haben sich gemeldet
+            anzahl_waagen += 1
+            neue_i2c_adresse = anzahl_waagen + 8 #ab Adresse 9 geht's los
 
-        logger.info(f"Setze Wagge (Suchlauf {anzahl_waagen}): {res2:014_X} auf I2C Adresse {neue_i2c_adresse:02X}")
-        res2 = send_and_recv(f"w0002{res2:012X}{neue_i2c_adresse:02X}")
-        logger.info(f"Rückgabewert Schreiben I2C Adresse: {res2}")
-        time.sleep(0.5)
-        #individuelle kurz LED an
-        res3 = send_and_recv(f"w{neue_i2c_adresse:02X}03")
-        logger.info(f"Rückgabewert Schreiben I2C LED an: {res3}")
-        time.sleep(0.5)
-        #individuelle wieder LED aus
-        res3 = send_and_recv(f"w{neue_i2c_adresse:02X}02")
-        logger.info(f"Rückgabewert Schreiben I2C LED aus: {res3}")
-        time.sleep(0.1)
+            res2 = bin_search()
+            logger.info(f"Waage mit MAC {res2:014_X} gefunden.")
+            waagen[neue_i2c_adresse] = {'mac': f"{res2:012X}", 'i2c_address': neue_i2c_adresse, 'slope': 1, 
+                                        'zero':0, 'state':0, 'stack': collections.deque(maxlen=10),
+                                        'touched': 0}
 
-logger.info(f"gefundene Waagen Anzahl: {anzahl_waagen}")
+            logger.info(f"Setze Wagge (Suchlauf {anzahl_waagen}): {res2:014_X} auf I2C Adresse {neue_i2c_adresse:02X}")
+            res2 = send_and_recv(f"w0002{res2:012X}{neue_i2c_adresse:02X}")
+            logger.info(f"Rückgabewert Schreiben I2C Adresse: {res2}")
+
+            client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/state", 0, qos=0, retain=True)
+            client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/i2c_address", neue_i2c_adresse, qos=0, retain=True)
+
+
+            # time.sleep(0.5) # wait for electronics to set new i2c address
+
+            #individuelle LED kurz an
+            res3 = send_and_recv(f"w{neue_i2c_adresse:02X}03")
+            logger.info(f"Rückgabewert Schreiben I2C LED an: {res3}")
+            #time.sleep(0.5)
+            #individuelle LED wieder aus
+            #res3 = send_and_recv(f"w{neue_i2c_adresse:02X}02")
+            #logger.info(f"Rückgabewert Schreiben I2C LED aus: {res3}")
+            #time.sleep(0.1)
+
+    logger.info(f"gefundene Waagen Anzahl: {anzahl_waagen}")
+    logger.info(f"gefundene Waagen: {waagen}")
+    time.sleep(1)
+
+    #alle LEDs aus
+    send_and_recv("w0004")    
+
+search_waagen()
 
 while True:
-    str_to_send = f"r0904"
-    res = send_and_recv(str_to_send)
-    if res[1][0] == 4:
-        v = struct.unpack('<l',bytes(res[1][1:5]))[0]
-        logger.info(f"Read:\t{v}")
-    else:
-        logger.warning(f"Fehler beim Lesen: {res}")
+    while not mqtt_queue.empty():
+        message = mqtt_queue.get()
+        if message is None:
+            continue
+        logger.debug(f"Process queued MQTT message now: {str(message.payload.decode('utf-8'))}")
 
-#    str_to_send = f"r0A04"
-#    res = send_and_recv(str_to_send)
-#    if res[1][0] == 4:
-#        v = struct.unpack('<l',bytes(res[1][1:5]))[0]
-#        print(f"\t{v}")
-#    else:
-#        print(f"Fehler beim Lesen: {res}")
+        try:
+            m = message.payload.decode("utf-8")
+        except Exception as err:
+            traceback.print_tb(err.__traceback__)
+        logger.debug("Topic: "+message.topic+" Message: "+m)
+
+        msplit = re.split("/", message.topic)
+        if len(msplit) == 4 and msplit[2].lower() == "cmd" and msplit[3].lower() == "leds":
+            if m == "1":
+                logger.info("Per MQTT empfangen: Setze alle LEDs an.")
+                send_and_recv("w0005")
+            else:
+                logger.info("Per MQTT empfangen: Setze alle LEDs aus.")
+                send_and_recv("w0004")
+        
+        if len(msplit) == 4 and msplit[2].lower() == "cmd" and msplit[3].lower() == "restart":
+            logger.info("Per MQTT empfangen: Alle Waagen neustarten.")
+            send_and_recv("w0000") # Waagen Neustart
+            logger.info("Warte 8 Sekunden, bis alle Waagen den Neustart sicher ausgeführt haben.")
+
+        if len(msplit) == 4 and msplit[2].lower() == "cmd" and msplit[3].lower() == "search":
+            logger.info("Per MQTT empfangen: Neuer Waagen scan.")
+            search_waagen()
+
+    # Poll all scales for raw readings
+    for w in waagen.items():
+        i2c_address = w[1]['i2c_address']
+        res = send_and_recv(f"r{i2c_address:02X}04")
+        state_okay = 1 if res[1][0] == 4 else 0
+        if state_okay == 1:
+            v = struct.unpack('<l',bytes(res[1][1:5]))[0]
+            logger.debug(f"Read i2c address 0x{i2c_address:02X}\t raw value: {v}")
+            if debug:
+                client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/raw", v, qos=0, retain=False)
+
+            waagen[w[0]]['stack'].append(v)
+            if (len(waagen[w[0]]['stack'])>8): #some reading has to be in the stack
+                # check the last 3 readings and compare to the first in stack.
+                # mean(new)-mean(old) > 10*std-dev
+                act_distance_avg_new = statistics.mean(list(waagen[w[0]]['stack'])[-3:])
+                act_distance_stdev = statistics.stdev(list(waagen[w[0]]['stack'])[:-4])
+                act_distance_avg_old = statistics.mean(list(waagen[w[0]]['stack'])[:-4])
+
+                act_touched = 1 if abs(act_distance_avg_new - act_distance_avg_old) > act_distance_stdev*10 else 0
+                if act_distance_stdev<10: act_distance_stdev=10 #to avoid too small std deviations
+                
+
+                if waagen[w[0]]['touched'] != act_touched:
+                    logger.info(f"touched changed for i2c address 0x{i2c_address:02X}: New: {act_distance_avg_new:.1f} Diff: {(act_distance_avg_new-act_distance_avg_old):.1f} Std: {act_distance_stdev:.1f}")
+                    client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/touched", act_touched, qos=0, retain=False)
+                    waagen[w[0]]['touched'] = act_touched
+
+                    if act_touched == 1:
+                        send_and_recv(f"w{i2c_address:02X}03")
+                    else:
+                        send_and_recv(f"w{i2c_address:02X}02")
+
+        else:
+            logger.warning(f"Fehler beim Lesen, Anzahl der gelesenen Bytes ist nicht 4. I2C address 0x{i2c_address:02X}, return: {res}")
+        
+        if state_okay != waagen[w[0]]['state']:
+            client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/state", state_okay, qos=0, retain=True)
+            waagen[w[0]]['state'] = state_okay
 
     time.sleep(0.1)
 
+
+client.loop_stop()
+client.disconnect()
 
 ser.close()
