@@ -8,7 +8,7 @@ import datetime
 build_no = 0
 try:
     with open(FILENAME_BUILDNO) as f:
-        build_no = int(f.readline()) + 1
+        build_no = int(f.readline()) #+ 1
 except:
     print('Starting build number from 1..')
     build_no = 1
