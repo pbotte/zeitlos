@@ -1,8 +1,9 @@
-# Shelf Controller
+# Shelf Controller I2C
 
 - MQTT-Client name: `shelf01`, etc.
 - MQTT-topic-prefix: `homie/shelf01`
 - MAC-Adresse von Scale (6x byte): `aabbccddeeff`
+- EEPROM Adressnuztung: 0: I2C Adresse, 1..4: Steigung (4bytes float), 5..8: Nullwert (4bytes float)
 
 | R/W | MQTT Topic <br> (ohne Topic-prefix) | Retain | Typischer Wert | Aktion |
 | --- | --- |:---:| --- | --- |
