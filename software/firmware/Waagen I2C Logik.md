@@ -9,6 +9,8 @@
 
 - Daten in EEPROM:
   - EEPROM, byte 0: I2C-Adresse (7bit)
+  - EEPROM, bytes 1..4: 4bytes float Steigung
+  - EEPROM, bytes 5..8: 4bytes float Waagen-Nullwert
 
 - Alle Waagen haben eine 6x 8bit MAC-Adresse. Sie wird aus der Chip Seriennummer abgeleitet.
 
