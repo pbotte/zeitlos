@@ -135,14 +135,13 @@ client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.enable_logger(logger) #info: https://www.eclipse.org/paho/clients/python/docs/#callbacks
 logger.info("connecting to broker: "+args.mqtt_broker_host+". If it fails, check whether the broker is reachable. Check the -b option.")
-logger.info("Connecting to broker "+args.mqtt_broker_host)
 
 # start with MQTT connection and set last will
 logger.info(f"mqtt_client_name: {args.mqtt_client_name}")
 client.will_set(f"homie/{args.mqtt_client_name}/state", '0', qos=1, retain=True)
 client.connect(args.mqtt_broker_host)
 client.loop_start() #start loop to process received messages in separate thread
-logger.debug("MQTT Loop started.")
+logger.debug("MQTT loop started.")
 client.publish(f"homie/{args.mqtt_client_name}/state", '1', qos=1, retain=True)
 
 ##############################################################################
@@ -155,7 +154,7 @@ LUT_MAC_2_I2C_ADD = {} #LUT to get I2C address from MAC address
 
 ##############################################################################
 def signal_handler(sig, frame):
-    logger.info(f"Programm terminating. Sending correct /state for all {anzahl_waagen} scales... (this takes 1 second)")
+    logger.info(f"Program terminating. Sending correct /state for all {anzahl_waagen} scales... (this takes 1 second)")
 
     for w in waagen.items():
         client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/state", 0, qos=0, retain=True)
