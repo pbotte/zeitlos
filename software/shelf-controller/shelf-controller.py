@@ -1,42 +1,113 @@
 #!/usr/bin/python3
 
+import serial
 import time
-import can
+import re
+import struct
+import logging, argparse
 import json
 import paho.mqtt.client as paho
-import logging, argparse
-import traceback
-import re
+import queue, traceback
+import signal
 import sys
-import struct
+import collections, statistics
+import math
+
+
 
 logging.basicConfig(format="%(asctime)-15s %(levelname)-8s  %(message)s")
-logger = logging.getLogger("Shelf-Controller")
+logger = logging.getLogger("Shelf Readout")
 
-parser = argparse.ArgumentParser(description='CANbus Regal-Controller.')
+parser = argparse.ArgumentParser(description='Shelf Readout.')
 parser.add_argument("-v", "--verbosity", help="increase output verbosity", default=0, action="count")
 parser.add_argument("-b", "--mqtt-broker-host", help="MQTT broker hostname", default="localhost")
-parser.add_argument("-c", "--channel", help="Channel name, eg can0", type=str, default="can0")
-parser.add_argument("-i", "--interface", help="Interface name, eg socketcan", type=str, default="socketcan")
-parser.add_argument("--bitrate", help="Bitrate to use for the CAN bus.", type=int, default=125000)
+parser.add_argument("serial_device_name", help="eg /dev/ttyUSB0", type=str)
 parser.add_argument("mqtt_client_name", help="MQTT client name. Needs to be unique in the MQTT namespace, eg shelf01.", type=str)
 args = parser.parse_args()
 logger.setLevel(logging.WARNING-(args.verbosity*10 if args.verbosity <=2 else 20) )
 
+debug = True if args.verbosity>1 else False
 
-mcu_eeprom_data_dict_float = {"scale_product_mass_per_unit":{"start":0xcc},
-        "scale_calibration_slope": {"start":0xd0},
-        "scale_product_price_per_unit": {"start":0xd8} }
-mcu_eeprom_data_dict_sgn_long = {
-        "scale_calibration_zero_in_raw": {"start":0xd4} }
-mcu_eeprom_data_dict_str = {"scale_product_description":{"len":50,"start":0xa},
-        "scale_product_details_line1": {"len":50,"start":0x3c},
-        "scale_product_details_line2": {"len":50,"start":0x6e} }
 
+
+#######################################################################
+
+def send_and_recv(str_to_send, echo_out = False, print_return = False):
+    logger.debug(f"<<{str_to_send}")
+    ser.write(str_to_send.encode() + b'\n')
+
+    out = ser.readline().decode().strip()
+    if out != '' and print_return:
+        logger.debug(f">>{out}")
+
+    # analyse output
+    # Define the regular expression pattern to capture the relevant parts
+    pattern = r'^([rw])\s+((?:[A-Fa-f0-9]{2}\s+){1,})$'
+
+    # Use the regular expression to match the input string
+    match = re.match(pattern, out+"\n")
+
+    ret_val = []
+    command = None
+    if match:
+        # Extract the captured groups
+        command = match.group(1)     # 'r' or 'w'
+        hex_numbers = match.group(2).split()   # Split numbers separated by spaces
+
+        # Convert numbers to integers (base 16) and print the results
+        #print(f"Command: {command}")
+        #print("Hex Numbers:")
+        for number in hex_numbers:
+            decimal_number = int(number, 16)
+            ret_val = ret_val + [decimal_number]
+            #print(decimal_number)
+    else:
+        logger.warning(f"Invalid data from serial: {out}")
+
+    return (command, ret_val)
+
+
+def bin_search():
+    # MAC addresses scan range
+    min = 0x0
+    max = 0xffff_ffff_ffff
+
+    l = min
+    r = max
+    i = 0
+    while i<52:
+        m = l + (r-l)//2
+
+        #print(f"i: {i} {l:014_X} {m:014_X} {r:014_X}")
+        str_to_send = f"w0003{m:#014X}".replace("0X","")
+        #print(str_to_send)
+        send_and_recv(str_to_send)
+
+        str_to_send = f"r0801"
+        #print(str_to_send)
+
+        res = send_and_recv(str_to_send)
+        #print(res)
+
+        if res[1][1] == 0x00:
+            if r-l<=1: return m #Ausgabe, falls 0 gesucht wurde
+            r = m
+        else:
+            if r-l<=1: return r #Ausgabe aller anderen Adressen
+            l = m+1
+
+        i+=1
+
+    return False #nichts gefunden. Waage während des Suchlaufs kaputtgegangen?
+
+
+#######################################################################
+# MQTT functions
 def on_connect(client, userdata, flags, rc):
   if rc==0:
     logger.info("MQTT connected OK. Return code "+str(rc) )
-    client.subscribe("homie/"+args.mqtt_client_name+"/#")
+    client.subscribe("homie/"+args.mqtt_client_name+"/cmd/#")
+    client.subscribe(f"homie/{args.mqtt_client_name}/cmd/scales/+/led")
     client.subscribe("homie/shop_controller/prepare_for_next_customer")
     logger.info("MQTT: Success, subscribed to all topics")
   else:
@@ -46,226 +117,338 @@ def on_disconnect(client, userdata, rc):
   if rc != 0:
     logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
 
+mqtt_queue=queue.Queue()
 def on_message(client, userdata, message):
+  global mqtt_queue
   try:
+    mqtt_queue.put(message)
     m = message.payload.decode("utf-8")
-    logger.debug("received:"+str(m)+" "+message.topic)
-    msplit = re.split("/", message.topic)
-
-    #reset all scales: cansend can0 11000000#42fabeef
-    # mosquitto_pub -m 0 -t homie/shelf01/reset-all
-    if len(msplit) == 3 and msplit[2].lower() == "reset-all":
-      msg = can.Message(arbitration_id=0x11000000, data=[0x42,0xfa,0xbe,0xef], is_extended_id=True)
-      bus.send(msg)
-    #send continously can msg off / on: cansend can0 12000000# | cansend can0 13000000#
-    # mosquitto_pub -m 0 -t homie/shelf01/can-off-all
-    if len(msplit) == 3 and msplit[2].lower() == "can-off-all":
-      msg = can.Message(arbitration_id=0x12000000, data=[], is_extended_id=True)
-      bus.send(msg)
-    # mosquitto_pub -m 0 -t homie/shelf01/can-on-all
-    if len(msplit) == 3 and msplit[2].lower() == "can-on-all":
-      msg = can.Message(arbitration_id=0x13000000, data=[], is_extended_id=True)
-      bus.send(msg)
-
-    # mosquitto_pub -n -t homie/shop_controller/prepare_for_next_customer
-    # message from shop_controller to all scales to become ready for next customer
-    # eg reset units withdrawn
-    if len(msplit) == 3 and msplit[1].lower() == "shop_controller" and msplit[2].lower() == "prepare_for_next_customer":
-      msg = can.Message(arbitration_id=0x14000000, data=[], is_extended_id=True)
-      bus.send(msg)
-
-    #reset individual scale
-    # cansend can0 00007b87#42fabeef
-    # mosquitto_pub -m 0 -t homie/shelf01/7b87/reset
-    # To update firmware via CAN: pio run && npx mcp-can-boot-flash-app -p m1284p -m 0x3320 -f .pio/build/atmega1284p/firmware.hex -R 00003320#42fabeef
-    if len(msplit) == 4 and msplit[3].lower() == "reset":
-      scale_id = int(msplit[2],16)
-      msg = can.Message(arbitration_id=0x0+scale_id, data=[0x42,0xfa,0xbe,0xef], is_extended_id=True)
-      bus.send(msg)
-
-    #retrieve individual scale
-    # cansend can0 00063320#
-    if len(msplit) == 4 and msplit[3].lower() == "retrieve":
-      scale_id = int(msplit[2],16)
-      msg = can.Message(arbitration_id=0x60000+scale_id, data=[], is_extended_id=True)
-      bus.send(msg)
-
-    #Set raw Zero calibration individual scale
-    # cansend can0 00093320#
-    # mosquitto_pub -n -t homie/shelf01/65c0/zero-raw-to-act-reading
-    if len(msplit) == 4 and msplit[3].lower() == "zero-raw-to-act-reading":
-      scale_id = int(msplit[2],16)
-      msg = can.Message(arbitration_id=0x90000+scale_id, data=[], is_extended_id=True)
-      bus.send(msg)
-
-    #Set slope calibration individual scale
-    # mosquitto_pub -n -t homie/shelf01/65c0/set-slope-to-act-reading
-    if len(msplit) == 4 and msplit[3].lower() == "set-slope-to-act-reading":
-      scale_id = int(msplit[2],16)
-      msg = can.Message(arbitration_id=0xb0000+scale_id, data=[], is_extended_id=True)
-      bus.send(msg)
-
-    #write long
-    if len(msplit) == 5 and msplit[4].lower() == "set" and int(msplit[2],16) in range(0xffff+1):
-      scale_id = int(msplit[2],16)
-      #eg: homie/shelf01/0315/scale_calibration_zero_in_raw/set
-      act_pos = 0
-      can_msg_len = 4 #because long has 4 bytes
-      if msplit[3].lower() in mcu_eeprom_data_dict_sgn_long:
-        #send CAN bus message to 0x0006.... (....=scale id) with [length0], [length1], [bytes...]
-        mem_pos_start = mcu_eeprom_data_dict_sgn_long[msplit[3].lower()]["start"]  #start memory address in MCU, eg 0x0a for scale_product_description
-        hex_str=struct.pack('<l', int(m)) #parameters see: https://docs.python.org/3/library/struct.html
-        data_str = [i for i in hex_str]
-        data_str = [mem_pos_start&0xff, (mem_pos_start>>8)] + data_str # add first to bytes, where to store in eeprom
-        #write 6 bytes to scale eeprom
-        msg = can.Message(arbitration_id=0x00070000+scale_id, data=data_str, is_extended_id=True)
-        bus.send(msg)
-
-    #write float
-    if len(msplit) == 5 and msplit[4].lower() == "set" and int(msplit[2],16) in range(0xffff+1):
-      scale_id = int(msplit[2],16)
-      #eg: homie/shelf01/0315/scale_product_mass_per_unit/set
-      act_pos = 0
-      can_msg_len = 4 #because float has 4 bytes
-      if msplit[3].lower() in mcu_eeprom_data_dict_float:
-        #send CAN bus message to 0x0006.... (....=scale id) with [length0], [length1], [bytes...]
-        mem_pos_start = mcu_eeprom_data_dict_float[msplit[3].lower()]["start"]  #start memory address in MCU, eg 0x0a for scale_product_description
-        hex_str=struct.pack('<f', float(m))
-        data_str = [i for i in hex_str]
-        data_str = [mem_pos_start&0xff, (mem_pos_start>>8)] + data_str # add first to bytes, where to store in eeprom
-        #write 6 bytes to scale eeprom
-        msg = can.Message(arbitration_id=0x00070000+scale_id, data=data_str, is_extended_id=True)
-        bus.send(msg)
-
-    #write string
-    #mosquitto_pub -t 'homie/shelf01/7B87/scale_product_details_line1/set' -m hallohallohallohallohallohallohallohallohallohallohallo
-    if len(msplit) == 5 and msplit[4].lower() == "set" and int(msplit[2],16) in range(0xffff+1):
-      scale_id = int(msplit[2],16)
-      #eg: homie/shelf01/0315/scale_product_description/set
-      act_pos = 0
-      can_msg_len = 6 #only the data portion. if data len>6 -> multiple messages
-      if msplit[3].lower() in mcu_eeprom_data_dict_str:
-        #send CAN bus message to 0x0006.... (....=scale id) with [length0], [length1], [bytes...]
-        mem_pos_start = mcu_eeprom_data_dict_str[msplit[3].lower()]["start"]  #start memory address in MCU, eg 0x0a for scale_product_description
-        data_str = str(m) #prepare string to be submitted
-        data_str = [ord(i) for i in list(data_str)]
-        data_str = data_str[0:mcu_eeprom_data_dict_str[msplit[3].lower()]["len"]] +[0] #limit length  + terminating 0x0
-        while act_pos < len(data_str):
-          #write 6 bytes to scale eeprom
-          msg = can.Message(arbitration_id=0x00070000+scale_id, data=[(mem_pos_start+act_pos)&0xff,((mem_pos_start+act_pos)&0xff00)>>8]+data_str[act_pos:act_pos+can_msg_len], is_extended_id=True)
-          bus.send(msg)
-          time.sleep(0.001) # wait for message to be send
-          act_pos += can_msg_len
-
-
-
+    logger.debug("MQTT message received. Topic: "+message.topic+" Payload: "+m)
   except Exception as err:
     traceback.print_tb(err.__traceback__)
 
-#open can bus
-bus = can.interface.Bus(channel=args.channel, bustype=args.interface, bitrate=args.bitrate)
+
 #connect to MQTT broker
 client= paho.Client(args.mqtt_client_name)
-
-debug = True if args.verbosity>1 else False
-
 client.on_message=on_message
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.enable_logger(logger) #info: https://www.eclipse.org/paho/clients/python/docs/#callbacks
 logger.info("connecting to broker: "+args.mqtt_broker_host+". If it fails, check whether the broker is reachable. Check the -b option.")
+
+# start with MQTT connection and set last will
+logger.info(f"mqtt_client_name: {args.mqtt_client_name}")
+client.will_set(f"homie/{args.mqtt_client_name}/state", '0', qos=1, retain=True)
 client.connect(args.mqtt_broker_host)
 client.loop_start() #start loop to process received messages in separate thread
-logger.debug("MQTT Loop started.")
+logger.debug("MQTT loop started.")
+client.publish(f"homie/{args.mqtt_client_name}/state", '1', qos=1, retain=True)
 
-loop_variable = True
-eeprom_storage = [None] * 256
-while loop_variable:
+##############################################################################
 
-  message = bus.recv()
-  msg_handeled = False
-  logger.debug("CAN received: {}".format(message))
-
-  if debug: client.publish("homie/"+args.mqtt_client_name+"/can-messages", "{}".format(message), qos=0, retain=False)
-
-  cmd_id = (message.arbitration_id>>16) & 0xff
-  if cmd_id == 2:
-    sender_id = (message.arbitration_id&0xffff)
-    firmware_version = struct.unpack('<L',message.data[0:4])[0]
-    hardware_version = message.data[4]
-    logger.info("Firmware version: {}  Hardware version: {}".format(firmware_version, hardware_version) )
-    client.publish("homie/"+args.mqtt_client_name+"/{:02x}/firmware_version".format(sender_id), "{}".format(firmware_version), qos=1, retain=True)
-    client.publish("homie/"+args.mqtt_client_name+"/{:02x}/hardware_version".format(sender_id), "{}".format(hardware_version), qos=1, retain=True)
-    msg_handeled = True
-
-  if cmd_id == 3:
-    sender_id = (message.arbitration_id&0xffff)
-    data = struct.unpack('<l',message.data)[0]
-    logger.info("Averaged Reading: {} {}".format(message.data, data ) )
-    client.publish("homie/"+args.mqtt_client_name+"/{:02x}/reading_avg".format(sender_id), "{}".format( data ), qos=1, retain=False)
-    msg_handeled = True
-
-  if cmd_id == 0xa:
-    sender_id = (message.arbitration_id&0xffff)
-    data = struct.unpack('<f',message.data)[0]
-    logger.info("Mass in kg: {} {}".format(message.data, data ) )
-    client.publish("homie/"+args.mqtt_client_name+"/{:02x}/mass_kg".format(sender_id), "{}".format( data ), qos=1, retain=False)
-    msg_handeled = True
-
-  if cmd_id == 0xb:
-    sender_id = (message.arbitration_id&0xffff)
-    data = struct.unpack('<h',message.data)[0] #integer with 2 bytes
-    logger.info("Withdrawal units: {} {}".format(message.data, data ) )
-    client.publish("homie/"+args.mqtt_client_name+"/{:02x}/withdrawal_units".format(sender_id), "{}".format( data ), qos=1, retain=True)
-    msg_handeled = True
-
-  if cmd_id == 4:
-    sender_id = (message.arbitration_id&0xffff)
-    data = struct.unpack('<f',message.data)[0]
-    logger.info("Temperature: {} {}".format(message.data, data ) )
-    client.publish("homie/"+args.mqtt_client_name+"/{:02x}/temperature".format(sender_id), "{}".format( data ), qos=1, retain=False)
-    msg_handeled = True
-
-  if cmd_id == 9:
-    sender_id = (message.arbitration_id&0xffff)
-    eeprom_pos = (message.data[1]<<8) + message.data[0]
-    for i in range(6):
-      if eeprom_pos+i < 256: #currently only the lower bytes in eeprom are supported. This can later be extended
-        eeprom_storage[eeprom_pos+i] = message.data[2+i]
-    if eeprom_pos> 250: #when last message is send from MCU
-      logger.debug("{}".format(eeprom_storage))
-#      client.publish("homie/"+args.mqtt_client_name+"/{:02x}/eeprom".format(sender_id), "{}".format(eeprom_storage), qos=1, retain=False)
-      for i in mcu_eeprom_data_dict_float:
-        start_address = mcu_eeprom_data_dict_float[i]["start"]
-        logger.info("{}: {} {} ".format(i, eeprom_storage[start_address:start_address+4], struct.unpack('<f',bytes(eeprom_storage[start_address:start_address+4] ))[0]  ))
-        client.publish("homie/"+args.mqtt_client_name+"/{:02x}/{}".format(sender_id, i), "{}".format(struct.unpack('<f',bytes(eeprom_storage[start_address:start_address+4] ))[0]), qos=1, retain=True)
-      for i in mcu_eeprom_data_dict_sgn_long:
-        start_address = mcu_eeprom_data_dict_sgn_long[i]["start"]
-        data = struct.unpack('<l',bytes(eeprom_storage[start_address:start_address+4] ))[0]
-        logger.info("{}: {} {} ".format(i, eeprom_storage[start_address:start_address+4], data  ))
-        client.publish("homie/"+args.mqtt_client_name+"/{:02x}/{}".format(sender_id, i), "{}".format(data), qos=1, retain=True)
-      for i in mcu_eeprom_data_dict_str:
-        start_address = mcu_eeprom_data_dict_str[i]["start"]
-        data_length = mcu_eeprom_data_dict_str[i]["len"]
-        data = eeprom_storage[start_address:start_address+data_length]
-        data_concat = []
-        for l in data:
-          if l == 0: break #stop with 0x0 as delimiter
-          data_concat.append(chr(l))
-        data_concat = ''.join(data_concat)
-        logger.info("{}: {}".format(i, data_concat) )
-        client.publish("homie/"+args.mqtt_client_name+"/{:02x}/{}".format(sender_id, i), "{}".format(data_concat), qos=1, retain=True)
-    msg_handeled = True
-
-  if not msg_handeled:
-    logger.info("Unhandeled CAN received: {}".format(message))
+#Global information on all scales
+anzahl_waagen = 0
+waagen = {} #index: i2c_add   eg: 9: {'mac': "493037D20E1B", 'address': 9, 'slope': 1, 'zero':0, 'state': 0, ...},}
+LUT_MAC_2_I2C_ADD = {} #LUT to get I2C address from MAC address
 
 
-#  if args.verbosity>0:
-  #  time.sleep(1-time.time() % 1) #every second, even if the processing before took longer
-#  else:
-  time.sleep(0.0001)
+##############################################################################
+def signal_handler(sig, frame):
+    logger.info(f"Program terminating. Sending correct /state for all {anzahl_waagen} scales... (this takes 1 second)")
+
+    for w in waagen.items():
+        client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/state", 0, qos=0, retain=True)
+        waagen[w[0]]['state'] = 0
+
+    time.sleep(1) #to allow the published message to be delivered.
+
+    client.loop_stop()
+    client.disconnect()
+
+    ser.close()
+
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+##############################################################################
+
+
+ser = serial.Serial(port=args.serial_device_name, baudrate=115200, timeout=1 )
+#ser.isOpen()
+
+# Waagen Neustart
+send_and_recv("w0000")
+logger.info("Warte auf Waagen, bis sie den Neustart ausgeführt haben. 8 Sekunden ...")
+time.sleep(8)
+
+##alle LEDs an
+send_and_recv("w0005")
+time.sleep(0.9)
+#Antwort bit setzen
+send_and_recv("w0001")
+time.sleep(.1)
+#alle LEDs aus
+send_and_recv("w0004")
+time.sleep(.1)
+
+def search_waagen():
+    #Antwort bit setzen
+    send_and_recv("w0001")
+    time.sleep(.1)
+
+    global anzahl_waagen, waagen
+    weiter_suchen = True
+    anzahl_waagen = 0
+    waagen = {} #9: {'mac': "4930_37D2_0E1B", 'address': 9, 'slope': 1, 'zero':0},}
+    while weiter_suchen:
+        #test, ob noch waagen ohne neue I2C Adresse
+        logger.info(f"Suche weitere Waagen. ")
+        m = 0xffff_ffff_ffff
+        str_to_send = f"w0003{m:#014X}".replace("0X","")
+        send_and_recv(str_to_send)
+
+        str_to_send = f"r0801"
+        res = send_and_recv(str_to_send)
+        logger.info(f"Rückgabewerte der Suche: {res}")
+
+        weiter_suchen = True if res[1][0] > 0 else False
+
+        if weiter_suchen: #welche haben sich gemeldet
+            anzahl_waagen += 1
+            neue_i2c_adresse = anzahl_waagen + 8 #ab Adresse 9 geht's los
+
+            res2 = bin_search()
+            logger.info(f"Waage mit MAC {res2:014_X} gefunden.")
+            waagen[neue_i2c_adresse] = {'mac': f"{res2:012X}", 'i2c_address': neue_i2c_adresse, 'slope': 1, 
+                                        'zero':0, 'state':0, 
+                                        'stack': collections.deque(maxlen=10), #if maxlen is changed, check later for touch functionality that it still works
+                                        'touched': 0,
+                                        'last_mass_submitted': None, 'last_mass_submitted_time': None}
+            LUT_MAC_2_I2C_ADD[f"{res2:012X}"] = neue_i2c_adresse
+
+            logger.info(f"Setze Wagge (Suchlauf {anzahl_waagen}): {res2:014_X} auf I2C Adresse {neue_i2c_adresse:02X}")
+            res2 = send_and_recv(f"w0002{res2:012X}{neue_i2c_adresse:02X}")
+            logger.debug(f"Rückgabewert Schreiben I2C Adresse: {res2}")
+
+            client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/state", 0, qos=0, retain=True)
+            client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/i2c_address", neue_i2c_adresse, qos=0, retain=True)
+
+            time.sleep(0.5) # wait for electronics to set new i2c address
+
+            #read MAC, LED, BUILD_NUMBER and HARDWARE_REV
+            #set: prepare for next read
+            send_and_recv(f"w{neue_i2c_adresse:02X}01")
+            res4 = send_and_recv(f"r{neue_i2c_adresse:02X}0D") #read 13 characters from bus
+            if (res4[1][0] == 13): #13 characters expected
+                logger.info(f"Gefundene Eigenschaften: MAC: {res4[1][1:7]}, LED: {res4[1][7]}, BUILD: {res4[1][8:12]}, Hardware: {res4[1][12:14]}")
+                BUILD_VERSION = (res4[1][8]<<24)+(res4[1][9]<<16)+(res4[1][10]<<8)+(res4[1][11])
+                HARDWARE_REV = (res4[1][12]<<8) + res4[1][13]
+                client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/firmware_version", BUILD_VERSION, qos=0, retain=True)
+                client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/hardware_version", HARDWARE_REV, qos=0, retain=True)
+            else:
+                logger.warning(f"Falsche Anzahl an Bytes zurück erhalten: {res4[1][0]}")
+
+            #Read out offset from scale: 4 single bytes (address 5..8)
+            r=[]
+            for i in range(5,8+1):
+              res7 = send_and_recv(f"w{neue_i2c_adresse:02X}060{i}") # prepare to read 1 byte from address 0x07
+              logger.debug(f"Prepare to Read Return {res7=}")
+              res5 = send_and_recv(f"r{neue_i2c_adresse:02X}01") # read 1 byte
+              logger.debug(f"Read this byte from address 0x0{i}: {res5=}")
+              r.append(res5[1][1])
+            logger.debug(f"Gesamt gelesen: {r=}")
+            v=struct.unpack('<f',bytearray(r))[0]  #unpack returns: (-524945,), get the right value with [0]
+            waagen[neue_i2c_adresse]['zero'] = v
+
+
+            #Read out slope from scale: 4 single bytes (address 1..4)
+            r=[]
+            for i in range(1,4+1):
+              res7 = send_and_recv(f"w{neue_i2c_adresse:02X}060{i}") # prepare to read 1 byte from address 0x07
+              logger.debug(f"Prepare to Read Return {res7=}")
+              res5 = send_and_recv(f"r{neue_i2c_adresse:02X}01") # read 1 byte
+              logger.debug(f"Read this byte from address 0x0{i}: {res5=}")
+              r.append(res5[1][1])
+            logger.debug(f"Gesamt gelesen: {r=}")
+            v=struct.unpack('<f',bytearray(r))[0]  #unpack returns: (-7.092198939062655e-05,), get the right value with [0]
+            if math.isnan(v): v=-4.632391446259352e-05 #set to default value for 4*50kg scales if value is not set (==nan)
+            waagen[neue_i2c_adresse]['slope'] = v
+
+
+            send_and_recv(f"w{neue_i2c_adresse:02X}00") #set back normal read mode
+
+            #individuelle LED kurz an
+            res3 = send_and_recv(f"w{neue_i2c_adresse:02X}03")
+            logger.debug(f"Rückgabewert Schreiben I2C LED an: {res3}")
+            #time.sleep(0.5)
+            #individuelle LED wieder aus
+            #res3 = send_and_recv(f"w{neue_i2c_adresse:02X}02")
+            #logger.info(f"Rückgabewert Schreiben I2C LED aus: {res3}")
+            #time.sleep(0.1)
+
+    logger.info(f"gefundene Waagen Anzahl: {anzahl_waagen}")
+    logger.info(f"gefundene Waagen: {waagen}")
+    logger.info(f"{LUT_MAC_2_I2C_ADD=}")
+    time.sleep(1)
+
+    #alle LEDs aus
+    send_and_recv("w0004")    
+
+search_waagen()
+
+#test string is float?
+def is_float(element: any) -> bool:
+    if element is None: 
+        return False
+    try:
+        float(element)
+        return True
+    except ValueError:
+        return False
+
+while True:
+    while not mqtt_queue.empty():
+        message = mqtt_queue.get()
+        if message is None:
+            continue
+        logger.debug(f"Process queued MQTT message now: {str(message.payload.decode('utf-8'))}")
+
+        try:
+            m = message.payload.decode("utf-8")
+        except Exception as err:
+            traceback.print_tb(err.__traceback__)
+        logger.debug("Topic: "+message.topic+" Message: "+m)
+
+        msplit = re.split("/", message.topic)
+        if len(msplit) == 4 and msplit[2].lower() == "cmd" and msplit[3].lower() == "leds":
+            if m == "1":
+                logger.info("Per MQTT empfangen: Setze alle LEDs an.")
+                send_and_recv("w0005")
+            else:
+                logger.info("Per MQTT empfangen: Setze alle LEDs aus.")
+                send_and_recv("w0004")
+        
+        if len(msplit) == 4 and msplit[2].lower() == "cmd" and msplit[3].lower() == "restart":
+            logger.info("Per MQTT empfangen: Alle Waagen neustarten.")
+            send_and_recv("w0000") # Waagen Neustart
+            logger.info("Warte 8 Sekunden, bis alle Waagen den Neustart sicher ausgeführt haben.")
+
+        if len(msplit) == 4 and msplit[2].lower() == "cmd" and msplit[3].lower() == "search":
+            logger.info("Per MQTT empfangen: Neuer Waagen scan.")
+            search_waagen()
+
+        if len(msplit) == 4 and msplit[2].lower() == "cmd" and msplit[3].lower() == "set_zero":
+            logger.info("Per MQTT empfangen: set_zero")
+            for w in waagen.items():
+                waagen[w[0]]['zero'] = statistics.mean(list(waagen[w[0]]['stack']))
+                logger.info(f"Waage {w[1]['mac']} Zero gesetzt auf: {waagen[w[0]]['zero']}")
+
+                #write single bytes to scale
+                v=struct.pack('<f', waagen[w[0]]['zero']) #returns eg: b'o\xfd\xf7\xff'
+                for i,x in enumerate(v):
+                    res6 = send_and_recv(f"w{w[0]:02X}05{i+5:02X}{x:02X}") # write 1 byte to address i+5
+                    logger.info(f"Write Return (address {i+5}, value: {x}) {res6=}")
+
+
+        if len(msplit) == 6 and msplit[2].lower() == "cmd" and msplit[3].lower() == "scales" and msplit[5].lower() == "set_slope":
+            logger.info(f"Per MQTT empfangen: individuelle Steigung der Waage {msplit[4].upper()} setzen: {m} kg")
+            if msplit[4].upper() in LUT_MAC_2_I2C_ADD:
+                i2c_address = LUT_MAC_2_I2C_ADD[msplit[4].upper()]
+
+                if is_float(m):
+                    # slope in kg / raw ticks
+                    waagen[i2c_address]['slope'] = float(m) / (
+                        statistics.mean(list(waagen[i2c_address]['stack'])) - waagen[i2c_address]['zero']
+                        )
+                    logger.info(f"Mittelwert: {statistics.mean(list(waagen[i2c_address]['stack']))} Differenz zur 0: {statistics.mean(list(waagen[i2c_address]['stack'])) - waagen[i2c_address]['zero']} Steigung: {waagen[i2c_address]['slope']}")
+
+                    #write single bytes to scale
+                    v=struct.pack('<f', waagen[i2c_address]['slope']) #returns eg: b'\xf4\xbb\x94\xb8'
+                    for i,x in enumerate(v):
+                        res6 = send_and_recv(f"w{i2c_address:02X}05{i+1:02X}{x:02X}") # write 1 byte to address i+1
+                        logger.info(f"Write Return {res6=}")
+
+                else:
+                    logger.warning(f"Value passed: '{m}' is no float.")
+            else:
+                logger.warning(f"MAC not in local list: {msplit[4].upper()}")
+
+        if len(msplit) == 6 and msplit[2].lower() == "cmd" and msplit[3].lower() == "scales" and msplit[5].lower() == "led":
+            logger.info(f"Per MQTT empfangen: individuelle LED von Waage {msplit[3].upper()} on/off: {m}")
+            if msplit[4].upper() in LUT_MAC_2_I2C_ADD:
+                i2c_address = LUT_MAC_2_I2C_ADD[msplit[4].upper()]
+                if m == "1":
+                    res3 = send_and_recv(f"w{i2c_address:02X}03")
+                else:
+                    res3 = send_and_recv(f"w{i2c_address:02X}02")
+                logger.info(f"Rückgabewert Schreiben I2C LED an: {res3}")
+            else:
+                logger.warning(f"MAC not in local list: {msplit[4].upper()}")
+
+
+            
+
+    # Poll all scales for raw readings
+    for w in waagen.items():
+        i2c_address = w[1]['i2c_address']
+        res = send_and_recv(f"r{i2c_address:02X}04")
+        state_okay = 1 if res[1][0] == 4 else 0
+        if state_okay == 1:
+            v = struct.unpack('<l',bytes(res[1][1:5]))[0]
+            logger.debug(f"Read i2c address 0x{i2c_address:02X}\t raw value: {v}")
+            if debug:
+                client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/raw", v, qos=0, retain=False)
+            waagen[w[0]]['stack'].append(v)
+
+            #######################################################################
+            # calculate mass and submit if change large enough
+            v_mean = statistics.mean(list(waagen[w[0]]['stack'])[-4:]) #get the last 4 readings
+            mass = ( v_mean - waagen[w[0]]['zero'] ) * waagen[w[0]]['slope']
+            #submit only, when change is larger than 0.05kg OR every 10 seconds
+            if (waagen[w[0]]['last_mass_submitted'] is None) or \
+                (abs(mass-waagen[w[0]]['last_mass_submitted']) > 0.05) or \
+                (waagen[w[0]]['last_mass_submitted_time'] is None) or \
+                ((time.time()-waagen[w[0]]['last_mass_submitted_time']) > 10 ):
+                client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/mass", mass, qos=0, retain=True)            
+                waagen[w[0]]['last_mass_submitted'] = mass
+                waagen[w[0]]['last_mass_submitted_time'] = time.time()
+
+            #######################################################################
+            # check for touch functionality start
+            if (len(waagen[w[0]]['stack'])>8): #some reading has to be in the stack
+                # check the last 3 readings and compare to the first in stack.
+                # mean(new)-mean(old) > 10*std-dev
+                act_distance_avg_new = statistics.mean(list(waagen[w[0]]['stack'])[-3:])
+                act_distance_stdev = statistics.stdev(list(waagen[w[0]]['stack'])[:-4])
+                act_distance_avg_old = statistics.mean(list(waagen[w[0]]['stack'])[:-4])
+
+                act_touched = 1 if abs(act_distance_avg_new - act_distance_avg_old) > act_distance_stdev*10 else 0
+                if act_distance_stdev<20: act_distance_stdev=20 #to avoid too small std deviations
+                
+                if waagen[w[0]]['touched'] != act_touched:
+                    logger.info(f"touched changed to {act_touched} for i2c address 0x{i2c_address:02X} mac {waagen[w[0]]['mac']}: New: {act_distance_avg_new:.1f} Diff: {(act_distance_avg_new-act_distance_avg_old):.1f} Std: {act_distance_stdev:.1f}")
+                    client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/touched", act_touched, qos=0, retain=False)
+                    waagen[w[0]]['touched'] = act_touched
+
+                    if act_touched == 1:
+                        send_and_recv(f"w{i2c_address:02X}03")
+                    else:
+                        send_and_recv(f"w{i2c_address:02X}02")
+            # check for touch functionality end
+            #######################################################################
+
+        else:
+            logger.warning(f"Fehler beim Lesen, Anzahl der gelesenen Bytes ist nicht 4. I2C address 0x{i2c_address:02X}, return: {res}")
+        
+        if state_okay != waagen[w[0]]['state']:
+            client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/state", state_okay, qos=0, retain=True)
+            waagen[w[0]]['state'] = state_okay
+
+    time.sleep(0.1)
 
 
 client.loop_stop()
 client.disconnect()
+
+ser.close()

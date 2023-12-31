@@ -3,9 +3,9 @@ graph TD
   W1["Waagen 1..8"] <--> |I2C| WC1
   W2["Waagen 1..8"] <--> |I2C| WC2
   W3["Waagen 1..8"] <--> |I2C| WCN
-  WC1["scale_v4_bussearch.py 1"] ==> |Rohdaten| WI
-  WC2["scale_v4_bussearch.py 2"] ==> |Rohdaten| WI
-  WCN["scale_v4_bussearch.py N"] ==> |Rohdaten| WI
+  WC1["shelf-controller.py 1"] ==> |Rohdaten| WI
+  WC2["shelf-controller.py 2"] ==> |Rohdaten| WI
+  WCN["shelf-controller.py N"] ==> |Rohdaten| WI
 
   L1["Lidar 1..4"] --> |Serial| ST1
   L2["Lidar 1..4"] --> |Serial| ST2
@@ -21,9 +21,9 @@ graph TD
 
 
 subgraph Messdaten-Input
-  WI["Waagen Interpreter"]
+  WI["Warenkorb Interpreter"]
   cardreader
-  STI["Lidar Shop-Track Interpreter"]
+  STI["shop-track-collector.py"]
   IOR["io-usb-readout"]
   QCS["qr-code-scanner"]
 end
