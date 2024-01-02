@@ -83,7 +83,7 @@ async def main():
 #    mqtt_client = aiomqtt.Client(hostname="192.168.178.93", port=1884)
     mqtt_client = aiomqtt.Client(hostname="localhost", port=1883)
 #    ptc = await make_pt_connection("192.168.179.167", 20007, mqtt_client, logger)
-    ptc = await make_pt_connection("192.168.10.44", 20007, mqtt_client, logger)
+    ptc = await make_pt_connection("192.168.10.45", 20007, mqtt_client, logger)
 
     reconnect_interval = 5  # In seconds
     while True:
