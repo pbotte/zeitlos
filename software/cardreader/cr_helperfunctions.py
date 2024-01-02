@@ -244,6 +244,12 @@ def parse_bmps(msg):
                     if len(val) != 4:
                         raise Exception('Unexpected TLV receipt parameter length')
                     res['receipt-param'] = parse_bcd(bytearray(val), 4)
+                elif tag == 0x1F6C:
+                    if len(val) != 1:
+                        raise Exception('Unexpected length of age verification result')
+                    res['age-verification-result'] = val[0]
+                else:
+                    res['tlv_tag_%X' % tag] = val
         else:
             raise Exception(f'Tried to parse BMP but found invalid BMP number {fmt_bytes(bmp)}')
     return res
@@ -253,11 +259,11 @@ def parse_result_msg(msg, logger):
     if len(msg) < 2 or not msg.startswith(b'\x04\x0F'):
         raise Exception('result message does not start with 04 0F')
     skip_command_header(msg)
-    if pop_byte(msg) != 0x27:
-        raise Exception('result data block does not start with 27!')
-    result_code = pop_byte(msg)
-    if result_code != 0:
-        #in case an error occured, eg non card presented, etc.
-        logger.info(f'parse_result_msg(): result code not 00 but {fmt_bytes(result_code)}!')
+    if msg[0] == 0x27:
+        pop_byte(msg)
+        result_code = pop_byte(msg)
+        if result_code != 0:
+            #in case an error occured, eg non card presented, etc.
+            logger.info(f'parse_result_msg(): result code not 00 but {fmt_bytes(result_code)}!')
     return parse_bmps(msg)
 
