@@ -532,7 +532,12 @@ void loop()
   if (update_i2c_address_from_eeprom)
   {
     eeprom_i2c_address = EEPROM.read(0);
+    Wire.end();
+    Serial.println("I2C end.");
     Wire.begin(eeprom_i2c_address, true, WIRE_ALT_ADDRESS(8));
+    Serial.print("I2C mit neuer I2C Adresse ");
+    Serial.print(eeprom_i2c_address);
+    Serial.println(" gestartet.");
     update_i2c_address_from_eeprom = false;
   }
 

@@ -135,14 +135,13 @@ client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.enable_logger(logger) #info: https://www.eclipse.org/paho/clients/python/docs/#callbacks
 logger.info("connecting to broker: "+args.mqtt_broker_host+". If it fails, check whether the broker is reachable. Check the -b option.")
-logger.info("Connecting to broker "+args.mqtt_broker_host)
 
 # start with MQTT connection and set last will
 logger.info(f"mqtt_client_name: {args.mqtt_client_name}")
 client.will_set(f"homie/{args.mqtt_client_name}/state", '0', qos=1, retain=True)
 client.connect(args.mqtt_broker_host)
 client.loop_start() #start loop to process received messages in separate thread
-logger.debug("MQTT Loop started.")
+logger.debug("MQTT loop started.")
 client.publish(f"homie/{args.mqtt_client_name}/state", '1', qos=1, retain=True)
 
 ##############################################################################
@@ -155,7 +154,7 @@ LUT_MAC_2_I2C_ADD = {} #LUT to get I2C address from MAC address
 
 ##############################################################################
 def signal_handler(sig, frame):
-    logger.info(f"Programm terminating. Sending correct /state for all {anzahl_waagen} scales... (this takes 1 second)")
+    logger.info(f"Program terminating. Sending correct /state for all {anzahl_waagen} scales... (this takes 1 second)")
 
     for w in waagen.items():
         client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[w[0]]['mac']}/state", 0, qos=0, retain=True)
@@ -261,6 +260,7 @@ def search_waagen():
             logger.debug(f"Gesamt gelesen: {r=}")
             v=struct.unpack('<f',bytearray(r))[0]  #unpack returns: (-524945,), get the right value with [0]
             waagen[neue_i2c_adresse]['zero'] = v
+            client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/zero_raw", v, qos=0, retain=True)
 
 
             #Read out slope from scale: 4 single bytes (address 1..4)
@@ -275,6 +275,7 @@ def search_waagen():
             v=struct.unpack('<f',bytearray(r))[0]  #unpack returns: (-7.092198939062655e-05,), get the right value with [0]
             if math.isnan(v): v=-4.632391446259352e-05 #set to default value for 4*50kg scales if value is not set (==nan)
             waagen[neue_i2c_adresse]['slope'] = v
+            client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[neue_i2c_adresse]['mac']}/slope", v, qos=0, retain=True)
 
 
             send_and_recv(f"w{neue_i2c_adresse:02X}00") #set back normal read mode
@@ -286,7 +287,12 @@ def search_waagen():
             #individuelle LED wieder aus
             #res3 = send_and_recv(f"w{neue_i2c_adresse:02X}02")
             #logger.info(f"Rückgabewert Schreiben I2C LED aus: {res3}")
-            #time.sleep(0.1)
+            
+            if anzahl_waagen % 8==0: #nicht mehr als 8 LEDS gleichzeitig an, da Strom für Controller zu hoch
+              time.sleep(0.5)
+              #alle LEDs aus
+              send_and_recv("w0004")
+              logger.info(f"Switch off all LEDs to limit current drawn from shelf controller. This is repeated every 8 found scales.")
 
     logger.info(f"gefundene Waagen Anzahl: {anzahl_waagen}")
     logger.info(f"gefundene Waagen: {waagen}")
@@ -350,6 +356,7 @@ while True:
                 for i,x in enumerate(v):
                     res6 = send_and_recv(f"w{w[0]:02X}05{i+5:02X}{x:02X}") # write 1 byte to address i+5
                     logger.info(f"Write Return (address {i+5}, value: {x}) {res6=}")
+                client.publish(f"homie/{args.mqtt_client_name}/scales/{w[1]['mac']}/zero_raw", waagen[w[0]]['zero'], qos=0, retain=True)
 
 
         if len(msplit) == 6 and msplit[2].lower() == "cmd" and msplit[3].lower() == "scales" and msplit[5].lower() == "set_slope":
@@ -369,7 +376,7 @@ while True:
                     for i,x in enumerate(v):
                         res6 = send_and_recv(f"w{i2c_address:02X}05{i+1:02X}{x:02X}") # write 1 byte to address i+1
                         logger.info(f"Write Return {res6=}")
-
+                    client.publish(f"homie/{args.mqtt_client_name}/scales/{waagen[i2c_address]['mac']}/slope", waagen[i2c_address]['slope'], qos=0, retain=True)
                 else:
                     logger.warning(f"Value passed: '{m}' is no float.")
             else:

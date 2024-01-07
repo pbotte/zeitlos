@@ -69,15 +69,15 @@ client.on_disconnect = on_disconnect
 client.enable_logger(logger)
 logger.info("Conncting to broker " + args.mqtt_broker_host)
 client.will_set(
-    topic="homie/" + args.mqtt_client_name + "/$state",
-    payload="disconnect",
+    topic="homie/" + args.mqtt_client_name + "/state",
+    payload="0",
     qos=1,
     retain=True,
 )
 client.connect(args.mqtt_broker_host, keepalive=60, port=args.mqtt_broker_port)
 client.publish(
-    topic="homie/" + args.mqtt_client_name + "/$state",
-    payload="ready",
+    topic="homie/" + args.mqtt_client_name + "/state",
+    payload="1",
     qos=1,
     retain=True,
 )
