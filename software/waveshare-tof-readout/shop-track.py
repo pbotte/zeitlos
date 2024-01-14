@@ -29,7 +29,7 @@ logger.setLevel(logging.WARNING - (args.verbosity * 10 if args.verbosity <= 2 el
 
 #get usb path of device
 usb_path_device = "unknown"
-last_dev = os.popen(f'udevadm info {args.serial_device_name} | grep DEVLINKS').read()
+last_dev = os.popen(f'udevadm info /{args.serial_device_name} | grep DEVLINKS').read()
 regex = r"-usb-[0-9:\.]+-port0"
 matches = re.finditer(regex, last_dev, re.MULTILINE)
 for matchnum, match in enumerate(matches): #only one match should be found

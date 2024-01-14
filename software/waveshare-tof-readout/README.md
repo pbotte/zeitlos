@@ -6,6 +6,8 @@ Die Datei `shop-track00.service` als Vorlage nehmen und mit dem `/dev/serial/by-
 sudo cp shop-track00.service /etc/systemd/system/
 ```
 
+Dies für jeden angeschlossen Serial-Converter wiederholen und die Ziffern hochzählen.
+
 
 # Installation Variante 2
 
