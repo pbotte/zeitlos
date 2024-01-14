@@ -12,16 +12,6 @@ import logging
 import struct
 import os, re
 
-#get usb path of device
-usb_path_device = "unknown"
-last_dev = os.popen('udevadm info /dev/ttyUSB0 | grep DEVLINKS').read()
-regex = r"-usb-[0-9:\.]+-port0"
-matches = re.finditer(regex, last_dev, re.MULTILINE)
-for matchnum, match in enumerate(matches): #only one match should be found
-  s=match.group()
-  usb_path_device = s.replace(":","-").replace("-usb-","").replace("-port0","")
-mqtt_client_name = f"tracker-{usb_path_device}"
-
 logging.basicConfig(
     level=logging.WARNING, format="%(asctime)-6s %(levelname)-8s  %(message)s"
 )
@@ -36,6 +26,18 @@ parser.add_argument("-t", "--watchdog-timeout", help="timeout in seconds for the
 parser.add_argument("serial_device_name", help="Serial port used, eg /dev/ttyUSB0", type=str)
 args = parser.parse_args()
 logger.setLevel(logging.WARNING - (args.verbosity * 10 if args.verbosity <= 2 else 20))
+
+#get usb path of device
+usb_path_device = "unknown"
+last_dev = os.popen(f'udevadm info {args.serial_device_name} | grep DEVLINKS').read()
+regex = r"-usb-[0-9:\.]+-port0"
+matches = re.finditer(regex, last_dev, re.MULTILINE)
+for matchnum, match in enumerate(matches): #only one match should be found
+  s=match.group()
+  usb_path_device = s.replace(":","-").replace("-usb-","").replace("-port0","")
+mqtt_client_name = f"tracker-{usb_path_device}"
+
+
 
 logger.info("MQTT client name: " + mqtt_client_name)
 logger.info("Watchdog timeout (seconds): " + str(args.watchdog_timeout))
