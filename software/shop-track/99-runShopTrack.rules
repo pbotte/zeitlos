@@ -1,0 +1,1 @@
+SUBSYSTEM=="tty", ACTION=="add", ATTRS{idVendor}=="2e8a", ATTRS{idProduct}=="0005", ENV{ID_MM_DEVICE_IGNORE}="1", PROGRAM="/bin/systemd-escape -p --template=scale-track@.service $env{DEVNAME}", ENV{SYSTEMD_WANTS}+="%c"

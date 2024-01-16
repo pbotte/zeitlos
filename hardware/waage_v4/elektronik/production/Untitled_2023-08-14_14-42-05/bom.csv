@@ -1,0 +1,13 @@
+﻿Designator,Footprint,Quantity,Value,LCSC Part #
+C1,1206,1,10u,
+"C2, C5, C6",1206,3,100n,
+C3,1206,1,330p,
+C4,1206,1,1µ,
+D1,1206,1,LED,
+J1,PinSocket_1x03_P2.54mm_Vertical,1,Conn_01x03,
+"J2, J3",JST_SM04B-SRSS-TB(LF)(SN),2,SM04B-SRSS-TB(LF)(SN),
+"J4, J5, J6, J7",SolderWire-0.1sqmm_1x03_P3.6mm_D0.4mm_OD1mm_Relief,4,Conn_01x03_Male,
+R1,1206,1,180,
+"R2, R3",1206,2,47,
+U1,SOIC-14_3.9x8.7mm_P1.27mm,1,ATtiny1614-SS,
+U2,NAU7802SGI,1,NAU7802SGI,

@@ -1,0 +1,16 @@
+docker/mariadb/data/*
+docker/nodered/data/.npm/*
+docker/nodered/data/node_modules/*
+docker/nodered/data/.config.nodes.json.backup
+docker/nodered/data/.flows.json.backup
+docker/nodered/data/package.json
+docker/nodered/data/node_modules/.package-lock.json
+docker/nodered/data/.config.nodes.json
+docker/nodered/data/package-lock.json
+docker/nodered/data/.config.users.json.backup
+docker/nodered/data/.config.users.json
+
+www/qrscanner-debug/last.png
+
+update-public-webpage-from-shop/password
+shop-control/myconfig.py

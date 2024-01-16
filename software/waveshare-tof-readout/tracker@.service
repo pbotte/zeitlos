@@ -1,0 +1,11 @@
+[Unit]
+Description=Shop Tracker Readout for %i
+BindTo=%i.device
+After=%i.device
+
+[Service]
+Restart=always
+RestartSec=10s
+User=pi
+Group=pi
+ExecStart=/usr/bin/python3 /home/pi/zeitlos/software/waveshare-tof-readout/shop-track.py -v -b 192.168.10.10 %I
