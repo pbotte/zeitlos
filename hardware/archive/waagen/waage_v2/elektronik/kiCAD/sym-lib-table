@@ -1,4 +1,0 @@
-(sym_lib_table
-  (lib (name "2022-02-17_08-21-37")(type "KiCad")(uri "${KIPRJMOD}/libs/NAU7802/NAU7802.kicad_sym")(options "")(descr ""))
-  (lib (name "MCP2515")(type "KiCad")(uri "${KIPRJMOD}/libs/MCP2515.kicad_sym")(options "")(descr ""))
-)

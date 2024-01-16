@@ -1,9 +1,0 @@
-# get idVendor and idProduct via
-# udevadm info /dev/ttyUSB0
-# or via
-# lsusb -v
-# while device is connected
-# or via
-# dmesg
-
-SUBSYSTEM=="tty", ACTION=="add", ATTRS{idVendor}=="067b", ATTRS{idProduct}=="2303", ENV{ID_MM_DEVICE_IGNORE}="1", PROGRAM="/bin/systemd-escape -p --template=tracker@.service $env{DEVNAME}", ENV{SYSTEMD_WANTS}+="%c"

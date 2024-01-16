@@ -1,3 +1,0 @@
-paho-mqtt>=1.4.0
-parse
-requests>=2.25.1
