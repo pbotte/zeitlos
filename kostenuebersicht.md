@@ -121,6 +121,8 @@ Kontrolliert den ganzen Laden:
 
 ## Globale Summe
 
+Für ein System mit 200 Waagen und 16m^2 begehbare Ladenfläche.
+
 | Teilsystem | Kosten in € |
 |---| ---:|
 | Präsenzsystem für 16m^2 |  515|

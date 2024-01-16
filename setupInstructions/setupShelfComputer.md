@@ -5,13 +5,13 @@
 - micro SD-Card: [SanDisc Endurance 32GB](https://www.berrybase.de/raspberry-pi-co/raspberry-pi/speicherkarten/sandisk-high-endurance-microsdhc-uhs-i-u3-speicherkarte-43-adapter-32gb) (hält viele Schreibezyklen aus)
 - Original-Gehäuse für Raspberry Pi
 - [TP-Link PoE-Splitter 1GBit/s](https://www.idealo.de/preisvergleich/OffersOfProduct/2118892_-poe-splitter-tl-poe10r-tp-link.html)
-- [Adapter-Kabel (Micro-B auf Hohlstecker Buchse)](https://www.berrybase.de/raspberry-pi-co/raspberry-pi/kabel-adapter/usb-kabel-adapter/adapterkabel-hohlstecker-buchse-5-5x2-1mm-micro-usb-b-stecker-schwarz-15cm)
+- [Adapter-Kabel (Micro-B auf Hohlstecker Buchse)](https://www.berrybase.de/raspberry-pi-co/raspberry-pi/kabel-adapter/usb-kabel-adapter/adapterkabel-hohlstecker-buchse-5-5x2-1mm-micro-usb-b-stecker-schwarz-15cm) Adapterkabel Hohlstecker Buchse 5,5x2,1mm - Micro USB B Stecker schwarz 15cm
 - HDMI-Kabel zum Monitor
 - HDMI-Monitor mit VESA-Befestigungsmöglichkeit
 - [D-Link USB-Hub, 7fach, mit PPS, mit Netzteil](https://www.idealo.de/preisvergleich/OffersOfProduct/97228.html)
 - Langes Netzwerkkabel zum PoE-Switch
 - 230V-Mehrfachsteckdosenleiste, genutzt für
-  - Beleuchtung (Zigbee-Lampen von Philips und IKEA?)
+  - Beleuchtung (Möglich sind: Zigbee-Lampen von Philips und IKEA)
   - Monitor
   - USB-HUB-Netzteil
 

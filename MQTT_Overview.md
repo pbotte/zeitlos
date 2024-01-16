@@ -25,7 +25,6 @@ subgraph Messdaten-Input
   cardreader
   STI["shop-track-collector.py"]
   IOR["io-usb-readout"]
-  QCS["qr-code-scanner"]
 end
 
 subgraph Ausgabe
@@ -58,7 +57,6 @@ end
   WI ==> |Entnommene Ware| SC
   STI ==> |Anz. Pixel>Schwelle| SC
   cardreader <==> SC
-  QCS ==> |Gescannter Code| SC
 
   SC ==> FSR
   SC ==> DPC
