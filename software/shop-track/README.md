@@ -7,8 +7,8 @@ Dies geschieht mittels udev und systemd über die beiden Dateien `99-runShopTrac
 Nach einem git clone des Repositories müssen die beiden Dateien in die richtigen Systemverzeichnisse kopiert werden:
 
 ```bash
-sudo cp zeitlos/scaleController/99-runScale.rules /etc/udev/rules.d/
-sudo cp zeitlos/scaleController/scale-controller-@.service /etc/systemd/system/
+sudo cp zeitlos/scaleController/99-runShopTrack.rules /etc/udev/rules.d/
+sudo cp zeitlos/scaleController/shop-track@.service /etc/systemd/system/
 ```
 Anschließend noch die Änderungen an Systemd mitteilen mittels:
 ```bash

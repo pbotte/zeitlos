@@ -8,8 +8,8 @@ set -e
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 echo "Copy files"
-cp "$SCRIPT_DIR/99-runScale.rules" /etc/udev/rules.d/
-cp "$SCRIPT_DIR/scale-controller-@.service" /etc/systemd/system/
+cp "$SCRIPT_DIR/99-runShopTrack.rules" /etc/udev/rules.d/
+cp "$SCRIPT_DIR/shop-track@.service" /etc/systemd/system/
 
 echo "Update systemctl"
 systemctl daemon-reload
