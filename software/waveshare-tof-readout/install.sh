@@ -9,8 +9,8 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 echo "Copy files"
 
-cp "$SCRIPT_DIR/zeitlos/software/waveshare-tof-readout/99-runTracker.rules" /etc/udev/rules.d/
-cp "$SCRIPT_DIR/zeitlos/software/waveshare-tof-readout/tracker@.service" /etc/systemd/system/
+cp "$SCRIPT_DIR/99-runTracker.rules" /etc/udev/rules.d/
+cp "$SCRIPT_DIR/tracker@.service" /etc/systemd/system/
 
 echo "Update systemctl"
 systemctl daemon-reload
