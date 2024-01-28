@@ -2,7 +2,9 @@
 
 ## Quick and easy:
 
-1) Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/), copy lite or standard image to SD card. Activate SSH server, set hostname (eg `shelf01`) and password for user `pi`. Check the right localisation. Press `CTRL + SHIFT + X` in the imager to reach the advanced options.
+1) Use [Raspberry Pi Imager](https://www.raspberrypi.com/software/), copy lite or standard image to SD card. Activate SSH server, set hostname (eg `shelf01`) and password for user `pi`. Check the right localisation options. Press `CTRL + SHIFT + X` in the imager to reach the advanced options.
+
+   ALTERNATIVELY: Hold down the `shift`-key while powering up the raspberry and install the OS with the right custom settings.
 2) After the first boot, run: 
    ```bash
    curl -fsSL https://raw.githubusercontent.com/pbotte/zeitlos/master/software/get.sh -o get.sh
