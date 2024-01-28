@@ -13,4 +13,8 @@ cp "$SCRIPT_DIR/io-usb-readout.service" /etc/systemd/system/
 echo "Update systemctl"
 systemctl daemon-reload
 
+echo "Enable and start deamon"
+systemctl enable io-usb-readout.service
+systemctl start io-usb-readout.service
+
 echo "Done."
