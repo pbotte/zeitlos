@@ -40,6 +40,17 @@ find ./zeitlos/software/ -type f -name requirements.txt -exec cat '{}' ';' -exec
 sed -i '/mariadb/d' ./requirements.txt
 sudo -u pi pip3 install --break-system-packages -r requirements.txt
 
+#################################################
+echo -e "$sstr   Register software in systemd \n$sstr"
+echo -e "$sstr   Register shelf-controller \n$sstr"
+./zeitlos/software/shelf-controller/install.sh
+echo -e "$sstr   Register TOF-controller \n$sstr"
+./zeitlos/software/waveshare-tof-readout/install.sh
+
+
+#################################################
+
+
 #deactivate swap file
 echo -e "$sstr   deactivate swap file \n$sstr"
 dphys-swapfile swapoff 
