@@ -1,0 +1,14 @@
+#@xscreensaver -no-splash
+ 
+#Mauszeiger weg:
+@unclutter
+#Bildschirmschoner deaktivieren 
+#(die folgende Zeile also suchen und auskommentieren)
+#@xscreensaver -no-splash 
+ 
+#Bildschirm nicht ausschalten
+@xset s off
+@xset -dpms
+@xset s noblank
+#Browser starten
+@/home/pi/startBrowser.sh

@@ -48,3 +48,22 @@ sequenceDiagram
 | --- | --- |
 | `homie/shop_controller/shop_overview/products` | `{"1": {"ProductID": 1, "ProductName": "Kuerbis", "ProductDescription": "eigene Ernte", "PriceType": 0, "PricePerUnit": 4.0, "kgPerUnit": 1.67}, "2": {"ProductID": 2, "ProductName": "Nudeln", "ProductDescription": "Hausgemacht mit frischen Eiern", "PriceType": 0, "PricePerUnit": 2.6, "kgPerUnit": 0.5}, "3": {"ProductID": 3, "ProductName": "Cocktailtomaten", "ProductDescription": null, "PriceType": 0, "PricePerUnit": 4.45, "kgPerUnit": 0.5}, "4": {"ProductID": 4, "ProductName": "Tomaten", "ProductDescription": null, "PriceType": 0, "PricePerUnit": 2.15, "kgPerUnit": 0.6}, "5": {"ProductID": 5, "ProductName": "Eier L 10er", "ProductDescription": "aus Bodenhaltung", "PriceType": 0, "PricePerUnit": 3.3, "kgPerUnit": 0.6}, "6": {"ProductID": 6, "ProductName": "Weizenmehl", "ProductDescription": "1kg Type 550", "PriceType": 0, "PricePerUnit": 1.59, "kgPerUnit": 1.04}, "7": {"ProductID": 7, "ProductName": "Gummibaerchen", "ProductDescription": null, "PriceType": 0, "PricePerUnit": 1.9, "kgPerUnit": 0.155}, "8": {"ProductID": 8, "ProductName": "Haltbare Milch", "ProductDescription": "1L im Tetrapack", "PriceType": 0, "PricePerUnit": 1.69, "kgPerUnit": 1.1}, "9": {"ProductID": 9, "ProductName": "Birnen", "ProductDescription": "750g Eigene Ernte Alexander Lukas", "PriceType": 0, "PricePerUnit": 1.0, "kgPerUnit": 0.775}}}` |
 | `homie/shop_controller/shop_overview/products_scales` | `{"shelf01/b963": 1, "shelf01/ca44": 2, "shelf01/d660": 5, "shelf01/3320": 6, "shelf01/1a6d": 7, "shelf01/1503": 8, "shelf01/12d4": 12, "shelf01/73d0": 17, "shelf01/95e": 18, "shelf01/2438": 19, "shelf01/84a7": 20, "shelf01/65c0": 21, "shelf01/7b87": 22, "shelf01/7e3e": 23}`
+
+
+# Automatischer Start und Terminierung des Controllers
+
+Dies geschieht mittels udev und systemd über die beiden Dateien `99-runScales.rules` und `scale@.service`. Durch die Konfiguration in der systemd-Datei ist sichergestellt, dass das Programm erst dann gestartet wird, wenn der serielle Anschluss bereit ist (After=) und beendet wird, sobald dieser verschwindet (BindTo=).
+
+## Installationsanleitung
+
+Nach einem git clone des Repositories müssen die beiden Dateien in die richtigen Systemverzeichnisse kopiert werden:
+
+```bash
+sudo cp zeitlos/software/shelf-controller/99-runScales.rules /etc/udev/rules.d/
+sudo cp zeitlos/software/shelf-controller/scale@.service /etc/systemd/system/
+```
+Anschließend noch die Änderungen an Systemd mitteilen mittels:
+```bash
+sudo systemctl daemon-reload
+```
+Wird nun ein Scale Controller an den Computer angesteckt, so wird automatisch der Scale Controller gestartet. Wird er entfernt, so beendet sich dieser auch wieder.

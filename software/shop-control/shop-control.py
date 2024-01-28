@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 
+# ToDO: On entering: Save current scales readings to register
+# ToDo: On new mass reading: update basket. Note: multiple scales can work together, weight the same product
+
 import paho.mqtt.client as paho
 import json
 import time
@@ -16,20 +19,14 @@ import mariadb #1st: sudo apt install libmariadb3 libmariadb-dev   2nd: pip inst
 import parse #pip install parse
 import signal #to catch interrupts and exit gracefully
 import queue
-import myconfig # credentials go here
 
-logging.basicConfig(level=logging.WARNING,
-                    format='%(asctime)-6s %(levelname)-8s  %(message)s')
+logging.basicConfig(level=logging.WARNING, format='%(asctime)-6s %(levelname)-8s  %(message)s')
 logger = logging.getLogger("Shop Controller")
 
 parser = argparse.ArgumentParser(description='Shop Controller.')
-parser.add_argument("-v", "--verbosity",
-                    help="increase output verbosity", default=0, action="count")
-parser.add_argument("-b", "--mqtt-broker-host",
-                    help="MQTT broker hostname. default=localhost", default="localhost")
-parser.add_argument("-t", "--timeout",
-                    help="timeout in seconds. default=1h", default=100*60*60, type=int)
-parser.add_argument("qr_secret_str", help="used to generate a true secret for QR codes. Needs to be the same for the webpage.", type=str)
+parser.add_argument("-v", "--verbosity", help="increase output verbosity", default=0, action="count")
+parser.add_argument("-b", "--mqtt-broker-host", help="MQTT broker hostname. default=localhost", default="localhost")
+parser.add_argument("-t", "--timeout", help="timeout in seconds. default=1h", default=100*60*60, type=int)
 args = parser.parse_args()
 logger.setLevel(logging.WARNING-(args.verbosity * 10 if args.verbosity <= 2 else 20))
 
@@ -69,26 +66,21 @@ def get_all_data_from_db():
     db_close()
 
 get_all_data_from_db()
-#Support for retrieval of data from scales. Put scales anmes e.g. shelf01/921a into this list
-list_retrieve_scales = []
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logger.info("MQTT connected OK. Return code "+str(rc))
-        client.subscribe("homie/+/+/withdrawal_units")
-        client.subscribe("homie/"+mqtt_client_name+"/request_shop_status")
-        client.subscribe("homie/"+mqtt_client_name+"/close_shop");
-        client.subscribe("homie/shop_qr-scanner/qrcode_detected")
-        client.subscribe("homie/"+mqtt_client_name+"/upload_all")
-        client.subscribe("homie/"+mqtt_client_name+"/retrieve_all")
-        client.subscribe("homie/shop-track/+/distance")
+        client.subscribe("homie/+/+/withdrawal_units") #old style
+        client.subscribe("homie/+/scales/+/mass") #new style
+        client.subscribe("homie/"+mqtt_client_name+"/set_shop_status")
+        client.subscribe("homie/shop-track/+/distance") #old style
+        client.subscribe("homie/shop-track-collector/pixels-above-reference") #new style
         client.subscribe("homie/door/#")
         client.subscribe("homie/cardreader/#")
 
         logger.debug("MQTT: Subscribed to all topics")
     else:
         logger.error("Bad connection. Return code="+str(rc))
-
 
 def on_disconnect(client, userdata, rc):
     if rc != 0:
@@ -219,13 +211,11 @@ while loop_var:
         logger.debug("Topic: "+message.topic+" Message: "+m)
 
         msplit = re.split("/", message.topic)
-        if len(msplit) == 3 and msplit[2].lower() == "request_shop_status":
+        if len(msplit) == 3 and msplit[2].lower() == "set_shop_status":
             if len(m) > 0:
-               set_shop_status(int(m))
+              set_shop_status(int(m))
             else:
-               set_shop_status(0)
-        if len(msplit) == 3 and msplit[2].lower() == "close_shop":
-            set_shop_status(10)
+              set_shop_status(0)
 
         # distance reading to know person presence
         if len(msplit) == 4 and msplit[1].lower() == "shop-track"  and msplit[3].lower() == "distance":
@@ -241,34 +231,6 @@ while loop_var:
             scales_widthdrawal[msplit[1]+"/"+msplit[2]] = temp_units
 
             logger.info("scales_widthdrawal: {}".format( scales_widthdrawal ))
-
-        # QR Code scanned.
-        #emulate with: mosquitto_pub -t 'homie/shop_qr-scanner/qrcode_detected' -m '1666703949 43 B8FAF7'
-        # 3 numbers, separated with spaces: time.time(), User ID, md5-hash
-        if message.topic.lower() == "homie/shop_qr-scanner/qrcode_detected":
-            logger.info("qrcode read: {}".format( m ))
-            if m == myconfig.Door_master_key_QR_Code_Str: #master key
-              logger.info("Master key read. Open door now.")
-              client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
-            if shop_status == 1: # "Bereit, Kein Kunde im Laden"
-              r=parse.parse("{time:d} {id:d} {hash:w}", m) #definition see: https://pypi.org/project/parse/
-              if r: #time, user id and hash in qr code?
-                expected_sum = hashlib.md5("{}{}{}".format(args.qr_secret_str, r['time'], r['id']).encode('utf-8')).hexdigest()
-                logger.info("HASH expected_sum computated: {}".format(expected_sum[:6]))
-                if r['hash'] == expected_sum[:6]:
-                  logger.info("hash in qr code read equals expected sum: {}".format(expected_sum[:6]))
-                  if abs(time.time() - r['time']) < 10*60: #qrcode needs to be generated within a time windows of 10*60 seconds
-                    actualclientID = r['id']
-                    client.publish("homie/"+mqtt_client_name+"/actualclient/id", r['id'], qos=1, retain=True)
-                    set_shop_status(2) # Authentifizierung war in Ordnung
-                  else:
-                    logger.warning("Time window of qr code not met.") # qr code too old or time not set correctly
-                    set_shop_status(13) #Fehler bei Authentifizierung
-                else:
-                  logger.warning("hash in qr code not as expected.")
-                  set_shop_status(13) #Fehler bei Authentifizierung
-              else:
-                set_shop_status(13) #Fehler bei Authentifizierung
 
         #mosquitto_pub -t 'homie/door/Pin0' -m 1
         # Door open/close message
@@ -288,11 +250,6 @@ while loop_var:
             set_shop_status(3) # Kunde betritt / verlässt gerade den Laden
           elif (shop_status == 12) and (status_door_closed == False): #Kunde sicher im laden
             set_shop_status(3) # Kunde betritt / verlässt gerade den Laden
-
-        #mosquitto_pub -t 'homie/shop_controller/retrieve_all' -n
-        if message.topic.lower() == "homie/"+mqtt_client_name+"/retrieve_all":
-          list_retrieve_scales = list(products_scales.keys())
-          logger.info("Start retrieve all with: {}".format(list_retrieve_scales))
 
         #Kartenlesegerät busy als globale Variable zur Verfügung stellen
         if message.topic.lower() == "homie/cardreader/busy":
@@ -341,8 +298,8 @@ while loop_var:
               p = []
               ab = actBasket["data"]
               for i in ab:
-                 v=ab[i]
-                 p.append([v["ProductName"], v["withdrawal_units"], v["PricePerUnit"], 1]) # TODO: variable VAT support: 0:0%, 1:7%, 2:19%
+                v=ab[i]
+                p.append([v["ProductName"], v["withdrawal_units"], v["PricePerUnit"], 1]) # TODO: variable VAT support: 0:0%, 1:7%, 2:19%
               a={'d': {"p":p, 'c': cardreader_last_textblock, 't':int(time.time())}}
               logger.info(f"Kassenbon: {a=}")
               client.publish("homie/shop_controller/invoice_json", json.dumps(a), qos=1, retain=True)
@@ -354,27 +311,6 @@ while loop_var:
           else:
             logger.warning(f"{shop_status=}. Die MQTT-Nachricht kommt unerwartet, daher Fehler!")
             set_shop_status(8) #Technischer Fehler
-
-	      #mosquitto_pub -t 'homie/shop_controller/upload_all' -n
-        if message.topic.lower() == "homie/"+mqtt_client_name+"/upload_all":
-          logger.info("Start upload of settings to all scales.")
-          client.publish("homie/shelf01/can-off-all", "0", qos=1, retain=False)
-          for k,v in products_scales.items(): #{'shelf01/65c0': 1, 'shelf01/2438': 2, ...   | Products: {1: {'ProductID': 1, 'ProductName': 'Kürbis', 'ProductDescription': 'eigene Ernte', 'PriceType': 0, 'PricePerUnit': 1.9, 'kgPerUnit': 0.8}, 
-            if v in products:
-              logger.info("Sending data to scale: {}".format(k))
-              client.publish("homie/"+k+"/scale_product_description/set", products[v]['ProductName'], qos=1, retain=False)
-              time.sleep(0.05)
-              client.publish("homie/"+k+"/scale_product_details_line1/set", products[v]['ProductDescription'], qos=1, retain=False)
-              time.sleep(0.05)
-              client.publish("homie/"+k+"/scale_product_details_line2/set", "Stueckpreis: {:.2f}EUR".format(products[v]['PricePerUnit']), qos=1, retain=False)
-              time.sleep(0.05)
-              client.publish("homie/"+k+"/scale_product_mass_per_unit/set", products[v]['kgPerUnit'], qos=1, retain=False)
-              time.sleep(0.05)
-              client.publish("homie/"+k+"/scale_product_price_per_unit/set", products[v]['PricePerUnit'], qos=1, retain=False)
-              time.sleep(0.05)
-            else:
-              logger.warning("Product ID {} not found. Assigned by scale: {}. Update assignment.".format(v, k))
-          client.publish("homie/shelf01/can-on-all", "0", qos=1, retain=False)
 
       except Exception as err:
         traceback.print_tb(err.__traceback__)
@@ -409,12 +345,6 @@ while loop_var:
     if last_actBasket != actBasket: #change to basket? --> publish!
         client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
         last_actBasket = actBasket
-
-    # Support for scale data retrieval
-    if list_retrieve_scales:
-      logger.debug("list_retrieve_scales: {}".format(list_retrieve_scales))
-      # make sure to publish this not to fast multiple times in a row to allow the scales to answer
-      client.publish("homie/"+list_retrieve_scales.pop()+"/retrieve", "0", qos=1, retain=False)
 
 
     ############################################################################

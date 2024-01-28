@@ -10,7 +10,7 @@ import paho.mqtt.client as paho
 import argparse
 import logging
 import struct
-
+import os, re
 
 logging.basicConfig(
     level=logging.WARNING, format="%(asctime)-6s %(levelname)-8s  %(message)s"
@@ -18,35 +18,28 @@ logging.basicConfig(
 logger = logging.getLogger("Waveshare 18301 TOF Laser Range Sensor (VL53L1) readout")
 
 parser = argparse.ArgumentParser(description="MQTT Waveshare 18301 readout (VL53L1)")
-parser.add_argument(
-    "-v", "--verbosity", help="increase output verbosity", default=0, action="count"
-)
-parser.add_argument(
-    "-b",
-    "--mqtt-broker-host",
-    help="MQTT broker hostname. default=localhost",
-    default="localhost",
-)
+parser.add_argument("-v", "--verbosity", help="increase output verbosity", default=0, action="count")
+parser.add_argument("-b", "--mqtt-broker-host", help="MQTT broker hostname. default=localhost", default="localhost")
 parser.add_argument("-p", "--mqtt-broker-port", default=1883, type=int)
-parser.add_argument(
-    "-t",
-    "--watchdog-timeout",
-    help="timeout in seconds for the watchdog. default=10 sec",
-    default=10,
-    type=int,
-)
-parser.add_argument(
-    "mqtt_client_name",
-    help="MQTT client name. Needs to be unique in the MQTT namespace, eg shop-track-01.",
-    type=str,
-)
-parser.add_argument(
-    "serial_device_name", help="Serial port used, eg /dev/ttyUSB0", type=str
-)
+parser.add_argument("-t", "--watchdog-timeout", help="timeout in seconds for the watchdog. default=10 sec", default=10, type=int)
+#parser.add_argument("mqtt_client_name", help="MQTT client name. Needs to be unique in the MQTT namespace, eg shop-track-01.", type=str)
+parser.add_argument("serial_device_name", help="Serial port used, eg /dev/ttyUSB0", type=str)
 args = parser.parse_args()
 logger.setLevel(logging.WARNING - (args.verbosity * 10 if args.verbosity <= 2 else 20))
 
-logger.info("MQTT client name: " + args.mqtt_client_name)
+#get usb path of device
+usb_path_device = "unknown"
+last_dev = os.popen(f'udevadm info /{args.serial_device_name} | grep DEVLINKS').read()
+regex = r"-usb-[0-9:\.]+-port0"
+matches = re.finditer(regex, last_dev, re.MULTILINE)
+for matchnum, match in enumerate(matches): #only one match should be found
+  s=match.group()
+  usb_path_device = s.replace(":","-").replace("-usb-","").replace("-port0","")
+mqtt_client_name = f"tracker-{usb_path_device}"
+
+
+
+logger.info("MQTT client name: " + mqtt_client_name)
 logger.info("Watchdog timeout (seconds): " + str(args.watchdog_timeout))
 logger.info("Use the following Serial-Device: " + str(args.serial_device_name))
 
@@ -63,20 +56,20 @@ def on_disconnect(client, userdata, rc):
         logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
 
 
-client = paho.Client(args.mqtt_client_name)
+client = paho.Client(mqtt_client_name)
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.enable_logger(logger)
 logger.info("Conncting to broker " + args.mqtt_broker_host)
 client.will_set(
-    topic="homie/" + args.mqtt_client_name + "/state",
+    topic="homie/" + mqtt_client_name + "/state",
     payload="0",
     qos=1,
     retain=True,
 )
 client.connect(args.mqtt_broker_host, keepalive=60, port=args.mqtt_broker_port)
 client.publish(
-    topic="homie/" + args.mqtt_client_name + "/state",
+    topic="homie/" + mqtt_client_name + "/state",
     payload="1",
     qos=1,
     retain=True,
@@ -154,11 +147,12 @@ while WatchDogCounter > 0:
       logger.debug(f"Read at {(my_time_read-time_start)*1000:08f} after {(my_time_read-my_time)*1000:08f} {id}\t{distance}\t{status}")
       sensor_act_state[id] = 0
       sensor_last_read_time[id] = my_time_read
-      if status == 0:
-        #success
+      if status in (0,2): #submit. 0:success or 2:low signal strength
         WatchDogCounter = args.watchdog_timeout*1000 #to convert from sec to ms
         last_sensor_data[id] = distance
         sensor_last_data_time[id] = my_time_read
+        if status != 0:
+          logger.info(f"Problematic read: {id} {system_time} {distance} {status} {signal_strength} {checksum}")
       else:
         #answer, but problematic
         sensor_act_state[id] = 3
@@ -175,7 +169,7 @@ while WatchDogCounter > 0:
           logger.warning(f"Sensor {i} did not deliver data in the last 300ms.")
 
     #send data
-    client.publish('homie/'+args.mqtt_client_name+'/tof/actreading', json.dumps(last_sensor_data), qos=0, retain=False)
+    client.publish('homie/'+mqtt_client_name+'/tof/actreading', json.dumps(last_sensor_data), qos=0, retain=False)
     logger.info(f"act reading: {json.dumps(last_sensor_data)}")
     time_last_data_submit = time.time()
 
@@ -190,4 +184,3 @@ ser.close()
 client.loop_stop()
 client.disconnect()
 logger.info("Programm stopped.")
-
