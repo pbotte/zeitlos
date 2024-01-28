@@ -17,7 +17,7 @@ graph TD
 
   Türkontakt --> |Klingeldraht| IOR
 
-  SC["Shop controller"]
+  SC["Shop controller\nDNS: Controller"]
 
 
 subgraph Messdaten-Input

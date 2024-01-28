@@ -292,7 +292,7 @@ def search_waagen():
               time.sleep(0.5)
               #alle LEDs aus
               send_and_recv("w0004")
-              logger.info(f"Switch off all LEDs to limit current drawn from shelf controller. This is repeated every 8 found scales.")
+              logger.info(f"Switch off all LEDs to limit the current drawn by the shelf controller. This is repeated for every 8 scales found.")
 
     logger.info(f"gefundene Waagen Anzahl: {anzahl_waagen}")
     logger.info(f"gefundene Waagen: {waagen}")
