@@ -4,7 +4,7 @@ After=network.target syslog.target
 
 [Service]
 WorkingDirectory=/home/pi/zeitlos/software/io-usb-readout/
-ExecStart=/home/pi/zeitlos/software/io-usb-readout/io-usb-readout.py  -b 192.168.10.10 door /dev/ttyACM0
+ExecStart=/home/pi/zeitlos/software/io-usb-readout/io-usb-readout.py -b 192.168.10.10 door /dev/ttyACM0
 Restart=always
 RestartSec=15
 User=pi
