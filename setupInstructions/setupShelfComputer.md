@@ -27,8 +27,21 @@ $ uname -a
 Linux raspi-test 6.6.20+rpt-rpi-v8 #1 SMP PREEMPT Debian 1:6.6.20-1+rpt1 (2024-03-07) aarch64 GNU/Linux
 ```
 
-Zügeln des Lüfters mittels ([Erläuterungen zu den Parametern](dtoverlay -h rpi-poe-plus)):
+Zügeln des Lüfters mittels:
 ```bash
+$ dtoverlay -h rpi-poe-plus #Erläuterungen zu den Parametern
+Name:   rpi-poe-plus
+
+Info:   Raspberry Pi PoE+ HAT fan
+
+Usage:  dtoverlay=rpi-poe-plus,<param>[=<val>]
+
+Params: poe_fan_temp0           Temperature (in millicelcius) at which the fan
+                                turns on (default 40000)
+        poe_fan_temp0_hyst      Temperature delta (in millicelcius) at which
+                                the fan turns off (default 2000)
+...
+
 $ sudo nano /boot/firmware/config.txt 
 [all]
 dtoverlay=rpi-poe-plus
