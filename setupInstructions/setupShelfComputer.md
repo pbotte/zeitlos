@@ -27,7 +27,7 @@ $ uname -a
 Linux raspi-test 6.6.20+rpt-rpi-v8 #1 SMP PREEMPT Debian 1:6.6.20-1+rpt1 (2024-03-07) aarch64 GNU/Linux
 ```
 
-Zügeln des Lüfters mittels:
+Zügeln des Lüfters mittels ([Erläuterungen zu den Parametern](dtoverlay -h rpi-poe-plus)):
 ```bash
 $ sudo nano /boot/firmware/config.txt 
 [all]
