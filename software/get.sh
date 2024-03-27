@@ -41,11 +41,15 @@ sed -i '/mariadb/d' ./requirements.txt
 sudo -u pi pip3 install --break-system-packages -r requirements.txt
 
 #################################################
-echo -e "$sstr   Register software in systemd \n$sstr"
+echo -e "$sstr   Register zeitlos software in systemd \n$sstr"
 echo -e "$sstr   Register shelf-controller \n$sstr"
 ./zeitlos/software/shelf-controller/install.sh
 echo -e "$sstr   Register TOF-controller \n$sstr"
 ./zeitlos/software/waveshare-tof-readout/install.sh
+echo -e "$sstr   Register display power control \n$sstr"
+./zeitlos/software/display-power-control/install.sh
+
+echo -e "$sstr   ALL zeitlos SOFTWARE INSTALLED. \n$sstr"
 
 
 #################################################
@@ -71,14 +75,14 @@ raspi-config nonint do_boot_behaviour B4
 #enable ssh
 # 0 - Enable SSH
 # 1 - Disable SSH
-#raspi-config nonint do_ssh 0
+raspi-config nonint do_ssh 0
 #
 #Select a locale, for example en_GB.UTF-8 UTF-8.
 #correct setting will display currency and time correctly
-#raspi-config nonint do_change_locale de_DE.UTF-8
+raspi-config nonint do_change_locale de_DE.UTF-8
 #
 #timezone
-#raspi-config nonint do_change_timezone Europe/Berlin
+raspi-config nonint do_change_timezone Europe/Berlin
 
 
 ###################################
