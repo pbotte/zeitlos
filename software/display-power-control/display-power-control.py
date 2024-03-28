@@ -61,7 +61,7 @@ def on_message(client, userdata, message):
     except Exception as err:
         traceback.print_tb(err.__traceback__)
 
-client = paho.Client(args.mqtt_client_name)
+client = paho.Client(paho.CallbackAPIVersion.VERSION1, args.mqtt_client_name)
 client.on_connect = on_connect
 client.on_message = on_message
 client.on_disconnect = on_disconnect

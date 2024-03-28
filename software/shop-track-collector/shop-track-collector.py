@@ -51,7 +51,7 @@ def on_message(client, userdata, message):
 
 
 #connect to MQTT broker
-client = paho.Client(mqtt_client_name)
+client = paho.Client(paho.CallbackAPIVersion.VERSION1, mqtt_client_name)
 client.on_message = on_message
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
