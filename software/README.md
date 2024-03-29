@@ -1,3 +1,19 @@
+# Installation
+
+## Alle Software-Komponenten
+
+Einfach mit dem Install-Skript. 
+1. Download via
+```bash
+curl -fsSL https://raw.githubusercontent.com/pbotte/zeitlos/master/software/get.sh -o get.sh
+```
+2. run the script either as root, or using sudo to perform the installation.
+```bash
+sudo bash get.sh
+```
+
+
+
 ## www
 
 ```bash
