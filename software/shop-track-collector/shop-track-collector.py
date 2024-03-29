@@ -124,7 +124,7 @@ while True:
                     #pixel ist ggf. ausgefallen
                     pass
                 else:
-                    if (compare_list_ref[i] - compare_list_act[i]) > 100:
+                    if (compare_list_ref[i] - compare_list_act[i]) > 300:
                       logger.debug(f"The following pixel is below reference: {vr[0]} {i}")
                       res += 1
         else:
