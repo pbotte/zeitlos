@@ -62,11 +62,6 @@ dphys-swapfile uninstall
 apt-get purge -y dphys-swapfile 
 
 
-echo -e "$sstr   set boot target do_boot_behaviour \n$sstr"
-#boot to (B1=console, requiring login)
-#        (B4 - Boot to desktop, logging in automatically)
-raspi-config nonint do_boot_behaviour B4
-
 #echo -e "$sstr   set hostname \n$sstr"
 # set hostname and activate ssh service via raspi imager
 #set hostname
@@ -86,6 +81,13 @@ raspi-config nonint do_change_timezone Europe/Berlin
 
 
 ###################################
+# for shelf displays
+# 
+# necessary to have the standard or full versino of Raspberry OS 
+# installed. Will not work with the lite version
+###################################
+
+###################################
 # get rid of the welcome wizard
 # see: https://forums.raspberrypi.com/viewtopic.php?t=231557
 ###################################
@@ -94,9 +96,11 @@ myfile="/etc/xdg/autostart/piwiz.desktop"
 [ -e $myfile ] && rm $myfile && echo "File piwiz.desktop deleted."
 ###################################
 
-###################################
-# for shelf displays
-###################################
+
+echo -e "$sstr   set boot target do_boot_behaviour \n$sstr"
+#boot to (B1=console, requiring login)
+#        (B4 - Boot to desktop, logging in automatically)
+raspi-config nonint do_boot_behaviour B4
 
 # 0 - Enable splash screen
 # 1 - Disable splash screen

@@ -1,12 +1,23 @@
 #!/usr/bin/python3
 
+import paho.mqtt.client as paho
 import asyncio
 import asyncio_mqtt as aiomqtt
 import logging
 import argparse
 from cr_pt_class import *
 import json
+import signal
+import sys
 
+
+loop_var = True
+def signal_handler(sig, frame):
+    global loop_var
+    logger.info('You pressed Ctrl+C! Preparing for graceful termination.')
+    loop_var = False
+#    sys.exit(0)
+#signal.signal(signal.SIGINT, signal_handler) ##not yet solved...
 
 async def make_pt_connection(host, port, mqtt_client, logger):
     ptc = PTConnection(
@@ -86,16 +97,22 @@ async def main():
     #)
     #res = parse_result_msg(data, logger)
 
-    mqtt_client = aiomqtt.Client(hostname="localhost", port=1883) #comment for age test
-    ptc = await make_pt_connection("192.168.179.78", 20007, mqtt_client, logger) #comment for age test
+    # Create a LWT
+    will = aiomqtt.Will("homie/cardreader/state", payload="0", qos=2, retain=True)
+
+    mqtt_client = aiomqtt.Client(hostname="localhost", port=1883, will=will, keepalive=10) #comment for age test
+    logger.info(f'MQTT Client created.')
+    logger.info(f'Trying to option connection to terminal... (if unsuccesful, check IP address)')
+    ptc = await make_pt_connection(args.terminal_ip, 20007, mqtt_client, logger) #comment for age test
     #ptc = await make_pt_connection("192.168.10.78", 20007, None, logger) #uncomment for age test
     #await ptc.check_age3() #uncomment for age test
     #return  #uncomment for age test
 
     reconnect_interval = 5  # In seconds
-    while True:
+    while loop_var:
         try:
             async with mqtt_client as client:
+                await client.publish("homie/cardreader/state", payload="1", retain=True)
                 await client.publish("homie/cardreader/busy", payload="0", retain=True)
                 async with client.messages() as messages:
                     await client.subscribe("homie/cardreader/cmd/#")
@@ -182,23 +199,24 @@ async def main():
     #    await mqtt.disconnect()
 
 
-logging.basicConfig(
-    level=logging.WARNING, format="%(asctime)-6s %(levelname)-8s  %(message)s"
-)
+logging.basicConfig(level=logging.WARNING, format="%(asctime)-6s %(levelname)-8s  %(message)s")
 logger = logging.getLogger("cardreader")
 
 parser = argparse.ArgumentParser(description="MQTT 2 ntfy")
-parser.add_argument(
-    "-v", "--verbosity", help="increase output verbosity", default=0, action="count"
-)
-parser.add_argument(
-    "-b",
-    "--mqtt-broker-host",
-    help="MQTT broker hostname. default=localhost",
-    default="localhost",
-)
+parser.add_argument("-v", "--verbosity", help="increase output verbosity", default=0, action="count")
+parser.add_argument("-b", "--mqtt-broker-host", help="MQTT broker hostname. default=localhost", default="localhost" )
+parser.add_argument("terminal_ip", help="Terminal IP address")
 args = parser.parse_args()
 logger.setLevel(logging.WARNING - (args.verbosity * 10 if args.verbosity <= 2 else 20))
 
+logger.info(f'cardread starting...')
+
 
 asyncio.run(main())
+
+
+# sending last state
+
+#client = paho.Client("cardreader") #paho.CallbackAPIVersion.VERSION1, 
+#paho.Client.publish.single("homie/cardreader/state", payload="0", qos=2, retain=True, hostname="localhost",
+#        port=1883, client_id="cardreader", keepalive=60 )
