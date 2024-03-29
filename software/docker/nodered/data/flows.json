@@ -1988,7 +1988,7 @@
         "type": "function",
         "z": "e93210c72506d388",
         "name": "function 3",
-        "func": "var s1 = flow.get(\"s1\");\nvar s2 = flow.get(\"s2\");\nvar s3 = flow.get(\"s3\");\nvar s4 = flow.get(\"s4\");\n\n\nmsg.payload = [s1[4], s1[5], s1[6], s1[7],\n    s2[0], s2[1], s2[2], s2[3],\n    s3[0], s3[1], s3[2], s3[3],\n    s4[4], s4[5], s4[6], s4[7]\n    ];\n\nreturn msg;",
+        "func": "var s1 = flow.get(\"s1\");\nvar s2 = flow.get(\"s2\");\nvar s3 = flow.get(\"s3\");\nvar s4 = flow.get(\"s4\");\n\n\nmsg.payload = [s1[4], s1[5], s1[6], s1[7],\n    s2[0], s2[1], s2[2], s2[3],\n    s3[0], s3[1], s3[2], s3[3],\n    s4[4], s4[5], s4[6], s4[7]\n    ];\n\nvar h = [\n    0, 0, 0, 0,\n    0, 0, 0, 0,\n    0, 0, 0, 0,\n    0, 0, 0, 0]\n\n/*\n0 4  8 12\n1 5  9 13\n2 6 10 14\n3 7 11 15\n*/\n\nh[0] = s3[2]; h[4] = s3[3];    h[8] = s4[4]; h[12] = s4[5]; \nh[1] = s3[1]; h[5] = s3[0];    h[9] = s4[7]; h[13] = s4[6];   \n\nh[2] = s2[2]; h[6] = s2[3];    h[10] = s1[7]; h[14] = s1[6]; \nh[3] = s2[1]; h[7] = s2[0];    h[11] = s1[4]; h[15] = s1[5]; \n\nmsg.payload = h;\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
