@@ -1,2 +1,1 @@
-paho-mqtt>=1.4.0
-parse
+paho-mqtt>=2.0.0

@@ -56,7 +56,7 @@ def on_disconnect(client, userdata, rc):
         logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
 
 
-client = paho.Client(mqtt_client_name)
+client = paho.Client(paho.CallbackAPIVersion.VERSION1, mqtt_client_name)
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.enable_logger(logger)

@@ -15,6 +15,67 @@
   - Monitor
   - USB-HUB-Netzteil
 
+### Alternative Konfiguration (Stand März 2024)
+- Pi 4B oder 3B+
+- POE+ Hat: [Spezifikation](https://datasheets.raspberrypi.com/poe/poe-plus-hat-product-brief.pdf)
+  - Output power: 5 V DC/4 A
+  - PoE Standard: PoE+ (IEEE 802.3at-2009 PoE)
+
+Stand: März 2024
+```bash
+$ uname -a
+Linux raspi-test 6.6.20+rpt-rpi-v8 #1 SMP PREEMPT Debian 1:6.6.20-1+rpt1 (2024-03-07) aarch64 GNU/Linux
+```
+
+Zügeln des Lüfters mittels:
+```bash
+$ dtoverlay -h rpi-poe-plus #Erläuterungen zu den Parametern
+Name:   rpi-poe-plus
+
+Info:   Raspberry Pi PoE+ HAT fan
+
+Usage:  dtoverlay=rpi-poe-plus,<param>[=<val>]
+
+Params: poe_fan_temp0           Temperature (in millicelcius) at which the fan
+                                turns on (default 40000)
+        poe_fan_temp0_hyst      Temperature delta (in millicelcius) at which
+                                the fan turns off (default 2000)
+...
+
+$ sudo nano /boot/firmware/config.txt 
+[all]
+dtoverlay=rpi-poe-plus
+dtparam=poe_fan_temp0=50000,poe_fan_temp0_hyst=5000
+dtparam=poe_fan_temp1=55000,poe_fan_temp1_hyst=5000
+dtparam=poe_fan_temp2=60000,poe_fan_temp2_hyst=5000
+dtparam=poe_fan_temp3=65000,poe_fan_temp3_hyst=5000
+```
+
+Aktuelle Einstellung überprüfen mittels:
+```bash
+od -An --endian=big -td4 /proc/device-tree/thermal-zones/cpu-thermal/trips/trip?/temperature /proc/device-tree/thermal-zones/cpu-thermal/trips/trip?/hysteresis
+       50000       55000       60000       65000
+        5000        5000        5000        5000
+```
+
+Voll-Last-Test mit:
+```bash
+wget https://raw.githubusercontent.com/ssvb/cpuburn-arm/master/cpuburn-a53.S
+gcc -o cpuburn-a53 cpuburn-a53.S
+./cpuburn-a53 
+```
+
+CPU: Temperaturmessung in m°C
+```bash
+cat /sys/class/thermal/thermal_zone0/temp
+```
+
+HAT gelieferter Strom in muA
+```bash
+$ cat /sys/devices/platform/rpi-poe-power-supply/power_supply/rpi-poe/current_now
+577000
+```
+
 
 ## Software-Konfiguration
 
