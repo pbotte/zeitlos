@@ -2,13 +2,13 @@
 $str = "";
 switch ($_GET['hostname']) {
   case 'shop-display01':
-    $str = "door.php";
+    $str = "basket.php";
     break;
   case 'shop-display02':
     $str = "basket.php";
     break;
-  case 'shop-touch':
-    $str = "buttons.php";
+  case 'shop-door':
+    $str = "door.php";
     break;
   case 'shop-touch':
     $str = "buttons.php";

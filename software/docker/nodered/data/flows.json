@@ -152,17 +152,6 @@
         "hidden": false
     },
     {
-        "id": "d7d5290d1343ea02",
-        "type": "ui_group",
-        "name": "360° Kamera",
-        "tab": "b3c64a2d.c0638",
-        "order": 2,
-        "disp": true,
-        "width": "15",
-        "collapse": false,
-        "className": ""
-    },
-    {
         "id": "9472ae9df42c4534",
         "type": "ui_group",
         "name": "Shop-Controller",
@@ -208,17 +197,6 @@
         "type": "ui_group",
         "name": "Status",
         "tab": "d4570277bd2545ce",
-        "order": 2,
-        "disp": true,
-        "width": "6",
-        "collapse": false,
-        "className": ""
-    },
-    {
-        "id": "5762a8c37f72c790",
-        "type": "ui_group",
-        "name": "Abstandssensoren",
-        "tab": "de72aab522dbab1e",
         "order": 2,
         "disp": true,
         "width": "6",
@@ -288,48 +266,6 @@
         "className": ""
     },
     {
-        "id": "64afc51f7e4516fe",
-        "type": "ui_template",
-        "z": "993296db21e0de95",
-        "group": "48959b49.34fb6c",
-        "name": "Aufnahmen-Historie",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "format": "<p><a href=\"http://192.168.10.10:8081/\">Aufnahmen der letzten 24h</a></p>\n",
-        "storeOutMessages": true,
-        "fwdInMessages": true,
-        "resendOnRefresh": true,
-        "templateScope": "local",
-        "className": "",
-        "x": 580,
-        "y": 320,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "ead3b545b4da0608",
-        "type": "ui_template",
-        "z": "993296db21e0de95",
-        "group": "d7d5290d1343ea02",
-        "name": "360Grad Kamera",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "format": "<iframe width=\"800\" height=\"600\" src=\"http://192.168.10.25/video1.mjpg\" frameborder=\"0\" allowfullscreen></iframe>\n<!--<video src=\"http://192.168.178.207/video1.mjpg\" controls>\n   Your browser does not support the <code>video</code> element.\n</video>\n-->\n<p><a href=\"http://192.168.10.25/video1.mjpg\">MPEG Stream UG</a></p>\n<p><a href=\"rtsp://192.168.10.25:554/live1.sdp\">RTSP Stream UG (low)</a></p>\n<p><a href=\"rtsp://192.168.10.25:554/live2.sdp\">RTSP Stream UG (high)</a></p>",
-        "storeOutMessages": true,
-        "fwdInMessages": true,
-        "resendOnRefresh": true,
-        "templateScope": "local",
-        "className": "",
-        "x": 570,
-        "y": 400,
-        "wires": [
-            []
-        ]
-    },
-    {
         "id": "59c3e87f83413c32",
         "type": "ui_template",
         "z": "993296db21e0de95",
@@ -344,178 +280,10 @@
         "resendOnRefresh": true,
         "templateScope": "global",
         "className": "",
-        "x": 710,
-        "y": 220,
+        "x": 110,
+        "y": 40,
         "wires": [
             []
-        ]
-    },
-    {
-        "id": "7b4e7422dbe62a47",
-        "type": "ui_template",
-        "z": "993296db21e0de95",
-        "group": "48959b49.34fb6c",
-        "name": "Bullet Kamera",
-        "order": 2,
-        "width": 6,
-        "height": 5,
-        "format": "<img id=myImage alt=\"\" src=\"/cam01\"  />\n\n<script language=\"javascript\" type=\"text/javascript\">\nsetInterval(function() {\nvar myImageElement = document.getElementById('myImage');\nmyImageElement.src = '/cam01?rand=' + Math.random();\n}, 3000);\n</script>",
-        "storeOutMessages": true,
-        "fwdInMessages": true,
-        "resendOnRefresh": false,
-        "templateScope": "local",
-        "className": "",
-        "x": 560,
-        "y": 440,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "7311c9bc01095390",
-        "type": "http in",
-        "z": "993296db21e0de95",
-        "name": "",
-        "url": "/cam01",
-        "method": "get",
-        "upload": false,
-        "swaggerDoc": "",
-        "x": 170,
-        "y": 140,
-        "wires": [
-            [
-                "80946dc7c29c1c47"
-            ]
-        ]
-    },
-    {
-        "id": "80946dc7c29c1c47",
-        "type": "http request",
-        "z": "993296db21e0de95",
-        "name": "",
-        "method": "GET",
-        "ret": "bin",
-        "paytoqs": "ignore",
-        "url": "http://peter:peter@192.168.10.24/dms?nowprofileid=2",
-        "tls": "",
-        "persist": false,
-        "proxy": "",
-        "insecureHTTPParser": false,
-        "authType": "",
-        "senderr": false,
-        "headers": [],
-        "x": 370,
-        "y": 140,
-        "wires": [
-            [
-                "9568a8084acccdda"
-            ]
-        ]
-    },
-    {
-        "id": "9568a8084acccdda",
-        "type": "http response",
-        "z": "993296db21e0de95",
-        "name": "",
-        "statusCode": "",
-        "headers": {
-            "Content-Type": "image/jpeg",
-            "Cache-Control": "no-cache"
-        },
-        "x": 550,
-        "y": 140,
-        "wires": []
-    },
-    {
-        "id": "a6e99190dcaf40ca",
-        "type": "mqtt out",
-        "z": "993296db21e0de95",
-        "name": "shop_controller/upload_all",
-        "topic": "homie/shop_controller/upload_all",
-        "qos": "1",
-        "retain": "false",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "b1634a54dc9da698",
-        "x": 440,
-        "y": 500,
-        "wires": []
-    },
-    {
-        "id": "33c10ada04315e62",
-        "type": "ui_button",
-        "z": "993296db21e0de95",
-        "name": "",
-        "group": "9472ae9df42c4534",
-        "order": 3,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Upload All",
-        "tooltip": "",
-        "color": "",
-        "bgcolor": "",
-        "className": "",
-        "icon": "",
-        "payload": "",
-        "payloadType": "str",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 170,
-        "y": 500,
-        "wires": [
-            [
-                "a6e99190dcaf40ca"
-            ]
-        ]
-    },
-    {
-        "id": "23c878149d2e0088",
-        "type": "mqtt out",
-        "z": "993296db21e0de95",
-        "name": "shop_controller/retrieve_all",
-        "topic": "homie/shop_controller/retrieve_all",
-        "qos": "1",
-        "retain": "false",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "b1634a54dc9da698",
-        "x": 440,
-        "y": 560,
-        "wires": []
-    },
-    {
-        "id": "28471789c6523b12",
-        "type": "ui_button",
-        "z": "993296db21e0de95",
-        "name": "",
-        "group": "9472ae9df42c4534",
-        "order": 4,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Retrieve All",
-        "tooltip": "",
-        "color": "",
-        "bgcolor": "",
-        "className": "",
-        "icon": "",
-        "payload": "",
-        "payloadType": "str",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 170,
-        "y": 560,
-        "wires": [
-            [
-                "23c878149d2e0088"
-            ]
         ]
     },
     {
@@ -538,8 +306,8 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 170,
-        "y": 680,
+        "x": 110,
+        "y": 180,
         "wires": [
             [
                 "0965fa82d88ae84b"
@@ -562,15 +330,15 @@
         "bgcolor": "",
         "className": "",
         "icon": "",
-        "payload": "",
+        "payload": "10",
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 180,
-        "y": 720,
+        "x": 120,
+        "y": 220,
         "wires": [
             [
-                "5771e840ddf55057"
+                "0965fa82d88ae84b"
             ]
         ]
     },
@@ -579,7 +347,7 @@
         "type": "mqtt out",
         "z": "993296db21e0de95",
         "name": "",
-        "topic": "homie/shop_controller/request_shop_status",
+        "topic": "homie/shop_controller/set_shop_status",
         "qos": "1",
         "retain": "false",
         "respTopic": "",
@@ -588,8 +356,8 @@
         "correl": "",
         "expiry": "",
         "broker": "b1634a54dc9da698",
-        "x": 590,
-        "y": 680,
+        "x": 520,
+        "y": 180,
         "wires": []
     },
     {
@@ -605,8 +373,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 260,
-        "y": 760,
+        "x": 200,
+        "y": 260,
         "wires": [
             [
                 "2e15aad63a168040",
@@ -627,119 +395,9 @@
         "format": "{{msg.payload}}",
         "layout": "row-spread",
         "className": "",
-        "x": 630,
-        "y": 760,
+        "x": 570,
+        "y": 260,
         "wires": []
-    },
-    {
-        "id": "5771e840ddf55057",
-        "type": "mqtt out",
-        "z": "993296db21e0de95",
-        "name": "",
-        "topic": "homie/shop_controller/close_shop",
-        "qos": "1",
-        "retain": "false",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "b1634a54dc9da698",
-        "x": 480,
-        "y": 720,
-        "wires": []
-    },
-    {
-        "id": "d1b2543501e68df7",
-        "type": "mqtt out",
-        "z": "993296db21e0de95",
-        "name": "",
-        "topic": "homie/shelf01/can-on-all",
-        "qos": "1",
-        "retain": "false",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "b1634a54dc9da698",
-        "x": 450,
-        "y": 860,
-        "wires": []
-    },
-    {
-        "id": "602302420aa71078",
-        "type": "mqtt out",
-        "z": "993296db21e0de95",
-        "name": "",
-        "topic": "homie/shelf01/can-off-all",
-        "qos": "1",
-        "retain": "false",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "b1634a54dc9da698",
-        "x": 470,
-        "y": 900,
-        "wires": []
-    },
-    {
-        "id": "d7dd17d1fe561618",
-        "type": "ui_button",
-        "z": "993296db21e0de95",
-        "name": "",
-        "group": "9472ae9df42c4534",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "CAN all on",
-        "tooltip": "",
-        "color": "",
-        "bgcolor": "",
-        "className": "",
-        "icon": "",
-        "payload": "",
-        "payloadType": "str",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 190,
-        "y": 860,
-        "wires": [
-            [
-                "d1b2543501e68df7"
-            ]
-        ]
-    },
-    {
-        "id": "1eea48424524face",
-        "type": "ui_button",
-        "z": "993296db21e0de95",
-        "name": "",
-        "group": "9472ae9df42c4534",
-        "order": 2,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "CAN all off",
-        "tooltip": "",
-        "color": "",
-        "bgcolor": "",
-        "className": "",
-        "icon": "",
-        "payload": "",
-        "payloadType": "str",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 190,
-        "y": 900,
-        "wires": [
-            [
-                "602302420aa71078"
-            ]
-        ]
     },
     {
         "id": "4722d91b217b3268",
@@ -754,8 +412,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 200,
-        "y": 1020,
+        "x": 140,
+        "y": 400,
         "wires": [
             [
                 "4179c092ce1fb67c"
@@ -775,8 +433,8 @@
         "format": "{{msg.payload}}",
         "layout": "row-spread",
         "className": "",
-        "x": 720,
-        "y": 1040,
+        "x": 660,
+        "y": 420,
         "wires": []
     },
     {
@@ -804,8 +462,8 @@
         "checkall": "true",
         "repair": false,
         "outputs": 3,
-        "x": 370,
-        "y": 1020,
+        "x": 310,
+        "y": 400,
         "wires": [
             [
                 "849173f9072c26bd"
@@ -829,8 +487,8 @@
         "syntax": "mustache",
         "template": "ein",
         "output": "str",
-        "x": 520,
-        "y": 1000,
+        "x": 460,
+        "y": 380,
         "wires": [
             [
                 "6dbe60891a5ef50a"
@@ -848,8 +506,8 @@
         "syntax": "mustache",
         "template": "aus",
         "output": "str",
-        "x": 520,
-        "y": 1040,
+        "x": 460,
+        "y": 420,
         "wires": [
             [
                 "6dbe60891a5ef50a"
@@ -867,8 +525,8 @@
         "syntax": "mustache",
         "template": "Fehler",
         "output": "str",
-        "x": 520,
-        "y": 1080,
+        "x": 460,
+        "y": 460,
         "wires": [
             [
                 "6dbe60891a5ef50a"
@@ -889,8 +547,8 @@
         "correl": "",
         "expiry": "",
         "broker": "b1634a54dc9da698",
-        "x": 700,
-        "y": 1140,
+        "x": 640,
+        "y": 520,
         "wires": []
     },
     {
@@ -913,263 +571,11 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 410,
-        "y": 1140,
+        "x": 350,
+        "y": 520,
         "wires": [
             [
                 "40c6358bceea0193"
-            ]
-        ]
-    },
-    {
-        "id": "347c01a5cd975240",
-        "type": "mqtt in",
-        "z": "993296db21e0de95",
-        "name": "",
-        "topic": "homie/shop-track/e6616408431e8b32/distance",
-        "qos": "1",
-        "datatype": "auto-detect",
-        "broker": "b1634a54dc9da698",
-        "nl": false,
-        "rap": true,
-        "rh": 0,
-        "inputs": 0,
-        "x": 300,
-        "y": 1420,
-        "wires": [
-            [
-                "a00c4a80cc42cdc3"
-            ]
-        ]
-    },
-    {
-        "id": "a00c4a80cc42cdc3",
-        "type": "ui_level",
-        "z": "993296db21e0de95",
-        "group": "5762a8c37f72c790",
-        "order": 4,
-        "width": "1",
-        "height": "6",
-        "name": "4",
-        "label": "",
-        "colorHi": "#00f900",
-        "colorWarn": "#ff9900",
-        "colorNormal": "#ff2600",
-        "colorOff": "#595959",
-        "min": 0,
-        "max": "2300",
-        "segWarn": "",
-        "segHigh": "",
-        "unit": "mm",
-        "layout": "sv",
-        "channelA": "",
-        "channelB": "",
-        "decimals": 0,
-        "animations": "off",
-        "shape": 2,
-        "colorschema": "fixed",
-        "textoptions": "default",
-        "colorText": "#eeeeee",
-        "fontLabel": "",
-        "fontValue": "",
-        "fontSmall": "",
-        "colorFromTheme": true,
-        "textAnimations": false,
-        "hideValue": false,
-        "tickmode": "off",
-        "peakmode": false,
-        "property": "payload",
-        "peaktime": 3000,
-        "x": 570,
-        "y": 1420,
-        "wires": []
-    },
-    {
-        "id": "779d0a87d44ad553",
-        "type": "mqtt in",
-        "z": "993296db21e0de95",
-        "name": "",
-        "topic": "homie/shop-track/e661640843635132/distance",
-        "qos": "1",
-        "datatype": "auto-detect",
-        "broker": "b1634a54dc9da698",
-        "nl": false,
-        "rap": true,
-        "rh": 0,
-        "inputs": 0,
-        "x": 300,
-        "y": 1340,
-        "wires": [
-            [
-                "2f057a6f63ae8934"
-            ]
-        ]
-    },
-    {
-        "id": "2f057a6f63ae8934",
-        "type": "ui_level",
-        "z": "993296db21e0de95",
-        "group": "5762a8c37f72c790",
-        "order": 2,
-        "width": "1",
-        "height": "6",
-        "name": "2",
-        "label": "",
-        "colorHi": "#00f900",
-        "colorWarn": "#ff9900",
-        "colorNormal": "#ff2600",
-        "colorOff": "#595959",
-        "min": 0,
-        "max": "2300",
-        "segWarn": "",
-        "segHigh": "",
-        "unit": "mm",
-        "layout": "sv",
-        "channelA": "",
-        "channelB": "",
-        "decimals": 0,
-        "animations": "off",
-        "shape": 2,
-        "colorschema": "fixed",
-        "textoptions": "default",
-        "colorText": "#eeeeee",
-        "fontLabel": "",
-        "fontValue": "",
-        "fontSmall": "",
-        "colorFromTheme": true,
-        "textAnimations": false,
-        "hideValue": false,
-        "tickmode": "off",
-        "peakmode": false,
-        "property": "payload",
-        "peaktime": 3000,
-        "x": 570,
-        "y": 1340,
-        "wires": []
-    },
-    {
-        "id": "74e9bd6688fa2266",
-        "type": "ui_level",
-        "z": "993296db21e0de95",
-        "group": "5762a8c37f72c790",
-        "order": 3,
-        "width": "1",
-        "height": "6",
-        "name": "3",
-        "label": "",
-        "colorHi": "#00f900",
-        "colorWarn": "#ff9900",
-        "colorNormal": "#ff2600",
-        "colorOff": "#595959",
-        "min": 0,
-        "max": "2300",
-        "segWarn": "",
-        "segHigh": "",
-        "unit": "mm",
-        "layout": "sv",
-        "channelA": "",
-        "channelB": "",
-        "decimals": 0,
-        "animations": "off",
-        "shape": 2,
-        "colorschema": "fixed",
-        "textoptions": "default",
-        "colorText": "#eeeeee",
-        "fontLabel": "",
-        "fontValue": "",
-        "fontSmall": "",
-        "colorFromTheme": true,
-        "textAnimations": false,
-        "hideValue": false,
-        "tickmode": "off",
-        "peakmode": false,
-        "property": "payload",
-        "peaktime": 3000,
-        "x": 570,
-        "y": 1380,
-        "wires": []
-    },
-    {
-        "id": "ed31c7bdbd1625f4",
-        "type": "mqtt in",
-        "z": "993296db21e0de95",
-        "name": "",
-        "topic": "homie/shop-track/e6615cc1d3500e23/distance",
-        "qos": "1",
-        "datatype": "auto-detect",
-        "broker": "b1634a54dc9da698",
-        "nl": false,
-        "rap": true,
-        "rh": 0,
-        "inputs": 0,
-        "x": 300,
-        "y": 1380,
-        "wires": [
-            [
-                "74e9bd6688fa2266"
-            ]
-        ]
-    },
-    {
-        "id": "79b5367f8032768b",
-        "type": "ui_level",
-        "z": "993296db21e0de95",
-        "group": "5762a8c37f72c790",
-        "order": 1,
-        "width": "1",
-        "height": "6",
-        "name": "1 (Türe)",
-        "label": "",
-        "colorHi": "#00f900",
-        "colorWarn": "#ff9900",
-        "colorNormal": "#ff2600",
-        "colorOff": "#595959",
-        "min": 0,
-        "max": "2300",
-        "segWarn": "",
-        "segHigh": "",
-        "unit": "mm",
-        "layout": "sv",
-        "channelA": "",
-        "channelB": "",
-        "decimals": 0,
-        "animations": "off",
-        "shape": 2,
-        "colorschema": "fixed",
-        "textoptions": "default",
-        "colorText": "#eeeeee",
-        "fontLabel": "",
-        "fontValue": "",
-        "fontSmall": "",
-        "colorFromTheme": true,
-        "textAnimations": false,
-        "hideValue": false,
-        "tickmode": "off",
-        "peakmode": false,
-        "property": "payload",
-        "peaktime": 3000,
-        "x": 580,
-        "y": 1300,
-        "wires": []
-    },
-    {
-        "id": "669575eb0859a33f",
-        "type": "mqtt in",
-        "z": "993296db21e0de95",
-        "name": "",
-        "topic": "homie/shop-track/e661640843437e39/distance",
-        "qos": "1",
-        "datatype": "auto-detect",
-        "broker": "b1634a54dc9da698",
-        "nl": false,
-        "rap": true,
-        "rh": 0,
-        "inputs": 0,
-        "x": 300,
-        "y": 1300,
-        "wires": [
-            [
-                "79b5367f8032768b"
             ]
         ]
     },
@@ -1193,8 +599,8 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 180,
-        "y": 600,
+        "x": 120,
+        "y": 100,
         "wires": [
             [
                 "8a2d30bda302bb9a"
@@ -1215,8 +621,8 @@
         "correl": "",
         "expiry": "",
         "broker": "b1634a54dc9da698",
-        "x": 420,
-        "y": 600,
+        "x": 460,
+        "y": 100,
         "wires": []
     },
     {
@@ -1224,7 +630,7 @@
         "type": "mqtt out",
         "z": "993296db21e0de95",
         "name": "",
-        "topic": "homie/display-power-control-01/power/set",
+        "topic": "homie/display-power-control-shop-door/power/set",
         "qos": "1",
         "retain": "false",
         "respTopic": "",
@@ -1233,8 +639,8 @@
         "correl": "",
         "expiry": "",
         "broker": "b1634a54dc9da698",
-        "x": 690,
-        "y": 1640,
+        "x": 870,
+        "y": 620,
         "wires": []
     },
     {
@@ -1242,7 +648,7 @@
         "type": "ui_switch",
         "z": "993296db21e0de95",
         "name": "",
-        "label": "Display 01",
+        "label": "Display Eingangstüre",
         "tooltip": "",
         "group": "d4e8a1e8746ae8dc",
         "order": 3,
@@ -1263,8 +669,8 @@
         "offcolor": "",
         "animate": false,
         "className": "",
-        "x": 430,
-        "y": 1640,
+        "x": 560,
+        "y": 620,
         "wires": [
             [
                 "680fdf797f869786"
@@ -1276,7 +682,7 @@
         "type": "mqtt in",
         "z": "993296db21e0de95",
         "name": "",
-        "topic": "homie/display-power-control-01/power",
+        "topic": "homie/display-power-control-shop-door/power",
         "qos": "1",
         "datatype": "auto-detect",
         "broker": "b1634a54dc9da698",
@@ -1284,8 +690,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 190,
-        "y": 1640,
+        "x": 220,
+        "y": 620,
         "wires": [
             [
                 "215101dbdf40aa12"
@@ -1297,7 +703,7 @@
         "type": "ui_switch",
         "z": "993296db21e0de95",
         "name": "",
-        "label": "Display 02",
+        "label": "Display Innen 01",
         "tooltip": "",
         "group": "d4e8a1e8746ae8dc",
         "order": 4,
@@ -1318,8 +724,8 @@
         "offcolor": "",
         "animate": false,
         "className": "",
-        "x": 430,
-        "y": 1720,
+        "x": 550,
+        "y": 680,
         "wires": [
             [
                 "97f65fc2169ec05b"
@@ -1331,7 +737,7 @@
         "type": "mqtt in",
         "z": "993296db21e0de95",
         "name": "",
-        "topic": "homie/display-power-control-02/power",
+        "topic": "homie/display-power-control-shop-display01/power",
         "qos": "1",
         "datatype": "auto-detect",
         "broker": "b1634a54dc9da698",
@@ -1339,8 +745,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 190,
-        "y": 1720,
+        "x": 230,
+        "y": 680,
         "wires": [
             [
                 "47d32df0dfaddfe0"
@@ -1352,7 +758,7 @@
         "type": "mqtt out",
         "z": "993296db21e0de95",
         "name": "",
-        "topic": "homie/display-power-control-02/power/set",
+        "topic": "homie/display-power-control-shop-display01/power/set",
         "qos": "1",
         "retain": "false",
         "respTopic": "",
@@ -1361,8 +767,8 @@
         "correl": "",
         "expiry": "",
         "broker": "b1634a54dc9da698",
-        "x": 690,
-        "y": 1720,
+        "x": 890,
+        "y": 680,
         "wires": []
     },
     {
@@ -1379,7 +785,7 @@
         "rh": 0,
         "inputs": 0,
         "x": 200,
-        "y": 1940,
+        "y": 920,
         "wires": [
             [
                 "5fb2b97c8ecd628d"
@@ -1401,7 +807,7 @@
         "expiry": "",
         "broker": "b1634a54dc9da698",
         "x": 980,
-        "y": 1940,
+        "y": 920,
         "wires": []
     },
     {
@@ -1431,7 +837,7 @@
         "animate": false,
         "className": "",
         "x": 730,
-        "y": 1940,
+        "y": 920,
         "wires": [
             [
                 "1f9df93bd03a7e33"
@@ -1458,7 +864,7 @@
         "to": "",
         "reg": false,
         "x": 490,
-        "y": 1940,
+        "y": 920,
         "wires": [
             [
                 "94d5c655765bb089"
@@ -1479,7 +885,7 @@
         "rh": 0,
         "inputs": 0,
         "x": 200,
-        "y": 2020,
+        "y": 1000,
         "wires": [
             [
                 "d6cf7ae16b4df07c"
@@ -1506,44 +912,10 @@
         "to": "",
         "reg": false,
         "x": 490,
-        "y": 2020,
+        "y": 1000,
         "wires": [
             [
-                "f8dd468ab407e80e"
-            ]
-        ]
-    },
-    {
-        "id": "f8dd468ab407e80e",
-        "type": "ui_switch",
-        "z": "993296db21e0de95",
-        "name": "",
-        "label": "Innenlicht",
-        "tooltip": "",
-        "group": "3d85fbc00304fe9b",
-        "order": 2,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "decouple": "true",
-        "topic": "topic",
-        "topicType": "msg",
-        "style": "",
-        "onvalue": "1",
-        "onvalueType": "num",
-        "onicon": "",
-        "oncolor": "",
-        "offvalue": "0",
-        "offvalueType": "num",
-        "officon": "",
-        "offcolor": "",
-        "animate": false,
-        "className": "",
-        "x": 720,
-        "y": 2020,
-        "wires": [
-            [
-                "5a0bc138be9b63d3"
+                "bcf2aba9f23cf0bf"
             ]
         ]
     },
@@ -1562,7 +934,7 @@
         "expiry": "",
         "broker": "b1634a54dc9da698",
         "x": 970,
-        "y": 2020,
+        "y": 1000,
         "wires": []
     },
     {
@@ -1572,7 +944,7 @@
         "name": "Licht",
         "info": "",
         "x": 90,
-        "y": 1840,
+        "y": 820,
         "wires": []
     },
     {
@@ -1586,14 +958,14 @@
             }
         ],
         "repeat": "",
-        "crontab": "00 20 * * *",
+        "crontab": "00 18 * * *",
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
         "payload": "1",
         "payloadType": "num",
         "x": 710,
-        "y": 1880,
+        "y": 860,
         "wires": [
             [
                 "1f9df93bd03a7e33"
@@ -1611,14 +983,14 @@
             }
         ],
         "repeat": "",
-        "crontab": "00 06 * * *",
+        "crontab": "00 21 * * *",
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
         "payload": "0",
         "payloadType": "num",
         "x": 710,
-        "y": 1840,
+        "y": 820,
         "wires": [
             [
                 "1f9df93bd03a7e33"
@@ -1636,8 +1008,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 440,
-        "y": 800,
+        "x": 380,
+        "y": 300,
         "wires": [
             [
                 "982f959b98dd2657"
@@ -1657,8 +1029,8 @@
         "format": "{{msg.payload}}",
         "layout": "row-spread",
         "className": "",
-        "x": 630,
-        "y": 800,
+        "x": 570,
+        "y": 300,
         "wires": []
     },
     {
@@ -1681,13 +1053,113 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 230,
-        "y": 640,
+        "x": 170,
+        "y": 140,
         "wires": [
             [
                 "0965fa82d88ae84b"
             ]
         ]
+    },
+    {
+        "id": "bcf2aba9f23cf0bf",
+        "type": "ui_slider",
+        "z": "993296db21e0de95",
+        "name": "",
+        "label": "Innenlicht",
+        "tooltip": "",
+        "group": "3d85fbc00304fe9b",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "outs": "end",
+        "topic": "topic",
+        "topicType": "msg",
+        "min": 0,
+        "max": "1",
+        "step": "0.1",
+        "className": "",
+        "x": 720,
+        "y": 1000,
+        "wires": [
+            [
+                "5a0bc138be9b63d3"
+            ]
+        ]
+    },
+    {
+        "id": "f46ac19866977dc8",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/display-power-control-shop-display02/power",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 230,
+        "y": 740,
+        "wires": [
+            [
+                "467752a8ac18eab7"
+            ]
+        ]
+    },
+    {
+        "id": "467752a8ac18eab7",
+        "type": "ui_switch",
+        "z": "993296db21e0de95",
+        "name": "",
+        "label": "Display Innen 02",
+        "tooltip": "",
+        "group": "d4e8a1e8746ae8dc",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "decouple": "true",
+        "topic": "topic",
+        "topicType": "msg",
+        "style": "",
+        "onvalue": "1",
+        "onvalueType": "num",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "0",
+        "offvalueType": "num",
+        "officon": "",
+        "offcolor": "",
+        "animate": false,
+        "className": "",
+        "x": 550,
+        "y": 740,
+        "wires": [
+            [
+                "b41ec1bb3e453f2d"
+            ]
+        ]
+    },
+    {
+        "id": "b41ec1bb3e453f2d",
+        "type": "mqtt out",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/display-power-control-shop-display02/power/set",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 890,
+        "y": 740,
+        "wires": []
     },
     {
         "id": "8198ea1bf5fc4048",
@@ -1769,7 +1241,7 @@
         "type": "mqtt out",
         "z": "5f8b5286451f333f",
         "name": "",
-        "topic": "homie/shop_controller/request_shop_status",
+        "topic": "homie/shop_controller/set_shop_status",
         "qos": "1",
         "retain": "false",
         "respTopic": "",
@@ -1778,7 +1250,7 @@
         "correl": "",
         "expiry": "",
         "broker": "b1634a54dc9da698",
-        "x": 570,
+        "x": 560,
         "y": 340,
         "wires": []
     },

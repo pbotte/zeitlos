@@ -58,9 +58,9 @@ def get_all_data_from_db():
     for ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit in cur: 
         products[ProductID] = {"ProductID":ProductID, "ProductName":ProductName, "ProductDescription": ProductDescription, 
         "PriceType": PriceType, "PricePerUnit":PricePerUnit, "kgPerUnit":kgPerUnit}
-    cur.execute("SELECT ProductID, ShelfName, ScaleHexStr FROM Products_Scales ") 
-    for ProductID, ShelfName, ScaleHexStr in cur: 
-        products_scales[ShelfName+"/"+ScaleHexStr] = ProductID
+    cur.execute("SELECT ProductID, ScaleID FROM Products_Scales ")
+    for ProductID, ScaleID in cur:
+        products_scales[ScaleID] = ProductID
     logger.debug("products from db: {}".format(products))
     logger.debug("products_scales from db: {}".format(products_scales))
     db_close()
