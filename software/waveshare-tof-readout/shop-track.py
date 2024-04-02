@@ -11,6 +11,7 @@ import argparse
 import logging
 import struct
 import os, re
+import socket
 
 logging.basicConfig(
     level=logging.WARNING, format="%(asctime)-6s %(levelname)-8s  %(message)s"
@@ -35,7 +36,7 @@ matches = re.finditer(regex, last_dev, re.MULTILINE)
 for matchnum, match in enumerate(matches): #only one match should be found
   s=match.group()
   usb_path_device = s.replace(":","-").replace("-usb-","").replace("-port0","")
-mqtt_client_name = f"tracker-{usb_path_device}"
+mqtt_client_name = f"tracker-{socket.gethostname()}-{usb_path_device}"
 
 
 
