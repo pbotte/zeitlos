@@ -13,7 +13,7 @@ import sys
 import collections, statistics
 import math
 import socket
-
+import os
 
 logging.basicConfig(format="%(asctime)-15s %(levelname)-8s  %(message)s")
 logger = logging.getLogger("Shelf Readout")
@@ -99,7 +99,17 @@ def bin_search():
 
     return False #nichts gefunden. Waage während des Suchlaufs kaputtgegangen?
 
-mqtt_client_name = f"scale-{socket.gethostname()}-{args.serial_device_name.replace('/','-')}"
+#get usb path of device
+usb_path_device = "unknown"
+last_dev = os.popen(f'udevadm info /{args.serial_device_name} | grep DEVLINKS').read()
+regex = r"-usb-[0-9:\.]+-port0"
+matches = re.finditer(regex, last_dev, re.MULTILINE)
+for matchnum, match in enumerate(matches): #only one match should be found
+  s=match.group()
+  usb_path_device = s.replace(":","-").replace("-usb-","").replace("-port0","")
+mqtt_client_name = f"scale-{socket.gethostname()}-{usb_path_device}"
+#mqtt_client_name = f"scale-{socket.gethostname()}-{args.serial_device_name.replace('/','-')}"
+
 logger.info(f"This is the MQTT-Client-ID: {mqtt_client_name}")
 #######################################################################
 # MQTT functions
