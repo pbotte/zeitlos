@@ -1170,6 +1170,139 @@
         "wires": []
     },
     {
+        "id": "9007946d188665e6",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/door/Pin1",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 1160,
+        "wires": [
+            [
+                "a7b2040b51891b34"
+            ]
+        ]
+    },
+    {
+        "id": "a7b2040b51891b34",
+        "type": "switch",
+        "z": "993296db21e0de95",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 290,
+        "y": 1160,
+        "wires": [
+            [
+                "89a9c8e2b6531e9e"
+            ],
+            [
+                "a0ba1abf6334844c"
+            ]
+        ],
+        "outputLabels": [
+            "offen",
+            "geschlossen"
+        ]
+    },
+    {
+        "id": "89a9c8e2b6531e9e",
+        "type": "change",
+        "z": "993296db21e0de95",
+        "name": "offen",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "offen",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 430,
+        "y": 1140,
+        "wires": [
+            [
+                "60e62aad408dd534"
+            ]
+        ]
+    },
+    {
+        "id": "a0ba1abf6334844c",
+        "type": "change",
+        "z": "993296db21e0de95",
+        "name": "geschlossen",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "geschlossen",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 450,
+        "y": 1180,
+        "wires": [
+            [
+                "60e62aad408dd534"
+            ]
+        ]
+    },
+    {
+        "id": "60e62aad408dd534",
+        "type": "ui_text",
+        "z": "993296db21e0de95",
+        "group": "d4e8a1e8746ae8dc",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Eingangstüre",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 650,
+        "y": 1160,
+        "wires": []
+    },
+    {
         "id": "8198ea1bf5fc4048",
         "type": "mqtt in",
         "z": "5f8b5286451f333f",
@@ -1586,8 +1719,8 @@
         "bgcolor": "",
         "className": "",
         "icon": "",
-        "payload": "{\"terminal-id\":60903182,\"amount\":5000,\"trace\":391,\"time\":121151,\"date\":520,\"exp-date\":2612,\"seq-no\":1,\"payment-type\":96,\"ef-id\":\"672590eeeeeeeee6783f\",\"receipt-no\":275,\"auth-id\":\"3836303231320000\",\"cc\":978,\"VU-number\":\"1882500001     \",\"card-name\":\"girocard\",\"card-type\":5,\"good-groups\":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,50,51,52,53,54,55,56,57,58,59,60,61,62,63,64,65,66,67,81,82,83,84,86,87,88,89,91,92,93,94,95,110,130,131,132,133,134,135,136,180,181,184,185,186,187,190],\"receipt-param\":1000000,\"return_code_completion\":0}",
-        "payloadType": "json",
+        "payload": "reload",
+        "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
         "x": 160,

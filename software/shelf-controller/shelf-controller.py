@@ -118,7 +118,6 @@ def on_connect(client, userdata, flags, rc):
     logger.info("MQTT connected OK. Return code "+str(rc) )
     client.subscribe("homie/"+mqtt_client_name+"/cmd/#")
     client.subscribe(f"homie/{mqtt_client_name}/cmd/scales/+/led")
-    client.subscribe("homie/shop_controller/prepare_for_next_customer")
     logger.info("MQTT: Success, subscribed to all topics")
   else:
     logger.error("Bad connection. Return code="+str(rc))

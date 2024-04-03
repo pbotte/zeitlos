@@ -19,6 +19,7 @@ import mariadb #1st: sudo apt install libmariadb3 libmariadb-dev   2nd: pip inst
 import parse #pip install parse
 import signal #to catch interrupts and exit gracefully
 import queue
+import copy
 
 logging.basicConfig(level=logging.WARNING, format='%(asctime)-6s %(levelname)-8s  %(message)s')
 logger = logging.getLogger("Shop Controller")
@@ -49,10 +50,11 @@ def db_close():
   conn.close()
 
 products = {}
-products_scales = {}
-scales_widthdrawal = {}
+scales_products = {}
+scales_mass_reference = {} #masses before client started shopping
+scales_mass_actual = {}
 def get_all_data_from_db():
-    global products, products_scales
+    global products, scales_products
     db_prepare()
     cur.execute("SELECT ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit FROM Products ") 
     for ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit in cur: 
@@ -60,9 +62,9 @@ def get_all_data_from_db():
         "PriceType": PriceType, "PricePerUnit":PricePerUnit, "kgPerUnit":kgPerUnit}
     cur.execute("SELECT ProductID, ScaleID FROM Products_Scales ")
     for ProductID, ScaleID in cur:
-        products_scales[ScaleID] = ProductID
-    logger.debug("products from db: {}".format(products))
-    logger.debug("products_scales from db: {}".format(products_scales))
+        scales_products[ScaleID.lower()] = ProductID
+    logger.debug(f"products from db: {products=}")
+    logger.debug(f"scales_products from db: {scales_products=}")
     db_close()
 
 get_all_data_from_db()
@@ -70,11 +72,9 @@ get_all_data_from_db()
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logger.info("MQTT connected OK. Return code "+str(rc))
-        client.subscribe("homie/+/+/withdrawal_units") #old style
-        client.subscribe("homie/+/scales/+/mass") #new style
+        client.subscribe("homie/+/scales/+/mass") #eg homie/scale-shop-shelf02-0-1.2-1.0/scales/493037101F4B/mass
         client.subscribe("homie/"+mqtt_client_name+"/set_shop_status")
-        client.subscribe("homie/shop-track/+/distance") #old style
-        client.subscribe("homie/shop-track-collector/pixels-above-reference") #new style
+        client.subscribe("homie/shop-track-collector/pixels-above-reference")
         client.subscribe("homie/door/#")
         client.subscribe("homie/cardreader/#")
 
@@ -147,11 +147,9 @@ def set_shop_status(v):
 cardreader_busy = False # set by MQTT messages from cardreader. When true, do not submit any task to cardreader and simply wait
 cardreader_last_textblock = "" # MQTT messages from cardread typically in receipe style from homie/cardreader/text_block
 
-actualclientID = -1
 actBasket = {"data": {}, "total": 0, "products_count": 0}
-status_no_person_in_shop = None # if all readings from homie/shop-track/+/distance are > 2000, then False, else True
+status_no_person_in_shop = None # True if homie/shop-track-collector/pixels-above-reference == 0, else False
 status_door_closed = None
-last_reading_distances = {}
 
 mqtt_queue=queue.Queue()
 def on_message(client, userdata, message):
@@ -185,7 +183,7 @@ set_shop_status(10) # Laden geschlossen. Sonst kann man den laden eröffnen durc
 last_actBasket = {} #to enable the feature: Send only on change
 client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
 client.publish("homie/"+mqtt_client_name+"/shop_overview/products", json.dumps(products), qos=1, retain=True)
-client.publish("homie/"+mqtt_client_name+"/shop_overview/products_scales", json.dumps(products_scales), qos=1, retain=True)
+client.publish("homie/"+mqtt_client_name+"/shop_overview/scales_products", json.dumps(scales_products), qos=1, retain=True)
 
 loop_var = True
 def signal_handler(sig, frame):
@@ -217,24 +215,18 @@ while loop_var:
             else:
               set_shop_status(0)
 
-        # distance reading to know person presence
-        if len(msplit) == 4 and msplit[1].lower() == "shop-track"  and msplit[3].lower() == "distance":
-            last_reading_distances[msplit[2].lower()] = float(m)
-            status_no_person_in_shop = all( value > 1750 for value in last_reading_distances.values()  ) #all returns true if all elements are true
+        # tracker information to know immediate person presence
+        if len(msplit) == 3 and msplit[1].lower() == "shop-track-collector" and msplit[2].lower() == "pixels-above-reference":
+            status_no_person_in_shop = True if int(m) == 0 else False #all returns true if all elements are true
 
         # products withdrawal
-        if len(msplit) == 4 and msplit[3].lower() == "withdrawal_units":
-            #product_id = products_scales[ msplit[1]+"/"+msplit[2] ]
-            temp_units = int(m)
-            if temp_units<-1000: temp_units=-1000 # set soem limits, arbitraryly choosen
-            if temp_units>1000: temp_units=1000 #set some limits, arbitrary
-            scales_widthdrawal[msplit[1]+"/"+msplit[2]] = temp_units
+        # eg homie/scale-shop-shelf02-0-1.2-1.0/scales/493037101F4B/mass
+        if len(msplit) == 5 and msplit[2].lower() == "scales" and msplit[4].lower() == 'mass':
+            scales_mass_actual[msplit[3].lower()] = float(m)
 
-            logger.info("scales_widthdrawal: {}".format( scales_widthdrawal ))
-
-        #mosquitto_pub -t 'homie/door/Pin0' -m 1
+        #mosquitto_pub -t 'homie/door/Pin1' -m 1
         # Door open/close message
-        if message.topic.lower() == "homie/door/pin0":
+        if message.topic.lower() == "homie/door/pin1":
           if m == "0": #Tür ist offen
             status_door_closed = False
           else:
@@ -255,6 +247,9 @@ while loop_var:
         if message.topic.lower() == "homie/cardreader/busy":
           cardreader_busy = True if m == "1" else False
           logger.debug(f"cardreader busy variable set to {cardreader_busy}")
+          if shop_status == 1 and cardreader_busy == False:
+             # Timeout von Kartenlesegerät passiert, neu anstoßen:
+             set_shop_status(16)
 
         # Receive receipes from Kartenlesegerät
         if message.topic.lower() == "homie/cardreader/text_block":
@@ -323,23 +318,28 @@ while loop_var:
     actSumTotal = 0
     actProductsCount = 0
 
-    for k, v in scales_widthdrawal.items():
-        if k in products_scales: # should always be true, unless error in db (assignment scales <-> products) 
-            temp_product_id = products_scales[k]
-            temp_product = products[temp_product_id]
-            temp_v = 0 if v<0 else v #no negative numbers of items in basket! Negative numbers only for actProductsCount
-            if products_scales[k] in actBasketProducts: #in case product is sold on several scales and already in basket
-                actBasketProducts[temp_product_id]['withdrawal_units'] += temp_v
-                actBasketProducts[temp_product_id]['price'] = actBasketProducts[temp_product_id]['withdrawal_units'] * temp_product['PricePerUnit']
-            else:
-                temp_product['withdrawal_units'] = temp_v
-                temp_product['price'] = temp_v * temp_product['PricePerUnit']
-                actBasketProducts[temp_product_id] = temp_product
-            actProductsCount += v
-            actSumTotal += actBasketProducts[temp_product_id]['price']
+    for k, temp_product_id in scales_products.items():
+      if temp_product_id in products: # should always be true, unless error in db (assignment scales <-> products) 
+        if (k in scales_mass_reference) and (k in scales_mass_actual): #Hat eine Waage einen Wert zurückgeliefert, auf dem das Produkt liegt?
+          temp_product = copy.deepcopy(products[temp_product_id])
+          temp_count = round( (scales_mass_reference[k] - scales_mass_actual[k]) / temp_product['kgPerUnit'] ) #Was ist die Masse einer Produkteinheit?
+          if temp_count<0: temp_count=0 #no negative numbers of items in basket! Negative numbers only for actProductsCount
+          if temp_count>100: 
+             temp_count=100 # set some arbitrarily choosen limits
+             logger.warning("Warenanzahllimit erreicht.")
 
-            if actBasketProducts[temp_product_id]['withdrawal_units'] == 0:
-                actBasketProducts.pop(temp_product_id, None) #Remove from list
+          if scales_products[k] in actBasketProducts: #in case product is sold on several scales and already in basket
+              actBasketProducts[temp_product_id]['withdrawal_units'] += temp_count
+              actBasketProducts[temp_product_id]['price'] = actBasketProducts[temp_product_id]['withdrawal_units'] * temp_product['PricePerUnit']
+          else:
+              temp_product['withdrawal_units'] = temp_count
+              temp_product['price'] = temp_count * temp_product['PricePerUnit']
+              actBasketProducts[temp_product_id] = temp_product
+          actProductsCount += temp_count
+          actSumTotal += actBasketProducts[temp_product_id]['price']
+
+          if actBasketProducts[temp_product_id]['withdrawal_units'] == 0:
+            actBasketProducts.pop(temp_product_id, None) #Remove from list
 
     actBasket = {"data": actBasketProducts, "total": actSumTotal, "products_count": actProductsCount}
     if last_actBasket != actBasket: #change to basket? --> publish!
@@ -354,14 +354,16 @@ while loop_var:
     if shop_status == 0: #"Geräte Initialisierung"
         next_shop_status = 7
     elif shop_status == 1: #Bereit, kein Kunde im Laden
-        pass # Wechsel zu 2 (OK) oder 13 (Fehler) passiert in MQTT-onMessage
+       pass
+       # Wechsel zu 16 (Falls Kartenleser Timeout), oder 2 (OK) passiert in MQTT-onMessage, Wechsel zu 13 als Standard-Timeout
     elif shop_status == 2: #"Kunde authentifiziert / Waagen tara wird ausgeführt
-        client.publish("homie/"+mqtt_client_name+"/prepare_for_next_customer", "1", qos=1, retain=False) # Waagen tara ausführen
-        if actProductsCount == 0: #no products withdrawn, all scales reset
-          next_shop_status = 14 # Bitte Laden betreten
-          client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
-        else:
-          logger.info("Der Laden kann nicht nicht freigegeben werden, da noch {} Produkt(e) nicht zurückgesetzt wurden.".format(actProductsCount))
+        #Waagen tara ausführen:
+        scales_mass_reference = copy.deepcopy(scales_mass_actual) #always use deepcopy, see: https://stackoverflow.com/questions/2465921/how-to-copy-a-dictionary-and-only-edit-the-copy
+        client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
+        client.publish("homie/shop_controller/generic_pir/innen_licht", '{"v":1,"type":"Generic_PIR"}', qos=1, retain=False)
+        client.publish("homie/display-power-control-shop-display01/power/set", '1', qos=1, retain=False)
+        client.publish("homie/display-power-control-shop-display02/power/set", '1', qos=1, retain=False)
+        next_shop_status = 14 # Bitte Laden betreten
     elif shop_status == 3: #Kunde betritt/verlässt gerade den Laden
         pass # Weiter gehts zu 11 in MQTT onMessage
     elif shop_status == 4: # Möglicherweise: Einkauf finalisiert / Kunde nicht mehr im Laden"
@@ -375,10 +377,7 @@ while loop_var:
     elif shop_status == 7: #"Warten auf: Vorbereitung für nächsten Kunden"
         cardreader_last_textblock = "" # this typically stores receipes from the card terminal, clear it for new customer
         client.publish("homie/shop_controller/invoice_json", "", qos=1, retain=True)
-        client.publish("homie/"+mqtt_client_name+"/actualclient/id", -1, qos=1, retain=True)
         client.publish("homie/shop_controller/generic_pir/innen_licht", '{"v":0,"type":"Generic_PIR"}', qos=1, retain=False)
-        actualclientID = -1
-        client.publish("homie/"+mqtt_client_name+"/prepare_for_next_customer", "1", qos=1, retain=False)
         if actProductsCount == 0: #no products withdrawn, all scales reset
           next_shop_status = 16
         else:
@@ -398,25 +397,24 @@ while loop_var:
     elif shop_status == 13: # Fehler bei Authentifizierung
         pass # geht über Timeout weiter zu 1
     elif shop_status == 14: # Bitte Laden betreten
-        client.publish("homie/shop_controller/generic_pir/innen_licht", '{"v":1,"type":"Generic_PIR"}', qos=1, retain=False)
-        client.publish("homie/display-power-control-02/power/set", '1', qos=1, retain=False)
+       pass
         # Tür offen in MQTT-Message: Wechsel zu next_shop_status = 3
     elif shop_status == 15: # Abrechnung wird vorbereitet
         # Abrechnung durchführen
         try:
-          sql_str = "INSERT INTO `Invoices` (`ClientID`, `Products`) VALUES (?, ?); "
+          sql_str = "INSERT INTO `Invoices` (`Products`) VALUES (?); "
           actBasket_str = json.dumps(actBasket)
-          logger.info("Executed the following SQL Str: {} with ({}, {})".format(sql_str, actualclientID, actBasket_str))
+          logger.info(f"Executed the following SQL Str: {sql_str} with ({actBasket_str})")
           db_prepare()
           try:
-            cur.execute(sql_str, (actualclientID, actBasket_str))
+            cur.execute(sql_str, (actBasket_str))
             conn.commit()
             logger.info("Last Inserted ID: {}".format(cur.lastrowid))
           except mariadb.Error as e:
             logger.warning(f"Error while SQL INSERT: {e}")
           db_close()
 
-          # Book monay from reservation
+          # Book money from reservation
           total_money_tobook_incents_str = round(actBasket["total"]*100)
           client.publish("homie/cardreader/cmd/book", total_money_tobook_incents_str, qos=1, retain=False)
 

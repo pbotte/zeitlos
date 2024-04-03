@@ -105,13 +105,6 @@ if (array_key_exists('debug', $_GET)) {
                     '</tr>';
                 document.getElementById("myBasketTable").innerHTML = mstr;
 
-                //For Paypal: decimal with "." and "%26" instead of "&" in URL to qr.php
-                if (obj['total'] >0) {
-                  amountstr = obj['total'].toLocaleString('en-US', {style: 'decimal', minimumFractionDigits    : 2, maximumFractionDigits    : 2})
-                  document.getElementById("paypalqrcode").innerHTML = '<img src="https://www.hemmes24.de/qr/qr.php?size=10&text=https://www.paypal.com/qrcodes/managed/12f2538e-0df2-477a-8616-4ce03e6efc34?utm_source=bizapp%26amount='+amountstr+'%26currency_code=EUR">';
-                } else {
-                  document.getElementById("paypalqrcode").innerHTML = 'Der QR-Code erscheint, sobald Sie etwas entnommen haben.';
-                }
             }
 		}
 
@@ -241,12 +234,7 @@ table.paleBlueRows tfoot td {
     </tbody>
     </table>
     <p>&nbsp;</p>
-    <p><b>Einkauf fertig?</b> Einfach den Laden verlassen. Sie erhalten von uns in den nächsten Tagen eine
-       Rechnung per E-Mail.<p>
-    <p><b>Wie bezahlen?</b> Per Überweisung nach Erhalt der Rechnung oder jetzt per PayPal:</p>
-    <p style="text-align: center;"><span id="paypalqrcode"></span><br>
-    <img src="images/medium_paypal_logo_white_background.jpeg"></p>
-
+    <p><b>Einkauf fertig?</b> Einfach den Laden verlassen. Außen erhalten Sie die Quittung.<p>
 
 	<script>
 		var connected_flag = 0;
