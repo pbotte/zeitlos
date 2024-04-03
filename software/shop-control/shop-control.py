@@ -378,10 +378,7 @@ while loop_var:
         cardreader_last_textblock = "" # this typically stores receipes from the card terminal, clear it for new customer
         client.publish("homie/shop_controller/invoice_json", "", qos=1, retain=True)
         client.publish("homie/shop_controller/generic_pir/innen_licht", '{"v":0,"type":"Generic_PIR"}', qos=1, retain=False)
-        if actProductsCount == 0: #no products withdrawn, all scales reset
-          next_shop_status = 16
-        else:
-          logger.info("Der Laden kann nicht nicht freigegeben werden, da noch {} Produkt(e) nicht zurückgesetzt wurden.".format(actProductsCount))
+        next_shop_status = 16
     elif shop_status == 8: #"Technischer Fehler aufgetreten"
         pass
     elif shop_status == 9: #"Kunde benötigt Hilfe"
