@@ -149,7 +149,6 @@ class PTConnection:
 
         if not msg.startswith(b"\x04\x0F"):
             raise Exception(f"Instead 04 0F receivd {fmt_bytes(msg)}")
-        msgx = bytes(msg)
         return parse_result_msg(msg, self.logger)
 
     async def wait_for_completion(self, count):
@@ -203,42 +202,7 @@ class PTConnection:
         self.logger.debug(f"wait_for_completion(): completed. result: {res}")
         return res
 
-    # with timeout
-    async def send_preauth(self, amount_cents, timeout_secs=None):
-        self.logger.debug("send_preauth(): start")
-        msg = bytearray(
-            b"\x06\x22\x00\x04"
-            + encode_bcd(6, amount_cents)
-            + b"\x49"
-            + euro_cc
-            + b"\x19\x40" #payment type
-            + b"\x06\x00"
-        )
-        len_without_tlv=len(msg)
-        msg += b"\x40\x02\xff\x00"
-        if timeout_secs is not None:
-            msg += b"\x1F\x5B"
-            number_as_bytes = timeout_secs.to_bytes((timeout_secs.bit_length() + 7) // 8, 'big') or b'\0'
-            msg += len(number_as_bytes).to_bytes(1, 'big') + number_as_bytes
-        msg[len_without_tlv-1] = len(msg) - len_without_tlv
-        msg[2] = len(msg) - 3
-        msg = await self.send_query(msg)
-        self.logger.debug("send_preauth(): wait_for_and_parse_status")
-        res = await self.wait_for_and_parse_status(msg)
-        self.logger.debug(f"send_preauth(): wait_for_completion. result {res}")
-        res2 = await self.wait_for_completion(1)
-        self.logger.debug(f"send_preauth(): completed, res2: {res2}")
-        res["return_code_completion"] = res2
-    
-        if self.mqtt_client:
-            if res2==0: #succesful
-                data = {"amount": res['amount'], "trace": res['trace'], "payment-type": res['payment-type'], "receipt-no": res['receipt-no'], "card-type": res['card-type'], "amount_book": -1}
-                await self.mqtt_client.publish("homie/cardreader/data_for_book_total_json", payload=json.dumps(data))
-            
-        return res
-
-    # no timeout
-    async def send_preauth2(self, amount_cents):
+    async def send_preauth(self, amount_cents):
         self.logger.debug("send_preauth(): start")
         msg = await self.send_query(  # see pdf: 2.8 Pre-Authorisation / Reservation (06 22)
             b"\x06\x22\x12\x04"
@@ -261,51 +225,6 @@ class PTConnection:
                 await self.mqtt_client.publish("homie/cardreader/data_for_book_total_json", payload=json.dumps(data))
             
         return res
-
-    # card type by tlv with optional timeout
-    async def check_age(self, timeout_secs=None, min_age=18):
-        self.logger.debug("check_age(): start")
-        msg = bytearray(b"\x06\xC0\x00")
-        if timeout_secs is not None:
-            msg += encode_bcd(1, min(99, timeout_secs))
-        msg += b'\xFC\x01\x06\x09\x1F\x60\x01\x07\x1F\x6B\x02' + encode_bcd(2, min_age)
-        msg[2] = len(msg) - 3
-        msg = await self.send_query(msg)
-        self.logger.debug("check_age(): wait_for_and_parse_status")
-        res = await self.wait_for_and_parse_status(msg)
-        self.logger.debug(f"check_age(): wait_for_completion. result {res}")
-        res2 = await self.wait_for_completion(1)
-        self.logger.debug(f"check_age(): completed, res2: {res2}")
-        res["return_code_completion"] = res2
-
-    # card type by tlv with obligatory timeout
-    async def check_age2(self, timeout_secs=0, min_age=18):
-        self.logger.debug("check_age(): start")
-        msg = b"\x06\xC0\x00"
-        msg += encode_bcd(1, min(99, timeout_secs))
-        msg += b'\xFC\x01\x06\x09\x1F\x60\x01\x07\x1F\x6B\x02' + encode_bcd(2, min_age)
-        msg = await self.send_query(msg)
-        self.logger.debug("check_age(): wait_for_and_parse_status")
-        res = await self.wait_for_and_parse_status(msg)
-        self.logger.debug(f"check_age(): wait_for_completion. result {res}")
-        res2 = await self.wait_for_completion(1)
-        self.logger.debug(f"check_age(): completed, res2: {res2}")
-        res["return_code_completion"] = res2
-
-    # card type by bmp
-    async def check_age3(self, timeout_secs=0, min_age=18):
-        self.logger.debug("check_age(): start")
-        msg = b"\x06\xC0\x0C"
-        msg += encode_bcd(1, min(99, timeout_secs))
-        msg += b'\x19\x50\xFC\x01\x06\x05\x1F\x6B\x02' + encode_bcd(2, min_age)
-        msg = await self.send_query(msg)
-        msgx = bytes(msg)
-        self.logger.debug("check_age(): wait_for_and_parse_status")
-        res = await self.wait_for_and_parse_status(msg)
-        self.logger.debug(f"check_age(): wait_for_completion. result {res}")
-        res2 = await self.wait_for_completion(1)
-        self.logger.debug(f"check_age(): completed, res2: {res2}")
-        res["return_code_completion"] = res2
 
     # requesting money from existing reservation. All infomration mandatory from the point when requesting the pre_auth
     async def book_total(self, preauth_res, amount_cents):
