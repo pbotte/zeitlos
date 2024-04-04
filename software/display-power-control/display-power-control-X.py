@@ -13,7 +13,7 @@ import socket
 logging.basicConfig(level=logging.WARNING, format='%(asctime)-6s %(levelname)-8s  %(message)s')
 logger = logging.getLogger("Display power control")
 
-parser = argparse.ArgumentParser(description='Display power control for Wayland')
+parser = argparse.ArgumentParser(description='Display power control for X')
 parser.add_argument("-v", "--verbosity", help="increase output verbosity", default=0, action="count")
 parser.add_argument("-b", "--mqtt-broker-host", help="MQTT broker hostname. default=localhost", default="localhost")
 args = parser.parse_args()
@@ -40,10 +40,10 @@ last_power_status = None
 #get current HDMI display status
 def check_power_status():
   global last_power_status
-  stream = os.popen("WAYLAND_DISPLAY="wayland-1" wlr-randr")
+  stream = os.popen("DISPLAY=:0.0 xrandr ")
   output = stream.read().strip()
-  logger.debug(f"return value of wlr-randr: {output}")
-  act_state = 1 if 'current' in output else 0
+  logger.debug(f"return value of xrandr: {output}")
+  act_state = 1 if '*' in output else 0
   if last_power_status != act_state:
     logger.info(f"detected new power state: {act_state}")
     last_power_status = act_state
@@ -94,13 +94,15 @@ while True:
     msplit = re.split("/", message.topic)
 
     if message.topic.lower() == "homie/"+mqtt_client_name+"/power/set":
-        cmd_str = '--on' if m=='1' else '--off'            #nomal mode
-        cmd_str = '--transform 90' if m=='1' else '--off'  #display rotated by 90°
+        cmd_str = '--auto' if m=='1' else '--off'
 
-        stream = os.popen('WAYLAND_DISPLAY="wayland-1" wlr-randr --output HDMI-A-1 '+cmd_str)
+        stream = os.popen("DISPLAY=:0.0 xrandr --output HDMI-1 "+cmd_str)
         output = stream.read().strip()
         logger.info(f"power_status of HDMI-1 changed with parameter: {cmd_str}")
 
+        stream = os.popen("DISPLAY=:0.0 xrandr --output HDMI-2 "+cmd_str)
+        output = stream.read().strip()
+        logger.info(f"power_status of HDMI-2 changed with parameter: {cmd_str}")
         last_change = time.time()
 
   # perform regular status checks every 10 seconds OR
