@@ -67,7 +67,7 @@ $rechnungs_header = '
 <img src="../wp-content/uploads/2022/09/cropped-HEMMES_Marke_neg_cmyk_c_Zeichenflaeche-1.png" width="4cm">
 <b>HEMMES24</b>
 Thomas Hemmes
-Edelobstbrennerei Hemmes 
+Hofgut Hemmes 
 Gartenfeldstr. 1
 55435 Gau-Algesheim
 Deutschland 
