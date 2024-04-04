@@ -107,10 +107,6 @@ raspi-config nonint do_boot_behaviour B4
 echo -e "$sstr   raspi-config nonint do_boot_splash 1 \n$sstr"
 raspi-config nonint do_boot_splash 1
 
-#Set to X11 mode, since Wayland and chormium in kiosk mode are not (yet) compatible
-echo -e "$sstr   raspi-config nonint do_wayland W1  \n$sstr"
-raspi-config nonint do_wayland W1 
-
 ##screen blanking, default=1 (=Yes)
 # details here: https://www.raspberrypi.com/documentation/computers/configuration.html#desktop
 echo -e "$sstr   raspi-config nonint do_blanking 0 \n$sstr"
@@ -120,13 +116,19 @@ raspi-config nonint do_blanking 0
 echo -e "$sstr   raspi-config nonint do_vnc 0  \n$sstr"
 raspi-config nonint do_vnc 0 
 
-echo -e "$sstr   cp startBrowser.sh \n$sstr"
-cp ./zeitlos/software/raspios_images/startBrowser.sh /home/pi/startBrowser.sh
-chmod a+x /home/pi/startBrowser.sh
-chown pi:pi /home/pi/startBrowser.sh
+##browser kiosk mode
+echo -e "$sstr   activate browser kiosk mode \n$sstr"
+sudo apt install wtype
 
-cp ./zeitlos/software/raspios_images/autostart /etc/xdg/lxsession/LXDE-pi/autostart
-chown pi:pi /etc/xdg/lxsession/LXDE-pi/autostart
+cat <<EOT >> /home/pi/.config/wayfire.ini
+[autostart]
+panel = wfrespawn wf-panel-pi
+background = wfrespawn pcmanfm --desktop --profile LXDE-pi
+xdg-autostart = lxsession-xdg-autostart
+chromium = chromium-browser http://shop-master/?hostname=$HOSTNAME --kiosk --noerrdialogs --disable-infobars --no-first-run --ozone-platform=wayland --enable-features=OverlayScrollbar --start-maximized
+screensaver = false
+dpms = false
+EOT
 
 #########################################
 

@@ -74,16 +74,25 @@ Für Lite-OS in Gänze:
 console=serial0,115200 console=tty1 root=PARTUUID=57c84f67-02 rootfstype=ext4 fsck.repair=yes rootwait quiet init=/usr/lib/raspberrypi-sys-mods/firstboot systemd.run=/boot/firstrun.sh systemd.run_success_action=reboot systemd.unit=kernel-command-line.target ipv6.disable=1
 ```
 
-Außerdem noch die beiden Dateien kopieren, für den Autostart des Browsers:
+### Browser Kiosk Modus
+
+#### Neu, Seit Wayland, ca. 2024
+
+Anleitung: https://www.raspberrypi.com/tutorials/how-to-use-a-raspberry-pi-in-kiosk-mode/
+
+Zusammengefasst: `wtype` installieren und die Datei `wayfire.ini` ergänzen. Im Text den `hostname` anpassen.
 ```bash
-# later to /home/pi/startBrowser.sh
-cp startBrowser.sh ./boot/
+sudo apt install wtype
+sudo nano .config/wayfire.ini
 
-# later to: /etc/xdg/lxsession/LXDE-pi/autostart
-cp autostart ./boot/
+[autostart]
+panel = wfrespawn wf-panel-pi
+background = wfrespawn pcmanfm --desktop --profile LXDE-pi
+xdg-autostart = lxsession-xdg-autostart
+chromium = chromium-browser http://shop-master/?hostname=shop-display02 --kiosk --noerrdialogs --disable-infobars --no-first-run --ozone-platform=wayland --enable-features=OverlayScrollbar --start-maximized
+screensaver = false
+dpms = false
 ```
-Diese beiden Dateien müssen in der Datei `firstrun.sh` noch in ihre richtigen Verzeichnisse verschoeben werden.
-
 
 ### Auswerfen 
 ```bash 
