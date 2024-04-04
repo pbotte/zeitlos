@@ -56,10 +56,10 @@ scales_mass_actual = {}
 def get_all_data_from_db():
     global products, scales_products
     db_prepare()
-    cur.execute("SELECT ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit FROM Products ") 
-    for ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit in cur: 
+    cur.execute("SELECT ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit, VAT FROM Products ") 
+    for ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit, VAT in cur: 
         products[ProductID] = {"ProductID":ProductID, "ProductName":ProductName, "ProductDescription": ProductDescription, 
-        "PriceType": PriceType, "PricePerUnit":PricePerUnit, "kgPerUnit":kgPerUnit}
+        "PriceType": PriceType, "PricePerUnit":PricePerUnit, "kgPerUnit":kgPerUnit, "VAT": VAT}
     cur.execute("SELECT ProductID, ScaleID FROM Products_Scales ")
     for ProductID, ScaleID in cur:
         scales_products[ScaleID.lower()] = ProductID
@@ -376,6 +376,7 @@ while loop_var:
         next_shop_status = 7
     elif shop_status == 7: #"Warten auf: Vorbereitung für nächsten Kunden"
         cardreader_last_textblock = "" # this typically stores receipes from the card terminal, clear it for new customer
+        scales_mass_reference = copy.deepcopy(scales_mass_actual) #Warenkorb zurücksetzen
         client.publish("homie/shop_controller/invoice_json", "", qos=1, retain=True)
         client.publish("homie/shop_controller/generic_pir/innen_licht", '{"v":0,"type":"Generic_PIR"}', qos=1, retain=False)
         next_shop_status = 16
