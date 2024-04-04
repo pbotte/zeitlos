@@ -94,12 +94,19 @@ while True:
     msplit = re.split("/", message.topic)
 
     if message.topic.lower() == "homie/"+mqtt_client_name+"/power/set":
-        cmd_str = '--on' if m=='1' else '--off'            #nomal mode
-        cmd_str = '--transform 90' if m=='1' else '--off'  #display rotated by 90°
+        cmd_str = '--on' if m=='1' else '--off'                  #nomal mode
+        cmd_str = '--on --transform 270' if m=='1' else '--off'  #display rotated vertically
 
-        stream = os.popen('WAYLAND_DISPLAY="wayland-1" wlr-randr --output HDMI-A-1 '+cmd_str)
+
+        stream = os.popen('XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY="wayland-1" wlr-randr --output HDMI-A-1 '+cmd_str)
         output = stream.read().strip()
         logger.info(f"power_status of HDMI-1 changed with parameter: {cmd_str}")
+
+        if m=='1':
+          #make chromium fullscreen again
+          stream = os.popen('sleep 2 && XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY="wayland-1" wtype -k F11')
+          output = stream.read().strip()
+          logger.info(f"send key stroke F11 to make chromium fullscreen again")
 
         last_change = time.time()
 
