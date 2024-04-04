@@ -40,7 +40,7 @@ last_power_status = None
 #get current HDMI display status
 def check_power_status():
   global last_power_status
-  stream = os.popen("WAYLAND_DISPLAY="wayland-1" wlr-randr")
+  stream = os.popen('XDG_RUNTIME_DIR=/run/user/1000 WAYLAND_DISPLAY="wayland-1" wlr-randr')
   output = stream.read().strip()
   logger.debug(f"return value of wlr-randr: {output}")
   act_state = 1 if 'current' in output else 0
