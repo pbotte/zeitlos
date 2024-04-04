@@ -2,10 +2,16 @@
 $str = "";
 switch ($_GET['hostname']) {
   case 'shop-display01':
-    $str = "basket.php";
+    $str = "basket.php?shelfid=1";
     break;
   case 'shop-display02':
-    $str = "basket.php";
+    $str = "basket.php?shelfid=2";
+    break;
+  case 'shop-display03':
+    $str = "basket.php?shelfid=3";
+    break;
+  case 'shop-display04':
+    $str = "basket.php?shelfid=4";
     break;
   case 'shop-door':
     $str = "door.php";
