@@ -6,6 +6,7 @@ import logging
 import argparse
 from cr_pt_class import *
 import json
+import signal
 
 
 async def make_pt_connection(host, port, mqtt_client, logger):
@@ -74,19 +75,35 @@ async def make_pt_connection(host, port, mqtt_client, logger):
     return ptc
 
 
+mqtt_client = None
+continue_main_loop = True
+
+
+def handle_sig_int():
+    global continue_main_loop
+    continue_main_loop = False
+    if mqtt_client is not None:
+        mqtt_client.disconnect()
+
+
+signal.signal(signal.SIGINT, handle_sig_int)
+
+
 async def main():
+    global mqtt_client
     # filename = 'preauth_testkarte3_erfolgreich.log'
     # filename = 'preauth_girocard_eingeschoben.log'
     # filename = 'book_total.log'
     # res = parse_res_from_chatfile(filename)
 
-    mqtt_client = aiomqtt.Client(hostname="localhost", port=1883)
+    will = aiomqtt.Will("homie/cardreader/state", payload="0", qos=2, retain=True)
+    mqtt_client = aiomqtt.Client(hostname="localhost", port=1883, will=will)
     logger.info(f'MQTT Client created.')
     logger.info(f'Trying to option connection to terminal... (if unsuccesful, check IP address)')
     ptc = await make_pt_connection(args.terminal_ip, 20007, mqtt_client, logger) #comment for age test
 
     reconnect_interval = 5  # In seconds
-    while True:
+    while continue_main_loop:
         try:
             async with mqtt_client as client:
                 await client.publish("homie/cardreader/state", payload="1", retain=True)
@@ -159,6 +176,8 @@ async def main():
         except aiomqtt.MqttError as error:
             logger.error(f'Error "{error}". Reconnecting in {reconnect_interval} seconds.')
             await asyncio.sleep(reconnect_interval)
+
+    await client.publish("homie/cardreader/state", payload="0", retain=True)
 
     # reverse pre_auth
     #   await ptc.pre_authorisation_reversal(list_rcpt_no[35][8][-1]) #the last entry in list = list_rcpt_no[35][8][-1]
