@@ -12,6 +12,8 @@ import logging
 import struct
 import os, re
 import socket
+import collections, statistics
+
 
 logging.basicConfig(
     level=logging.WARNING, format="%(asctime)-6s %(levelname)-8s  %(message)s"
@@ -20,10 +22,10 @@ logger = logging.getLogger("Waveshare 18301 TOF Laser Range Sensor (VL53L1) read
 
 parser = argparse.ArgumentParser(description="MQTT Waveshare 18301 readout (VL53L1)")
 parser.add_argument("-v", "--verbosity", help="increase output verbosity", default=0, action="count")
+parser.add_argument("-r", "--send-raw-data", help="send every data packat via mqtt", default=0, action="count")
 parser.add_argument("-b", "--mqtt-broker-host", help="MQTT broker hostname. default=localhost", default="localhost")
 parser.add_argument("-p", "--mqtt-broker-port", default=1883, type=int)
 parser.add_argument("-t", "--watchdog-timeout", help="timeout in seconds for the watchdog. default=10 sec", default=10, type=int)
-#parser.add_argument("mqtt_client_name", help="MQTT client name. Needs to be unique in the MQTT namespace, eg shop-track-01.", type=str)
 parser.add_argument("serial_device_name", help="Serial port used, eg /dev/ttyUSB0", type=str)
 args = parser.parse_args()
 logger.setLevel(logging.WARNING - (args.verbosity * 10 if args.verbosity <= 2 else 20))
@@ -94,9 +96,14 @@ sensor_last_data_time = [0]*number_sensors
 time_last_bus_access = 0 #to ensure no overlapp of multiple writes/reads
 
 last_sensor_data = [None]*number_sensors
+last_sensor_data_averaged = [None]*number_sensors
+last_sensor_data_averaged_sigma = [None]*number_sensors
+
+readings_stack = [collections.deque(maxlen=8) for i in range(number_sensors)] #8 Hz reading rate makes depth of 1sec
 
 next_sensor_id_to_poll_in_free_time = 0
 time_start = time.time()
+time_last_data_submit_raw = time_start # avoid to send data right at from the start
 time_last_data_submit = time_start # avoid to send data right at from the start
 
 ###########
@@ -161,7 +168,7 @@ while WatchDogCounter > 0:
           logger.warning(f"Problematic read: {id} {system_time} {distance} {status} {signal_strength} {checksum}")
 
   my_time = time.time()
-  if (my_time-time_last_data_submit)*1000 > 125:
+  if (my_time-time_last_data_submit_raw)*1000 > 125:
     #clear data from sensors no longer connected / working
     for i in range(number_sensors):
       if last_sensor_data[i]:
@@ -169,9 +176,30 @@ while WatchDogCounter > 0:
           last_sensor_data[i] = None
           logger.warning(f"Sensor {i} did not deliver data in the last 300ms.")
 
-    #send data
-    client.publish('homie/'+mqtt_client_name+'/tof/actreading', json.dumps(last_sensor_data), qos=0, retain=False)
+    #do statistics for averaging
+    for k,v in enumerate(last_sensor_data):
+      if v:
+        readings_stack[k].append(v)
+      else:
+        if (len(readings_stack[k])>0): #some reading has to be in the stack
+          readings_stack[k].pop() #simply delete one entry
+
+    #send raw data
+    if args.send_raw_data > 0: #only
+      client.publish('homie/'+mqtt_client_name+'/tof/actreading_raw', json.dumps(last_sensor_data), qos=0, retain=False)
     logger.info(f"act reading: {json.dumps(last_sensor_data)}")
+    time_last_data_submit_raw = time.time()
+
+  #send averaged data
+  if (my_time-time_last_data_submit)*1000 > 950: # approx every second
+    if (len(readings_stack[k])>2): #some reading has to be in the stack
+      last_sensor_data_averaged[k] = round(statistics.mean(list(readings_stack[k])))
+      last_sensor_data_averaged_sigma[k] = statistics.stdev(list(readings_stack[k]))
+    else:
+      last_sensor_data_averaged[k] = None
+      last_sensor_data_averaged_sigma[k] = None
+    client.publish('homie/'+mqtt_client_name+'/tof/actreading', json.dumps(last_sensor_data_averaged), qos=0, retain=False)
+    client.publish('homie/'+mqtt_client_name+'/tof/actreading_sigma', json.dumps(last_sensor_data_averaged_sigma), qos=0, retain=False)
     time_last_data_submit = time.time()
 
   WatchDogCounter -= 1
