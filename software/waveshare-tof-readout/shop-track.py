@@ -192,12 +192,13 @@ while WatchDogCounter > 0:
 
   #send averaged data
   if (my_time-time_last_data_submit)*1000 > 950: # approx every second
-    if (len(readings_stack[k])>2): #some reading has to be in the stack
-      last_sensor_data_averaged[k] = round(statistics.mean(list(readings_stack[k])))
-      last_sensor_data_averaged_sigma[k] = statistics.stdev(list(readings_stack[k]))
-    else:
-      last_sensor_data_averaged[k] = None
-      last_sensor_data_averaged_sigma[k] = None
+    for k,v in enumerate(last_sensor_data):
+      if (len(readings_stack[k])>2): #some reading has to be in the stack
+        last_sensor_data_averaged[k] = round(statistics.mean(list(readings_stack[k])))
+        last_sensor_data_averaged_sigma[k] = statistics.stdev(list(readings_stack[k]))
+      else:
+        last_sensor_data_averaged[k] = None
+        last_sensor_data_averaged_sigma[k] = None
     client.publish('homie/'+mqtt_client_name+'/tof/actreading', json.dumps(last_sensor_data_averaged), qos=0, retain=False)
     client.publish('homie/'+mqtt_client_name+'/tof/actreading_sigma', json.dumps(last_sensor_data_averaged_sigma), qos=0, retain=False)
     time_last_data_submit = time.time()
