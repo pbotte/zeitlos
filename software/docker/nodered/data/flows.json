@@ -8,6 +8,14 @@
         "env": []
     },
     {
+        "id": "362a0b93abc679d8",
+        "type": "tab",
+        "label": "Einräumen",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
         "id": "5f8b5286451f333f",
         "type": "tab",
         "label": "Einkaufssimulation",
@@ -22,6 +30,18 @@
         "disabled": false,
         "info": "",
         "env": []
+    },
+    {
+        "id": "d254a38df0715e26",
+        "type": "junction",
+        "z": "362a0b93abc679d8",
+        "x": 360,
+        "y": 140,
+        "wires": [
+            [
+                "e545fc8c59bcfe48"
+            ]
+        ]
     },
     {
         "id": "d4570277bd2545ce",
@@ -141,36 +161,6 @@
         "className": ""
     },
     {
-        "id": "48959b49.34fb6c",
-        "type": "ui_group",
-        "name": "Kameras",
-        "tab": "b3c64a2d.c0638",
-        "order": 1,
-        "disp": true,
-        "width": "6",
-        "collapse": true
-    },
-    {
-        "id": "b3c64a2d.c0638",
-        "type": "ui_tab",
-        "name": "Kameras",
-        "icon": "fa-video-camera",
-        "order": 2,
-        "disabled": false,
-        "hidden": false
-    },
-    {
-        "id": "9472ae9df42c4534",
-        "type": "ui_group",
-        "name": "Shop-Controller",
-        "tab": "de72aab522dbab1e",
-        "order": 1,
-        "disp": true,
-        "width": "6",
-        "collapse": false,
-        "className": ""
-    },
-    {
         "id": "b1634a54dc9da698",
         "type": "mqtt-broker",
         "name": "",
@@ -223,26 +213,6 @@
         "className": ""
     },
     {
-        "id": "de72aab522dbab1e",
-        "type": "ui_tab",
-        "name": "Fehlerbehebung",
-        "icon": "dashboard",
-        "order": 3,
-        "disabled": false,
-        "hidden": false
-    },
-    {
-        "id": "82d1995195117840",
-        "type": "ui_group",
-        "name": "Shop Status",
-        "tab": "de72aab522dbab1e",
-        "order": 3,
-        "disp": true,
-        "width": "6",
-        "collapse": false,
-        "className": ""
-    },
-    {
         "id": "8ee2a8be9e79749a",
         "type": "ui_group",
         "name": "Simulation",
@@ -258,7 +228,7 @@
         "type": "ui_tab",
         "name": "Simulation",
         "icon": "dashboard",
-        "order": 4,
+        "order": 3,
         "disabled": false,
         "hidden": false
     },
@@ -274,25 +244,75 @@
         "className": ""
     },
     {
-        "id": "59c3e87f83413c32",
-        "type": "ui_template",
-        "z": "993296db21e0de95",
-        "group": "48959b49.34fb6c",
-        "name": "No Referrer",
-        "order": 3,
-        "width": 0,
-        "height": 0,
-        "format": "<meta name=\"referrer\" content=\"no-referrer\">",
-        "storeOutMessages": true,
-        "fwdInMessages": true,
-        "resendOnRefresh": true,
-        "templateScope": "global",
-        "className": "",
-        "x": 110,
-        "y": 40,
-        "wires": [
-            []
-        ]
+        "id": "b5821319b49b5d68",
+        "type": "ui_tab",
+        "name": "Tracker",
+        "icon": "dashboard",
+        "order": 4,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "e7001e04ca82ff4e",
+        "type": "ui_group",
+        "name": "Diagramme",
+        "tab": "b5821319b49b5d68",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "b78d5b1b155bfa94",
+        "type": "ui_group",
+        "name": "Heatmap",
+        "tab": "b5821319b49b5d68",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "f92eb5dfeffee078",
+        "type": "ui_tab",
+        "name": "Einräumen",
+        "icon": "dashboard",
+        "order": 2,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "ce23d23a7801273d",
+        "type": "ui_group",
+        "name": "Waage",
+        "tab": "f92eb5dfeffee078",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "6d381aa10c3661fa",
+        "type": "Stackhero-MySQL-Server",
+        "name": "",
+        "host": "192.168.10.10",
+        "port": "3306",
+        "tls": false,
+        "database": "zeitlos"
+    },
+    {
+        "id": "f15585e8aad578ca",
+        "type": "ui_group",
+        "name": "Datenbank",
+        "tab": "f92eb5dfeffee078",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
     },
     {
         "id": "73e3bbce7808f2b5",
@@ -586,52 +606,6 @@
                 "40c6358bceea0193"
             ]
         ]
-    },
-    {
-        "id": "1c3e57d1ee836dd9",
-        "type": "ui_button",
-        "z": "993296db21e0de95",
-        "name": "",
-        "group": "9472ae9df42c4534",
-        "order": 5,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Reset all scales",
-        "tooltip": "",
-        "color": "",
-        "bgcolor": "",
-        "className": "",
-        "icon": "",
-        "payload": "0",
-        "payloadType": "str",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 120,
-        "y": 100,
-        "wires": [
-            [
-                "8a2d30bda302bb9a"
-            ]
-        ]
-    },
-    {
-        "id": "8a2d30bda302bb9a",
-        "type": "mqtt out",
-        "z": "993296db21e0de95",
-        "name": "",
-        "topic": "homie/shelf01/reset-all",
-        "qos": "1",
-        "retain": "false",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "b1634a54dc9da698",
-        "x": 460,
-        "y": 100,
-        "wires": []
     },
     {
         "id": "680fdf797f869786",
@@ -966,7 +940,7 @@
             }
         ],
         "repeat": "",
-        "crontab": "00 18 * * *",
+        "crontab": "30 19 * * *",
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
@@ -991,7 +965,7 @@
             }
         ],
         "repeat": "",
-        "crontab": "00 21 * * *",
+        "crontab": "00 22 * * *",
         "once": false,
         "onceDelay": 0.1,
         "topic": "",
@@ -1040,34 +1014,6 @@
         "x": 570,
         "y": 300,
         "wires": []
-    },
-    {
-        "id": "84d33885a408b354",
-        "type": "ui_button",
-        "z": "993296db21e0de95",
-        "name": "",
-        "group": "82d1995195117840",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Setze Mögliches Einkaufsende",
-        "tooltip": "",
-        "color": "",
-        "bgcolor": "",
-        "className": "",
-        "icon": "",
-        "payload": "4",
-        "payloadType": "str",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 170,
-        "y": 140,
-        "wires": [
-            [
-                "0965fa82d88ae84b"
-            ]
-        ]
     },
     {
         "id": "bcf2aba9f23cf0bf",
@@ -1125,7 +1071,7 @@
         "label": "Display Innen 02",
         "tooltip": "",
         "group": "d4e8a1e8746ae8dc",
-        "order": 4,
+        "order": 5,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -1303,6 +1249,862 @@
         "wires": []
     },
     {
+        "id": "7502e3b5b7b9b282",
+        "type": "ui_button",
+        "z": "993296db21e0de95",
+        "name": "",
+        "group": "8ee2a8be9e79749a",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Kunde nicht mehr im Laden",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "15",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 160,
+        "y": 140,
+        "wires": [
+            [
+                "0965fa82d88ae84b"
+            ]
+        ]
+    },
+    {
+        "id": "74eda7bd7c324529",
+        "type": "mqtt in",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "homie/+/scales/+/touched",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 190,
+        "y": 180,
+        "wires": [
+            [
+                "d254a38df0715e26"
+            ]
+        ]
+    },
+    {
+        "id": "f5aee131ef4e536c",
+        "type": "inject",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "homie/scale-shop-shelf02-0-1.2-1.0/scales/493037B2110C/touched",
+        "payload": "1",
+        "payloadType": "str",
+        "x": 150,
+        "y": 120,
+        "wires": [
+            [
+                "d254a38df0715e26"
+            ]
+        ]
+    },
+    {
+        "id": "e545fc8c59bcfe48",
+        "type": "function",
+        "z": "362a0b93abc679d8",
+        "name": "topic and message split",
+        "func": "const inputString = msg.topic;\nconst parts = inputString.split('/'); // Split the string by \"/\"\n\nlet msg_USB_ID = { payload: parts[1]};\nlet msg_scales_ID = { payload: parts[3]};\nlet msg_m = {payload: msg.payload};\nreturn [msg_USB_ID, msg_scales_ID, msg_m];",
+        "outputs": 3,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 530,
+        "y": 140,
+        "wires": [
+            [
+                "1e777df7393c8bc5",
+                "861847d36ea6f486"
+            ],
+            [
+                "e0f687fd0ce5fd77",
+                "2e57c1df929c1bbe"
+            ],
+            []
+        ]
+    },
+    {
+        "id": "1e777df7393c8bc5",
+        "type": "change",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "touched_USB_ID",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 840,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e0f687fd0ce5fd77",
+        "type": "change",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "touched_scale_ID",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 840,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "861847d36ea6f486",
+        "type": "ui_text",
+        "z": "362a0b93abc679d8",
+        "group": "ce23d23a7801273d",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "USB-ID",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 780,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "2e57c1df929c1bbe",
+        "type": "ui_text",
+        "z": "362a0b93abc679d8",
+        "group": "ce23d23a7801273d",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Scale-ID",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 780,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "e9ac0a72e96cc359",
+        "type": "mqtt out",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "homie/shop_controller/update_data_from_db",
+        "qos": "2",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 490,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "a6f7fd9a85788871",
+        "type": "ui_button",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "group": "f15585e8aad578ca",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Datenbank erneut einlesen",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 160,
+        "y": 340,
+        "wires": [
+            [
+                "e9ac0a72e96cc359",
+                "91ce8d56f0efe79a"
+            ]
+        ]
+    },
+    {
+        "id": "56f9ab02abc20493",
+        "type": "Stackhero-MySQL",
+        "z": "362a0b93abc679d8",
+        "server": "6d381aa10c3661fa",
+        "name": "",
+        "x": 490,
+        "y": 400,
+        "wires": [
+            [
+                "7520a8bc076209ed",
+                "fcbe5d97ab20d7b4"
+            ]
+        ]
+    },
+    {
+        "id": "fa660b60a9952301",
+        "type": "inject",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "props": [
+            {
+                "p": "topic",
+                "v": "",
+                "vt": "date"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "x": 90,
+        "y": 400,
+        "wires": [
+            [
+                "91ce8d56f0efe79a"
+            ]
+        ]
+    },
+    {
+        "id": "48679570cc6a02d4",
+        "type": "ui_dropdown",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "label": "",
+        "tooltip": "",
+        "place": "Select option",
+        "group": "ce23d23a7801273d",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "multiple": false,
+        "options": [
+            {
+                "label": "",
+                "value": "",
+                "type": "str"
+            }
+        ],
+        "payload": "",
+        "topic": "topic",
+        "topicType": "msg",
+        "className": "",
+        "x": 1090,
+        "y": 540,
+        "wires": [
+            [
+                "bd49bcfa3cacf086"
+            ]
+        ]
+    },
+    {
+        "id": "65e5ca2ed1ccdbbf",
+        "type": "change",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "options",
+                "pt": "msg",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 850,
+        "y": 480,
+        "wires": [
+            [
+                "48679570cc6a02d4"
+            ]
+        ]
+    },
+    {
+        "id": "7520a8bc076209ed",
+        "type": "function",
+        "z": "362a0b93abc679d8",
+        "name": "function 5",
+        "func": "const products = msg.payload;\n\nconst productArray = products.map(product => ({ [product.ProductName+' ('+product.Lieferant+')']: product.ProductID }));\n\n\nmsg.payload = productArray;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 480,
+        "wires": [
+            [
+                "65e5ca2ed1ccdbbf"
+            ]
+        ]
+    },
+    {
+        "id": "d926ce94f3aa2534",
+        "type": "Stackhero-MySQL",
+        "z": "362a0b93abc679d8",
+        "server": "6d381aa10c3661fa",
+        "name": "",
+        "x": 530,
+        "y": 740,
+        "wires": [
+            [
+                "abd2448a56fa8cc8",
+                "7b1b855b4d17ce1c",
+                "9846002c9322affe"
+            ]
+        ]
+    },
+    {
+        "id": "6a9b0598029631a3",
+        "type": "inject",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "props": [
+            {
+                "p": "topic",
+                "vt": "str"
+            },
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "SELECT * FROM `Products_Scales` WHERE `ScaleID` LIKE :scaleid",
+        "payload": "{\"scaleid\": \"49303779470B\"}",
+        "payloadType": "json",
+        "x": 390,
+        "y": 700,
+        "wires": [
+            [
+                "d926ce94f3aa2534",
+                "63d68bbff85801c7"
+            ]
+        ]
+    },
+    {
+        "id": "fcbe5d97ab20d7b4",
+        "type": "function",
+        "z": "362a0b93abc679d8",
+        "name": "function 6",
+        "func": "const products = msg.payload;\n\nconst productMap = products.reduce((acc, product) => {\n    acc[product.ProductID] = product.ProductName;\n    return acc;\n}, {});\n\nmsg.payload = productMap;\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 640,
+        "y": 400,
+        "wires": [
+            [
+                "584a4e9b2a934894"
+            ]
+        ]
+    },
+    {
+        "id": "584a4e9b2a934894",
+        "type": "change",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "products",
+                "pt": "global",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 860,
+        "y": 400,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "abd2448a56fa8cc8",
+        "type": "change",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload[0].ProductID",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 850,
+        "y": 540,
+        "wires": [
+            [
+                "48679570cc6a02d4"
+            ]
+        ]
+    },
+    {
+        "id": "3fbdf9f34d05fe96",
+        "type": "ui_button",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "group": "ce23d23a7801273d",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Berührte Waage nachschlagen",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 170,
+        "y": 740,
+        "wires": [
+            [
+                "d3abe070e3f6e119"
+            ]
+        ]
+    },
+    {
+        "id": "d3abe070e3f6e119",
+        "type": "function",
+        "z": "362a0b93abc679d8",
+        "name": "function 7",
+        "func": "msg.topic = \"SELECT * FROM`Products_Scales` WHERE `ScaleID` LIKE :scaleid\";\nmsg.payload = { \"scaleid\": flow.get('touched_scale_ID') };\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 740,
+        "wires": [
+            [
+                "d926ce94f3aa2534"
+            ]
+        ]
+    },
+    {
+        "id": "2e608d7511c7db5d",
+        "type": "comment",
+        "z": "362a0b93abc679d8",
+        "name": "Berührte Waage im Dropdown auswählen",
+        "info": "",
+        "x": 180,
+        "y": 660,
+        "wires": []
+    },
+    {
+        "id": "7b1b855b4d17ce1c",
+        "type": "ui_text",
+        "z": "362a0b93abc679d8",
+        "group": "ce23d23a7801273d",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Gedrückte ProduktID",
+        "format": "{{msg.payload[0].ProductID}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 720,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "a5c6ba909c178afb",
+        "type": "ui_button",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "group": "ce23d23a7801273d",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Produkt hier setzen",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 630,
+        "y": 900,
+        "wires": [
+            [
+                "36e2945b0ab0b035"
+            ]
+        ]
+    },
+    {
+        "id": "bd49bcfa3cacf086",
+        "type": "change",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "product_ID_selected",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 1310,
+        "y": 540,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "b7025ceefda7670b",
+        "type": "comment",
+        "z": "362a0b93abc679d8",
+        "name": "DB auslesen",
+        "info": "",
+        "x": 90,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "393569f329468b30",
+        "type": "comment",
+        "z": "362a0b93abc679d8",
+        "name": "Schreibe Options Liste des Dropdown-Menüs",
+        "info": "",
+        "x": 910,
+        "y": 440,
+        "wires": []
+    },
+    {
+        "id": "44f7f68e36b445ef",
+        "type": "comment",
+        "z": "362a0b93abc679d8",
+        "name": "Wähle aus der Dropdown-Liste aus",
+        "info": "",
+        "x": 860,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "e3005420cf7ee79b",
+        "type": "function",
+        "z": "362a0b93abc679d8",
+        "name": "Lösche Waagen Zuordnung",
+        "func": "msg.topic = \"DELETE FROM `Products_Scales` WHERE `ScaleID` LIKE :scaleid\";\nmsg.payload = { \"scaleid\": flow.get('touched_scale_ID') };\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 940,
+        "y": 940,
+        "wires": [
+            [
+                "e6acb73fa6213876"
+            ]
+        ]
+    },
+    {
+        "id": "e6acb73fa6213876",
+        "type": "Stackhero-MySQL",
+        "z": "362a0b93abc679d8",
+        "server": "6d381aa10c3661fa",
+        "name": "",
+        "x": 1170,
+        "y": 940,
+        "wires": [
+            [
+                "dd41ad8e67fe25e7"
+            ]
+        ]
+    },
+    {
+        "id": "e6e82c51daf8aee1",
+        "type": "ui_button",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "group": "ce23d23a7801273d",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Waagenzuordnung löschen",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 660,
+        "y": 940,
+        "wires": [
+            [
+                "e3005420cf7ee79b"
+            ]
+        ]
+    },
+    {
+        "id": "dd41ad8e67fe25e7",
+        "type": "debug",
+        "z": "362a0b93abc679d8",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1340,
+        "y": 940,
+        "wires": []
+    },
+    {
+        "id": "91ce8d56f0efe79a",
+        "type": "change",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "SELECT * FROM Products",
+                "tot": "str"
+            },
+            {
+                "t": "delete",
+                "p": "payload",
+                "pt": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 330,
+        "y": 400,
+        "wires": [
+            [
+                "56f9ab02abc20493",
+                "b4940b08fca90d5f"
+            ]
+        ]
+    },
+    {
+        "id": "9846002c9322affe",
+        "type": "debug",
+        "z": "362a0b93abc679d8",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 780,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "63d68bbff85801c7",
+        "type": "change",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "touched_scale_ID",
+                "pt": "flow",
+                "to": "49303779470B",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 500,
+        "y": 620,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "36e2945b0ab0b035",
+        "type": "function",
+        "z": "362a0b93abc679d8",
+        "name": "Eintragen Waagen Zuordnung",
+        "func": "msg.topic = \"INSERT INTO`Products_Scales`(`ProductID`, `ScaleID`) VALUES(:productid, :scaleid )\";\nmsg.payload = { \"productid\": flow.get(\"product_ID_selected\"), \"scaleid\": flow.get('touched_scale_ID') };\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 950,
+        "y": 900,
+        "wires": [
+            [
+                "0341ea296ec75b84"
+            ]
+        ]
+    },
+    {
+        "id": "0341ea296ec75b84",
+        "type": "Stackhero-MySQL",
+        "z": "362a0b93abc679d8",
+        "server": "6d381aa10c3661fa",
+        "name": "",
+        "x": 1170,
+        "y": 900,
+        "wires": [
+            [
+                "5eefd9adaf6289ac"
+            ]
+        ]
+    },
+    {
+        "id": "5eefd9adaf6289ac",
+        "type": "debug",
+        "z": "362a0b93abc679d8",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1340,
+        "y": 900,
+        "wires": []
+    },
+    {
+        "id": "b4940b08fca90d5f",
+        "type": "debug",
+        "z": "362a0b93abc679d8",
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 420,
+        "y": 480,
+        "wires": []
+    },
+    {
         "id": "8198ea1bf5fc4048",
         "type": "mqtt in",
         "z": "5f8b5286451f333f",
@@ -1316,7 +2118,7 @@
         "rh": 0,
         "inputs": 0,
         "x": 200,
-        "y": 200,
+        "y": 80,
         "wires": [
             [
                 "cd68a3106cc08ea0",
@@ -1338,7 +2140,7 @@
         "layout": "row-spread",
         "className": "",
         "x": 570,
-        "y": 200,
+        "y": 80,
         "wires": []
     },
     {
@@ -1353,7 +2155,7 @@
         "finalize": "",
         "libs": [],
         "x": 380,
-        "y": 240,
+        "y": 120,
         "wires": [
             [
                 "07ac77dc78ccf957"
@@ -1374,7 +2176,7 @@
         "layout": "row-spread",
         "className": "",
         "x": 570,
-        "y": 240,
+        "y": 120,
         "wires": []
     },
     {
@@ -1401,7 +2203,7 @@
         "z": "5f8b5286451f333f",
         "name": "",
         "group": "8ee2a8be9e79749a",
-        "order": 4,
+        "order": 3,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -1416,7 +2218,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 150,
-        "y": 340,
+        "y": 220,
         "wires": [
             [
                 "910414beb817d5b9"
@@ -1429,7 +2231,7 @@
         "z": "5f8b5286451f333f",
         "name": "",
         "group": "8ee2a8be9e79749a",
-        "order": 3,
+        "order": 5,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -1531,6 +2333,7 @@
         "id": "2afae3dc07fe5b56",
         "type": "ui_button",
         "z": "5f8b5286451f333f",
+        "d": true,
         "name": "",
         "group": "5a30b569fe0f7853",
         "order": 4,
@@ -1612,30 +2415,12 @@
         "wires": []
     },
     {
-        "id": "dfe2359015d47dce",
-        "type": "mqtt out",
-        "z": "5f8b5286451f333f",
-        "name": "",
-        "topic": "homie/shop_controller/close_shop",
-        "qos": "1",
-        "retain": "false",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "b1634a54dc9da698",
-        "x": 540,
-        "y": 380,
-        "wires": []
-    },
-    {
         "id": "46831a1abc174874",
         "type": "ui_button",
         "z": "5f8b5286451f333f",
         "name": "",
         "group": "8ee2a8be9e79749a",
-        "order": 4,
+        "order": 8,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -1645,7 +2430,7 @@
         "bgcolor": "",
         "className": "",
         "icon": "",
-        "payload": "",
+        "payload": "10",
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
@@ -1653,7 +2438,7 @@
         "y": 380,
         "wires": [
             [
-                "dfe2359015d47dce"
+                "910414beb817d5b9"
             ]
         ]
     },
@@ -1663,7 +2448,7 @@
         "z": "5f8b5286451f333f",
         "name": "",
         "group": "8ee2a8be9e79749a",
-        "order": 4,
+        "order": 9,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -1877,7 +2662,7 @@
         "z": "5f8b5286451f333f",
         "name": "",
         "group": "8ee2a8be9e79749a",
-        "order": 3,
+        "order": 7,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -1891,7 +2676,35 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 190,
+        "x": 200,
+        "y": 340,
+        "wires": [
+            [
+                "910414beb817d5b9"
+            ]
+        ]
+    },
+    {
+        "id": "a219a0a170bb46cc",
+        "type": "ui_button",
+        "z": "5f8b5286451f333f",
+        "name": "",
+        "group": "8ee2a8be9e79749a",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Kunde auth. Waagentara! (2)",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "2",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 200,
         "y": 260,
         "wires": [
             [
@@ -1904,7 +2717,7 @@
         "type": "mqtt in",
         "z": "e93210c72506d388",
         "name": "",
-        "topic": "homie/tracker-0-1.1-1.0/tof/actreading",
+        "topic": "homie/tracker-shop-track-0-1.1-1.0/tof/actreading",
         "qos": "0",
         "datatype": "auto-detect",
         "broker": "b1634a54dc9da698",
@@ -1912,11 +2725,12 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 230,
+        "x": 270,
         "y": 100,
         "wires": [
             [
-                "872d44e8e910d76e"
+                "872d44e8e910d76e",
+                "06f9fb5f163d7653"
             ]
         ]
     },
@@ -1924,8 +2738,8 @@
         "id": "dcb1f1ff405c6724",
         "type": "ui_heat_map",
         "z": "e93210c72506d388",
-        "group": "d4e8a1e8746ae8dc",
-        "order": 5,
+        "group": "b78d5b1b155bfa94",
+        "order": 2,
         "width": "6",
         "height": "6",
         "name": "",
@@ -1972,7 +2786,7 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 510,
+        "x": 610,
         "y": 100,
         "wires": [
             []
@@ -1997,7 +2811,7 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 510,
+        "x": 610,
         "y": 140,
         "wires": [
             []
@@ -2008,7 +2822,7 @@
         "type": "mqtt in",
         "z": "e93210c72506d388",
         "name": "",
-        "topic": "homie/tracker-0-1.2-1.0/tof/actreading",
+        "topic": "homie/tracker-shop-track-0-1.2-1.0/tof/actreading",
         "qos": "0",
         "datatype": "auto-detect",
         "broker": "b1634a54dc9da698",
@@ -2016,11 +2830,12 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 230,
+        "x": 270,
         "y": 140,
         "wires": [
             [
-                "506dee9e605204d5"
+                "506dee9e605204d5",
+                "72cb77049897d914"
             ]
         ]
     },
@@ -2043,7 +2858,7 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 510,
+        "x": 610,
         "y": 180,
         "wires": [
             []
@@ -2054,7 +2869,7 @@
         "type": "mqtt in",
         "z": "e93210c72506d388",
         "name": "",
-        "topic": "homie/tracker-0-1.3-1.0/tof/actreading",
+        "topic": "homie/tracker-shop-track-0-1.3-1.0/tof/actreading",
         "qos": "0",
         "datatype": "auto-detect",
         "broker": "b1634a54dc9da698",
@@ -2062,11 +2877,12 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 230,
+        "x": 270,
         "y": 180,
         "wires": [
             [
-                "0e73d01858270354"
+                "0e73d01858270354",
+                "71681780fe3656cf"
             ]
         ]
     },
@@ -2089,7 +2905,7 @@
         "from": "",
         "to": "",
         "reg": false,
-        "x": 510,
+        "x": 610,
         "y": 220,
         "wires": [
             []
@@ -2100,7 +2916,7 @@
         "type": "mqtt in",
         "z": "e93210c72506d388",
         "name": "",
-        "topic": "homie/tracker-0-1.4-1.0/tof/actreading",
+        "topic": "homie/tracker-shop-track-0-1.4-1.0/tof/actreading",
         "qos": "0",
         "datatype": "auto-detect",
         "broker": "b1634a54dc9da698",
@@ -2108,11 +2924,12 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 230,
+        "x": 270,
         "y": 220,
         "wires": [
             [
-                "f1fc667d555cd9a6"
+                "f1fc667d555cd9a6",
+                "9a92aab51c6f7540"
             ]
         ]
     },
@@ -2173,5 +2990,288 @@
         "x": 750,
         "y": 320,
         "wires": []
+    },
+    {
+        "id": "7e22ee6ca54d8e3b",
+        "type": "ui_chart",
+        "z": "e93210c72506d388",
+        "name": "",
+        "group": "e7001e04ca82ff4e",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "label": "Sensor 0-1.1",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "100",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 950,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "06f9fb5f163d7653",
+        "type": "function",
+        "z": "e93210c72506d388",
+        "name": "prepare",
+        "func": "for (let i=0; i<8; i++) {\n    if (msg.payload[i] != null) {\n        let msg0 = { topic: i.toString(), payload: msg.payload[i] };\n        node.send(msg0);\n    }\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 80,
+        "wires": [
+            [
+                "7e22ee6ca54d8e3b"
+            ]
+        ]
+    },
+    {
+        "id": "18611bc6f6647bee",
+        "type": "ui_chart",
+        "z": "e93210c72506d388",
+        "name": "",
+        "group": "e7001e04ca82ff4e",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "label": "Sensor 0-1.2",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "100",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 950,
+        "y": 120,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2530b909cff3b2ca",
+        "type": "ui_chart",
+        "z": "e93210c72506d388",
+        "name": "",
+        "group": "e7001e04ca82ff4e",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "label": "Sensor 0-1.3",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "100",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 950,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "754bb9952ab45451",
+        "type": "ui_chart",
+        "z": "e93210c72506d388",
+        "name": "",
+        "group": "e7001e04ca82ff4e",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "label": "Sensor 0-1.4",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "100",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 950,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "07459f0f3299cfe0",
+        "type": "ui_button",
+        "z": "e93210c72506d388",
+        "name": "",
+        "group": "e7001e04ca82ff4e",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Reset",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "[]",
+        "payloadType": "json",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 550,
+        "y": 400,
+        "wires": [
+            [
+                "7e22ee6ca54d8e3b",
+                "18611bc6f6647bee",
+                "2530b909cff3b2ca",
+                "754bb9952ab45451"
+            ]
+        ]
+    },
+    {
+        "id": "72cb77049897d914",
+        "type": "function",
+        "z": "e93210c72506d388",
+        "name": "prepare",
+        "func": "for (let i=0; i<8; i++) {\n    if (msg.payload[i] != null) {\n        let msg0 = { topic: i.toString(), payload: msg.payload[i] };\n        node.send(msg0);\n    }\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 120,
+        "wires": [
+            [
+                "18611bc6f6647bee"
+            ]
+        ]
+    },
+    {
+        "id": "71681780fe3656cf",
+        "type": "function",
+        "z": "e93210c72506d388",
+        "name": "prepare",
+        "func": "for (let i=0; i<8; i++) {\n    if (msg.payload[i] != null) {\n        let msg0 = { topic: i.toString(), payload: msg.payload[i] };\n        node.send(msg0);\n    }\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 160,
+        "wires": [
+            [
+                "2530b909cff3b2ca"
+            ]
+        ]
+    },
+    {
+        "id": "9a92aab51c6f7540",
+        "type": "function",
+        "z": "e93210c72506d388",
+        "name": "prepare",
+        "func": "for (let i=0; i<8; i++) {\n    if (msg.payload[i] != null) {\n        let msg0 = { topic: i.toString(), payload: msg.payload[i] };\n        node.send(msg0);\n    }\n}",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 200,
+        "wires": [
+            [
+                "754bb9952ab45451"
+            ]
+        ]
     }
 ]

@@ -74,6 +74,7 @@ def on_connect(client, userdata, flags, rc):
         logger.info("MQTT connected OK. Return code "+str(rc))
         client.subscribe("homie/+/scales/+/mass") #eg homie/scale-shop-shelf02-0-1.2-1.0/scales/493037101F4B/mass
         client.subscribe("homie/"+mqtt_client_name+"/set_shop_status")
+        client.subscribe("homie/"+mqtt_client_name+"/update_data_from_db")
         client.subscribe("homie/shop-track-collector/pixels-above-reference")
         client.subscribe("homie/door/#")
         client.subscribe("homie/cardreader/#")
@@ -181,9 +182,11 @@ client.publish("homie/"+mqtt_client_name+"/state", 'online', qos=1, retain=True)
 set_shop_status(10) # Laden geschlossen. Sonst kann man den laden eröffnen durch Stromunterbrechung.
 
 last_actBasket = {} #to enable the feature: Send only on change
-client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
-client.publish("homie/"+mqtt_client_name+"/shop_overview/products", json.dumps(products), qos=1, retain=True)
-client.publish("homie/"+mqtt_client_name+"/shop_overview/scales_products", json.dumps(scales_products), qos=1, retain=True)
+def send_basket_products_scales_to_mqtt():
+  client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
+  client.publish("homie/"+mqtt_client_name+"/shop_overview/products", json.dumps(products), qos=1, retain=True)
+  client.publish("homie/"+mqtt_client_name+"/shop_overview/scales_products", json.dumps(scales_products), qos=1, retain=True)
+send_basket_products_scales_to_mqtt()
 
 loop_var = True
 def signal_handler(sig, frame):
@@ -214,6 +217,10 @@ while loop_var:
               set_shop_status(int(m))
             else:
               set_shop_status(0)
+
+        if len(msplit) == 3 and msplit[2].lower() == "update_data_from_db":
+           get_all_data_from_db()
+           send_basket_products_scales_to_mqtt()
 
         # tracker information to know immediate person presence
         if len(msplit) == 3 and msplit[1].lower() == "shop-track-collector" and msplit[2].lower() == "pixels-above-reference":
@@ -321,25 +328,29 @@ while loop_var:
     for k, temp_product_id in scales_products.items():
       if temp_product_id in products: # should always be true, unless error in db (assignment scales <-> products) 
         if (k in scales_mass_reference) and (k in scales_mass_actual): #Hat eine Waage einen Wert zurückgeliefert, auf dem das Produkt liegt?
-          temp_product = copy.deepcopy(products[temp_product_id])
-          temp_count = round( (scales_mass_reference[k] - scales_mass_actual[k]) / temp_product['kgPerUnit'] ) #Was ist die Masse einer Produkteinheit?
-          if temp_count<0: temp_count=0 #no negative numbers of items in basket! Negative numbers only for actProductsCount
-          if temp_count>100: 
-             temp_count=100 # set some arbitrarily choosen limits
-             logger.warning("Warenanzahllimit erreicht.")
+          if isinstance(products[temp_product_id]['kgPerUnit'], (int, float)): #valid number? to prevent division by zero
+            if products[temp_product_id]['kgPerUnit'] > 0.001: #mind. 1g per product
+              temp_product = copy.deepcopy(products[temp_product_id])
+              temp_count = (scales_mass_reference[k] - scales_mass_actual[k]) / temp_product['kgPerUnit'] #double as return
+              if not math.isnan(temp_count):
+                temp_count = round(temp_count)
+                if temp_count<0: temp_count=0 #no negative numbers of items in basket! Negative numbers only for actProductsCount
+                if temp_count>100: 
+                  temp_count=100 # set some arbitrarily choosen limits
+                  logger.warning("Warenanzahllimit erreicht.")
 
-          if scales_products[k] in actBasketProducts: #in case product is sold on several scales and already in basket
-              actBasketProducts[temp_product_id]['withdrawal_units'] += temp_count
-              actBasketProducts[temp_product_id]['price'] = actBasketProducts[temp_product_id]['withdrawal_units'] * temp_product['PricePerUnit']
-          else:
-              temp_product['withdrawal_units'] = temp_count
-              temp_product['price'] = temp_count * temp_product['PricePerUnit']
-              actBasketProducts[temp_product_id] = temp_product
-          actProductsCount += temp_count
-          actSumTotal += actBasketProducts[temp_product_id]['price']
+                if scales_products[k] in actBasketProducts: #in case product is sold on several scales and already in basket
+                    actBasketProducts[temp_product_id]['withdrawal_units'] += temp_count
+                    actBasketProducts[temp_product_id]['price'] = actBasketProducts[temp_product_id]['withdrawal_units'] * temp_product['PricePerUnit']
+                else:
+                    temp_product['withdrawal_units'] = temp_count
+                    temp_product['price'] = temp_count * temp_product['PricePerUnit']
+                    actBasketProducts[temp_product_id] = temp_product
+                actProductsCount += temp_count
+                actSumTotal += actBasketProducts[temp_product_id]['price']
 
-          if actBasketProducts[temp_product_id]['withdrawal_units'] == 0:
-            actBasketProducts.pop(temp_product_id, None) #Remove from list
+                if actBasketProducts[temp_product_id]['withdrawal_units'] == 0:
+                  actBasketProducts.pop(temp_product_id, None) #Remove from list
 
     actBasket = {"data": actBasketProducts, "total": actSumTotal, "products_count": actProductsCount}
     if last_actBasket != actBasket: #change to basket? --> publish!
@@ -405,7 +416,7 @@ while loop_var:
           logger.info(f"Executed the following SQL Str: {sql_str} with ({actBasket_str})")
           db_prepare()
           try:
-            cur.execute(sql_str, (actBasket_str))
+            cur.execute(sql_str, (actBasket_str,)) #the last comma here is super important!!
             conn.commit()
             logger.info("Last Inserted ID: {}".format(cur.lastrowid))
           except mariadb.Error as e:
