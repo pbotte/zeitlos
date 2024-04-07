@@ -440,8 +440,8 @@ while True:
                 act_distance_stdev = statistics.stdev(list(waagen[w[0]]['stack'])[:-4])
                 act_distance_avg_old = statistics.mean(list(waagen[w[0]]['stack'])[:-4])
 
-                act_touched = 1 if abs(act_distance_avg_new - act_distance_avg_old) > act_distance_stdev*10 else 0
                 if act_distance_stdev<20: act_distance_stdev=20 #to avoid too small std deviations
+                act_touched = 1 if abs(act_distance_avg_new - act_distance_avg_old) > act_distance_stdev*10 else 0
                 
                 if waagen[w[0]]['touched'] != act_touched:
                     logger.info(f"touched changed to {act_touched} for i2c address 0x{i2c_address:02X} mac {waagen[w[0]]['mac']}: New: {act_distance_avg_new:.1f} Diff: {(act_distance_avg_new-act_distance_avg_old):.1f} Std: {act_distance_stdev:.1f}")
