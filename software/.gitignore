@@ -9,6 +9,7 @@ docker/nodered/data/.config.nodes.json
 docker/nodered/data/package-lock.json
 docker/nodered/data/.config.users.json.backup
 docker/nodered/data/.config.users.json
+docker/nodered/data/*.backup
 
 www/qrscanner-debug/last.png
 

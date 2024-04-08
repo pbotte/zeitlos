@@ -106,6 +106,11 @@ if (array_key_exists('debug', $_GET)) {
                 document.getElementById("myBasketTable").innerHTML = mstr;
 
             }
+            if (r_message.destinationName == "homie/shop-track-collector/pixels-above-reference") {
+              var Person_In_Shop = r_message.payloadString;
+              console.log("MQTT recv (" + r_message.destinationName + "): ", r_message.payloadString);
+              document.getElementById("myMessageString").innerHTML = "(Service-Meldung: "+Person_In_Shop+")";
+            }
 		}
 
 		function onConnected(recon, url) {
@@ -119,6 +124,7 @@ if (array_key_exists('debug', $_GET)) {
 			connected_flag = 1
 			console.log("connected_flag= ", connected_flag);
 			mqtt.subscribe("homie/shop_controller/actualBasket");
+                        mqtt.subscribe("homie/shop-track-collector/pixels-above-reference");
 		}
 
 		function MQTTconnect() {
@@ -235,6 +241,7 @@ table.paleBlueRows tfoot td {
     </table>
     <p>&nbsp;</p>
     <p><b>Einkauf fertig?</b> Einfach den Laden verlassen. Außen erhalten Sie die Quittung.<p>
+    <p><span id="myMessageString"></span></p>
 
 	<script>
 		var connected_flag = 0;

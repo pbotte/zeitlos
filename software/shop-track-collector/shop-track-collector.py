@@ -30,6 +30,7 @@ def on_connect(client, userdata, flags, rc):
         logger.info("MQTT connected OK. Return code "+str(rc))
         client.subscribe("homie/+/tof/actreading")
         client.subscribe(f"homie/{mqtt_client_name}/reference")
+        client.subscribe(f"homie/{mqtt_client_name}/reference/set")
         client.subscribe("homie/shop_controller/shop_status")
         logger.debug("MQTT: Subscribed to all topics")
     else:
@@ -102,13 +103,17 @@ while True:
 
         if message.topic.lower() == f"homie/{mqtt_client_name}/reference":
             logger.info("reference received")
-            values_reference = json.loads(m)            
+            values_reference = json.loads(m)
 
         if message.topic.lower() == "homie/shop_controller/shop_status":
             if int(m) ==2:
               logger.info("shop_status == 2 received, saving reference.")
               values_reference = values.copy()
               client.publish(f"homie/{mqtt_client_name}/reference", json.dumps(values_reference), qos=1, retain=True)
+        if message.topic.lower() == "homie/shop-track-collector/reference/set":
+            logger.info("saving reference.")
+            values_reference = values.copy()
+            client.publish(f"homie/{mqtt_client_name}/reference", json.dumps(values_reference), qos=1, retain=True)
 
         if msplit[2] == "tof" and msplit[3] == "actreading":
             values[msplit[1].lower()] = json.loads(m)
