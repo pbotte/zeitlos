@@ -1,0 +1,6 @@
+//Only secure connections supported.
+
+var host = "..."; //DNS-MQTT-Broker-Servername
+var port = 8084; //TCP-Port
+var mqtt_user_name = "...";
+var mqtt_password = "...";
