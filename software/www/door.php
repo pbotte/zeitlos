@@ -234,7 +234,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         iframe.src = '/invoice.php?d='+base64EncodedData+'&c='+correct_check_str+'&out=html';
 
         const qrpic = document.getElementById('qrpic');
-        qrpic.src="/qr.php?t=https://www.hemmes24.de/code/invoice2.php?d%3D"+base64EncodedData+"%26c%3D"+correct_check_str;
+        qrpic.src="/qr.php?t=https://www.hemmes24.de/code/invoice.php?d%3D"+base64EncodedData+"%26c%3D"+correct_check_str;
     }
     </script>
 

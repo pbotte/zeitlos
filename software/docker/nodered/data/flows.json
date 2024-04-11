@@ -16,6 +16,14 @@
         "env": []
     },
     {
+        "id": "de6d6197d0487792",
+        "type": "tab",
+        "label": "Warenpflege",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
         "id": "5f8b5286451f333f",
         "type": "tab",
         "label": "Details",
@@ -217,7 +225,7 @@
         "type": "ui_group",
         "name": "Setze Ladenstatus auf:",
         "tab": "564fb3f8a786add3",
-        "order": 2,
+        "order": 1,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -226,7 +234,7 @@
     {
         "id": "564fb3f8a786add3",
         "type": "ui_tab",
-        "name": "Simulation",
+        "name": "Servicearbeiten",
         "icon": "dashboard",
         "order": 3,
         "disabled": false,
@@ -237,7 +245,7 @@
         "type": "ui_group",
         "name": "Kartenleser",
         "tab": "564fb3f8a786add3",
-        "order": 2,
+        "order": 3,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -318,8 +326,8 @@
         "id": "e5e3c18954323c62",
         "type": "ui_group",
         "name": "Kalibration",
-        "tab": "f92eb5dfeffee078",
-        "order": 3,
+        "tab": "564fb3f8a786add3",
+        "order": 2,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -346,6 +354,37 @@
         "width": "6",
         "collapse": false,
         "className": ""
+    },
+    {
+        "id": "dcdf9b64105d581c",
+        "type": "ui_group",
+        "name": "Neus Produkt eintragen",
+        "tab": "f92eb5dfeffee078",
+        "order": 3,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "0428bbe7c77782e0",
+        "type": "ui_spacer",
+        "z": "362a0b93abc679d8",
+        "name": "spacer",
+        "group": "dcdf9b64105d581c",
+        "order": 4,
+        "width": 1,
+        "height": 1
+    },
+    {
+        "id": "2345f6633a6d4d82",
+        "type": "ui_spacer",
+        "z": "362a0b93abc679d8",
+        "name": "spacer",
+        "group": "ce23d23a7801273d",
+        "order": 5,
+        "width": 1,
+        "height": 1
     },
     {
         "id": "73e3bbce7808f2b5",
@@ -1017,7 +1056,7 @@
         "type": "function",
         "z": "993296db21e0de95",
         "name": "ID -> Str",
-        "func": "var shop_status_descr = {\n    0: \"Geräte Initialisierung\", \n    1: \"Bereit, Kein Kunde im Laden\", \n    2: \"Kunde authentifiziert/Waagen tara\",\n    3: \"Kunde betritt/verlässt gerade den Laden\", \n    4: \"Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden\",\n    5: \"Einkauf beendet und abgerechnet\", \n    6: \"ungenutzt\",\n    7: \"Warten auf: Vorbereitung für nächsten Kunden\", \n    8: \"Technischer Fehler aufgetreten\", \n    9: \"Kunde benötigt Hilfe\",\n    10: \"Laden geschlossen\", \n    11: \"Kunde möglicherweise im Laden\", \n    12: \"Kunde sicher im Laden\", \n    13: \"Fehler bei Authentifizierung\",\n    14: \"Bitte Laden betreten\", \n    15: \"Kunde nicht mehr im Laden. Abrechnung wird vorbereitet.\"\n};\n\nif (msg.payload in shop_status_descr) {\n    msg.payload = shop_status_descr[msg.payload];\n} else {\n    msg.payload = \"Invalid status\";\n}\nreturn msg;",
+        "func": "var shop_status_descr = {\n    0: \"Geräte Initialisierung\", \n    1: \"Bereit, Kein Kunde im Laden\", \n    2: \"Kunde authentifiziert/Waagen tara\",\n    3: \"Kunde betritt/verlässt gerade den Laden\", \n    4: \"Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden\",\n    5: \"Einkauf beendet und abgerechnet\", \n    6: \"ungenutzt\",\n    7: \"Warten auf: Vorbereitung für nächsten Kunden\", \n    8: \"Technischer Fehler aufgetreten\", \n    9: \"Kunde benötigt Hilfe\",\n    10: \"Laden geschlossen\", \n    11: \"Kunde möglicherweise im Laden\", \n    12: \"Kunde sicher im Laden\", \n    13: \"Fehler bei Authentifizierung\",\n    14: \"Bitte Laden betreten\", \n    15: \"Kunde nicht mehr im Laden. Abrechnung wird vorbereitet.\",\n    16: \"Timeout Kartenterminal\",\n    17: \"Warten auf: Kartenterminal Buchung erfolgreich\"\n};\n\nif (msg.payload in shop_status_descr) {\n    msg.payload = shop_status_descr[msg.payload];\n} else {\n    msg.payload = \"Invalid status\";\n}\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -1541,7 +1580,7 @@
         "type": "ui_text",
         "z": "362a0b93abc679d8",
         "group": "ce23d23a7801273d",
-        "order": 1,
+        "order": 2,
         "width": 0,
         "height": 0,
         "name": "",
@@ -1562,7 +1601,7 @@
         "type": "ui_text",
         "z": "362a0b93abc679d8",
         "group": "ce23d23a7801273d",
-        "order": 2,
+        "order": 3,
         "width": 0,
         "height": 0,
         "name": "",
@@ -1674,7 +1713,7 @@
         "tooltip": "",
         "place": "Select option",
         "group": "ce23d23a7801273d",
-        "order": 5,
+        "order": 10,
         "width": 0,
         "height": 0,
         "passthru": true,
@@ -1721,7 +1760,8 @@
         "y": 480,
         "wires": [
             [
-                "48679570cc6a02d4"
+                "48679570cc6a02d4",
+                "8eeddea9eecb46e7"
             ]
         ]
     },
@@ -1781,8 +1821,8 @@
         "topic": "SELECT * FROM `Products_Scales` WHERE `ScaleID` LIKE :scaleid",
         "payload": "{\"scaleid\": \"49303779470B\"}",
         "payloadType": "json",
-        "x": 390,
-        "y": 700,
+        "x": 290,
+        "y": 620,
         "wires": [
             [
                 "d926ce94f3aa2534",
@@ -1857,7 +1897,8 @@
         "y": 540,
         "wires": [
             [
-                "48679570cc6a02d4"
+                "48679570cc6a02d4",
+                "8eeddea9eecb46e7"
             ]
         ]
     },
@@ -1867,7 +1908,7 @@
         "z": "362a0b93abc679d8",
         "name": "",
         "group": "ce23d23a7801273d",
-        "order": 3,
+        "order": 4,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -1885,7 +1926,9 @@
         "y": 740,
         "wires": [
             [
-                "d3abe070e3f6e119"
+                "d3abe070e3f6e119",
+                "10bfdef9974c782b",
+                "7c0cae51ce80987c"
             ]
         ]
     },
@@ -1923,7 +1966,7 @@
         "type": "ui_text",
         "z": "362a0b93abc679d8",
         "group": "ce23d23a7801273d",
-        "order": 4,
+        "order": 9,
         "width": 0,
         "height": 0,
         "name": "",
@@ -1935,8 +1978,8 @@
         "font": "",
         "fontSize": 16,
         "color": "#000000",
-        "x": 720,
-        "y": 780,
+        "x": 820,
+        "y": 740,
         "wires": []
     },
     {
@@ -1945,7 +1988,7 @@
         "z": "362a0b93abc679d8",
         "name": "",
         "group": "ce23d23a7801273d",
-        "order": 6,
+        "order": 11,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -1959,8 +2002,8 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 630,
-        "y": 900,
+        "x": 210,
+        "y": 1080,
         "wires": [
             [
                 "36e2945b0ab0b035"
@@ -2033,8 +2076,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 940,
-        "y": 940,
+        "x": 520,
+        "y": 1120,
         "wires": [
             [
                 "e6acb73fa6213876"
@@ -2047,8 +2090,8 @@
         "z": "362a0b93abc679d8",
         "server": "6d381aa10c3661fa",
         "name": "",
-        "x": 1170,
-        "y": 940,
+        "x": 750,
+        "y": 1120,
         "wires": [
             [
                 "dd41ad8e67fe25e7"
@@ -2061,7 +2104,7 @@
         "z": "362a0b93abc679d8",
         "name": "",
         "group": "ce23d23a7801273d",
-        "order": 7,
+        "order": 12,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -2075,8 +2118,8 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 660,
-        "y": 940,
+        "x": 240,
+        "y": 1120,
         "wires": [
             [
                 "e3005420cf7ee79b"
@@ -2095,8 +2138,8 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1340,
-        "y": 940,
+        "x": 920,
+        "y": 1120,
         "wires": []
     },
     {
@@ -2184,8 +2227,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 950,
-        "y": 900,
+        "x": 530,
+        "y": 1080,
         "wires": [
             [
                 "0341ea296ec75b84"
@@ -2198,8 +2241,8 @@
         "z": "362a0b93abc679d8",
         "server": "6d381aa10c3661fa",
         "name": "",
-        "x": 1170,
-        "y": 900,
+        "x": 750,
+        "y": 1080,
         "wires": [
             [
                 "5eefd9adaf6289ac"
@@ -2218,8 +2261,8 @@
         "complete": "false",
         "statusVal": "",
         "statusType": "auto",
-        "x": 1340,
-        "y": 900,
+        "x": 920,
+        "y": 1080,
         "wires": []
     },
     {
@@ -2260,7 +2303,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 220,
-        "y": 1040,
+        "y": 1220,
         "wires": [
             [
                 "31c3b0196ca4bc79"
@@ -2279,7 +2322,7 @@
         "finalize": "",
         "libs": [],
         "x": 420,
-        "y": 1040,
+        "y": 1220,
         "wires": [
             [
                 "f328194ff57d9fe1"
@@ -2301,35 +2344,8 @@
         "expiry": "",
         "broker": "b1634a54dc9da698",
         "x": 570,
-        "y": 1040,
+        "y": 1220,
         "wires": []
-    },
-    {
-        "id": "9c7886e11b81f1d0",
-        "type": "ui_slider",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "label": "Masse in kg",
-        "tooltip": "",
-        "group": "e5e3c18954323c62",
-        "order": 2,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "outs": "end",
-        "topic": "topic",
-        "topicType": "msg",
-        "min": "0.1",
-        "max": "2",
-        "step": "0.05",
-        "className": "",
-        "x": 190,
-        "y": 1080,
-        "wires": [
-            [
-                "64d2e31cca80fe0b"
-            ]
-        ]
     },
     {
         "id": "c3e8c6bf8545722f",
@@ -2352,7 +2368,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 220,
-        "y": 1120,
+        "y": 1300,
         "wires": [
             [
                 "abbbb331bc9a7566"
@@ -2379,7 +2395,7 @@
         "to": "",
         "reg": false,
         "x": 470,
-        "y": 1080,
+        "y": 1260,
         "wires": [
             []
         ]
@@ -2396,7 +2412,7 @@
         "finalize": "",
         "libs": [],
         "x": 420,
-        "y": 1120,
+        "y": 1300,
         "wires": [
             [
                 "89d8fc9dba8241a4"
@@ -2418,7 +2434,7 @@
         "expiry": "",
         "broker": "b1634a54dc9da698",
         "x": 570,
-        "y": 1120,
+        "y": 1300,
         "wires": []
     },
     {
@@ -2428,8 +2444,613 @@
         "name": "Kalibration",
         "info": "",
         "x": 100,
-        "y": 1000,
+        "y": 1180,
         "wires": []
+    },
+    {
+        "id": "0999d5c129f52e6d",
+        "type": "ui_text_input",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "label": "Masse in kg",
+        "tooltip": "",
+        "group": "e5e3c18954323c62",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "number",
+        "delay": 300,
+        "topic": "topic",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "msg",
+        "x": 190,
+        "y": 1260,
+        "wires": [
+            [
+                "64d2e31cca80fe0b"
+            ]
+        ]
+    },
+    {
+        "id": "f27e660d285e3e7d",
+        "type": "link in",
+        "z": "362a0b93abc679d8",
+        "name": "DB Refresh",
+        "links": [],
+        "x": 95,
+        "y": 460,
+        "wires": [
+            [
+                "91ce8d56f0efe79a"
+            ]
+        ]
+    },
+    {
+        "id": "8eeddea9eecb46e7",
+        "type": "ui_dropdown",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "label": "",
+        "tooltip": "",
+        "place": "Select option",
+        "group": "f15585e8aad578ca",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "multiple": false,
+        "options": [
+            {
+                "label": "",
+                "value": "",
+                "type": "str"
+            }
+        ],
+        "payload": "",
+        "topic": "topic",
+        "topicType": "msg",
+        "className": "",
+        "x": 1090,
+        "y": 580,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d16a25ccc4f631d3",
+        "type": "mqtt in",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 1,
+        "x": 530,
+        "y": 840,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "10bfdef9974c782b",
+        "type": "function",
+        "z": "362a0b93abc679d8",
+        "name": "function 9",
+        "func": "msg.topic = \"homie/\" + flow.get(\"touched_USB_ID\")+\"/scales/\" + flow.get('touched_scale_ID')+\"/mass\";\nmsg.action = \"subscribe\";\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 840,
+        "wires": [
+            [
+                "d16a25ccc4f631d3"
+            ]
+        ]
+    },
+    {
+        "id": "126611169a3171c2",
+        "type": "ui_text",
+        "z": "362a0b93abc679d8",
+        "group": "ce23d23a7801273d",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Masse",
+        "format": "{{msg.payload | number:3}} kg",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 670,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "fa2f73aa3d88d305",
+        "type": "ui_text",
+        "z": "362a0b93abc679d8",
+        "group": "ce23d23a7801273d",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "WaagenID",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 790,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "3e6c2593bdb3b7ef",
+        "type": "ui_text",
+        "z": "362a0b93abc679d8",
+        "group": "ce23d23a7801273d",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Zuletzt berührte Waage",
+        "format": "{{msg.payload}}",
+        "layout": "col-center",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 150,
+        "y": 840,
+        "wires": []
+    },
+    {
+        "id": "7ffa621557cc2078",
+        "type": "ui_text",
+        "z": "362a0b93abc679d8",
+        "group": "ce23d23a7801273d",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Ausgewählte Waage",
+        "format": "{{msg.payload}}",
+        "layout": "col-center",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 140,
+        "y": 880,
+        "wires": []
+    },
+    {
+        "id": "7c0cae51ce80987c",
+        "type": "change",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "touched_scale_ID",
+                "tot": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 430,
+        "y": 780,
+        "wires": [
+            [
+                "fa2f73aa3d88d305"
+            ]
+        ]
+    },
+    {
+        "id": "818688328023ff53",
+        "type": "mqtt in",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "homie/scale-shop-shelf02-0-1.1-1.0/scales/493037B31449/mass",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 610,
+        "y": 900,
+        "wires": [
+            [
+                "126611169a3171c2"
+            ]
+        ]
+    },
+    {
+        "id": "43d0ed6cbee63753",
+        "type": "ui_text_input",
+        "z": "de6d6197d0487792",
+        "name": "",
+        "label": "Lieferant",
+        "tooltip": "",
+        "group": "dcdf9b64105d581c",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "text",
+        "delay": 300,
+        "topic": "topic",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "msg",
+        "x": 240,
+        "y": 100,
+        "wires": [
+            [
+                "2de014e1316861e0"
+            ]
+        ]
+    },
+    {
+        "id": "2de014e1316861e0",
+        "type": "change",
+        "z": "de6d6197d0487792",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "d0.Lieferant",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 460,
+        "y": 100,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "50a5eab7a334ebf3",
+        "type": "ui_text_input",
+        "z": "de6d6197d0487792",
+        "name": "",
+        "label": "Produktname",
+        "tooltip": "",
+        "group": "dcdf9b64105d581c",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "text",
+        "delay": 300,
+        "topic": "topic",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "msg",
+        "x": 260,
+        "y": 160,
+        "wires": [
+            [
+                "5776c552899329d2"
+            ]
+        ]
+    },
+    {
+        "id": "9282a9b116eaad4a",
+        "type": "ui_text_input",
+        "z": "de6d6197d0487792",
+        "name": "",
+        "label": "Preis pro Einheit",
+        "tooltip": "",
+        "group": "dcdf9b64105d581c",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "number",
+        "delay": 300,
+        "topic": "topic",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "msg",
+        "x": 260,
+        "y": 220,
+        "wires": [
+            [
+                "4a8ded367895543f"
+            ]
+        ]
+    },
+    {
+        "id": "2d9ffae9e50348a5",
+        "type": "ui_text_input",
+        "z": "de6d6197d0487792",
+        "name": "",
+        "label": "kg pro Einheit",
+        "tooltip": "",
+        "group": "dcdf9b64105d581c",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "number",
+        "delay": 300,
+        "topic": "topic",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "msg",
+        "x": 260,
+        "y": 280,
+        "wires": [
+            [
+                "420d80b50357683f"
+            ]
+        ]
+    },
+    {
+        "id": "d136748bf552bf66",
+        "type": "ui_text_input",
+        "z": "de6d6197d0487792",
+        "name": "",
+        "label": "MwSt.",
+        "tooltip": "",
+        "group": "dcdf9b64105d581c",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "number",
+        "delay": 300,
+        "topic": "topic",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "msg",
+        "x": 230,
+        "y": 320,
+        "wires": [
+            [
+                "ea40046dcef9b87c"
+            ]
+        ]
+    },
+    {
+        "id": "5427a70944893945",
+        "type": "Stackhero-MySQL",
+        "z": "de6d6197d0487792",
+        "server": "6d381aa10c3661fa",
+        "name": "",
+        "x": 590,
+        "y": 420,
+        "wires": [
+            [
+                "f41f0a8883d78a9c",
+                "1925d291aa7a9599"
+            ]
+        ]
+    },
+    {
+        "id": "ab638162634451a8",
+        "type": "change",
+        "z": "de6d6197d0487792",
+        "name": "Setze Topic",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "INSERT INTO `Products` (`Lieferant`, `ProductName`, `PricePerUnit`, `kgPerUnit`, `VAT`) VALUES (:Lieferant, :ProductName, :PricePerUnit, :kgPerUnit, :VAT)",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "d0",
+                "tot": "flow"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 430,
+        "y": 420,
+        "wires": [
+            [
+                "5427a70944893945"
+            ]
+        ]
+    },
+    {
+        "id": "5776c552899329d2",
+        "type": "change",
+        "z": "de6d6197d0487792",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "d0.ProductName",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 480,
+        "y": 160,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "4a8ded367895543f",
+        "type": "change",
+        "z": "de6d6197d0487792",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "d0.PricePerUnit",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 480,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "420d80b50357683f",
+        "type": "change",
+        "z": "de6d6197d0487792",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "d0.kgPerUnit",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 470,
+        "y": 280,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ea40046dcef9b87c",
+        "type": "change",
+        "z": "de6d6197d0487792",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "d0.VAT",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 450,
+        "y": 320,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "55e5626b50fe55c5",
+        "type": "ui_button",
+        "z": "de6d6197d0487792",
+        "name": "",
+        "group": "dcdf9b64105d581c",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Eintragen",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 240,
+        "y": 420,
+        "wires": [
+            [
+                "ab638162634451a8"
+            ]
+        ]
+    },
+    {
+        "id": "f41f0a8883d78a9c",
+        "type": "debug",
+        "z": "de6d6197d0487792",
+        "name": "debug 5",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 720,
+        "y": 420,
+        "wires": []
+    },
+    {
+        "id": "1925d291aa7a9599",
+        "type": "link call",
+        "z": "de6d6197d0487792",
+        "name": "DB Refresh",
+        "links": [
+            "f27e660d285e3e7d"
+        ],
+        "linkType": "static",
+        "timeout": "30",
+        "x": 750,
+        "y": 360,
+        "wires": [
+            []
+        ]
     },
     {
         "id": "8198ea1bf5fc4048",

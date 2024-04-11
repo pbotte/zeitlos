@@ -155,6 +155,26 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         mqtt.onConnected = onConnected;
 
 
+        var shop_status_descr = {
+          0: "Geräte Initialisierung", 
+          1: "Bereit, Kein Kunde im Laden", 
+          2: "Kunde authentifiziert/Waagen tara",
+          3: "Kunde betritt/verlässt gerade den Laden", 
+          4: "Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden",
+          5: "Einkauf beendet und abgerechnet", 
+          6: "ungenutzt",
+          7: "Warten auf: Vorbereitung für nächsten Kunden", 
+          8: "Technischer Fehler aufgetreten", 
+          9: "Kunde benötigt Hilfe",
+          10: "Laden geschlossen", 
+          11: "Kunde möglicherweise im Laden", 
+          12: "Kunde sicher im Laden", 
+          13: "Fehler bei Authentifizierung",
+          14: "Bitte Laden betreten", 
+          15: "Kunde nicht mehr im Laden. Abrechnung wird vorbereitet."
+        };
+
+
         mqtt_warning_on();
         MQTTconnect();
 
@@ -162,43 +182,10 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         setInterval(function () { if (connected_flag == 0) MQTTconnect() }, 5 * 1000);
 
         setInterval(function () {
-          switch (shop_status) {
-            case 0:
-              document.getElementById("mytext").innerHTML = "Initialisierung, bitte warten.";
-              break;
-            case 1:
-              document.getElementById("mytext").innerHTML = "Laden ist frei.<br><br>Einkauf mit Kundenkarte/Girocard beginnen.";
-              break;
-            case 2:
-              document.getElementById("mytext").innerHTML = "Authentifiziert.<br>Bitte Laden betreten.";
-              break;
-            case 3:
-              document.getElementById("mytext").innerHTML = "Kunde käuft ein.<br>Bitte warten.";
-              break;
-            case 4:
-              document.getElementById("mytext").innerHTML = "Kunde im Laden.<br>Einkauf beendet.";
-              break;
-            case 5:
-              document.getElementById("mytext").innerHTML = "Bezahlung erfolgreich.";
-              break;
-            case 6:
-              document.getElementById("mytext").innerHTML = "Kunde verlässt Laden";
-              break;
-            case 7:
-              document.getElementById("mytext").innerHTML = "Vorbereitung für nächsten Kunden. Bitte warten.";
-              break;
-            case 8:
-              document.getElementById("mytext").innerHTML = "Ein technischer Fehler ist aufgetreten.";
-              break;
-            case 9:
-              document.getElementById("mytext").innerHTML = "Kunde benötigt Hilfe.";
-              break;
-            case 10:
-              document.getElementById("mytext").innerHTML = "Laden geschlosen.";
-              break;
-            default:
-              document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";
-              break;
+          if (shop_status>=0 && shop_status<=15) {
+            document.getElementById("mytext").innerHTML = shop_status_descr[shop_status];
+          } else {
+            document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";
           }
 
         }, 100);

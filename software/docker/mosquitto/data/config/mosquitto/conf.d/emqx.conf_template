@@ -1,0 +1,12 @@
+connection emqx1
+log_type all
+try_private false
+address y1131616.ala.eu-central-1.emqxsl.com:8883
+bridge_cafile /mosquitto/config/mosquitto/certs/emqxsl-ca.crt
+#bridge_protocol_version mqttv50
+
+remote_clientid shop-controller
+remote_username shop-controller
+remote_password ...
+topic homie/shop_controller/# out
+topic homie/public_webpage_viewer/# in

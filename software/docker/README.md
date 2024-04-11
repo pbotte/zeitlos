@@ -34,9 +34,10 @@ git clone https://git.code.sf.net/p/phpqrcode/git qr
 
 
 ## Mosquitto
+Verison 2.0.18 ist mit emqx.com kompatibel, vorherige Versionen evtl. nicht. 
 ```bash
 # https://hub.docker.com/_/eclipse-mosquitto
-docker run -dit --restart unless-stopped --name mosquitto -p 1883:1883/tcp -p 9001:9001  -v /home/pi/zeitlos/software/docker/mosquitto/data:/mosquitto/ eclipse-mosquitto 
+docker run -dit --restart unless-stopped --name mosquitto -p 1883:1883/tcp -p 9001:9001  -v /home/pi/zeitlos/software/docker/mosquitto/data:/mosquitto/ eclipse-mosquitto:2.0.18
 # wichtig: Das Verzeichnis /home/pi/docker/mosquitto/data und allen Unterordnern muss 1883:1883 gehören:
 #          sudo chown -R 1883:1883 /home/pi/docker/mosquitto/data
 ```

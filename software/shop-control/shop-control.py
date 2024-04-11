@@ -60,7 +60,7 @@ def get_all_data_from_db():
     for ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit, VAT in cur: 
         products[ProductID] = {"ProductID":ProductID, "ProductName":ProductName, "ProductDescription": ProductDescription, 
         "PriceType": PriceType, "PricePerUnit":PricePerUnit, "kgPerUnit":kgPerUnit, "VAT": VAT}
-    cur.execute("SELECT ProductID, ScaleID FROM Products_Scales ")
+    cur.execute("SELECT ProductID, ScaleID FROM Products_Scales GROUP BY ScaleID"); #Group By verhindert, falls in der Datenbank zwei Produkte für eine Waage eingetragen sind.
     for ProductID, ScaleID in cur:
         scales_products[ScaleID.lower()] = ProductID
     logger.debug(f"products from db: {products=}")
@@ -76,6 +76,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe("homie/"+mqtt_client_name+"/set_shop_status")
         client.subscribe("homie/"+mqtt_client_name+"/update_data_from_db")
         client.subscribe("homie/shop-track-collector/pixels-above-reference")
+        client.subscribe("homie/public_webpage_viewer/message_input")
         client.subscribe("homie/door/#")
         client.subscribe("homie/cardreader/#")
 
@@ -218,6 +219,20 @@ while loop_var:
             else:
               set_shop_status(0)
 
+        #Fernsteuerung durch public_wegpage_viewer / supplier.php
+        if message.topic.lower() == "homie/public_webpage_viewer/message_input":
+          if shop_status==10:
+              if m == "1": #öffnen
+                logger.info("public_webpage_viewer öffnet den Laden.")
+                set_shop_status(0)
+                client.publish("homie/display-power-control-shop-door/power/set", '1', qos=1, retain=False) #schalte das Display außen ein 
+          if shop_status in (9, 1, 5, 16):
+              if m == "0": #schließen
+                logger.info("public_webpage_viewer schließt den Laden.")
+                set_shop_status(10)
+                client.publish("homie/display-power-control-shop-door/power/set", '0', qos=1, retain=False) #schalte das Display außen aus 
+                
+
         if len(msplit) == 3 and msplit[2].lower() == "update_data_from_db":
            get_all_data_from_db()
            send_basket_products_scales_to_mqtt()
@@ -347,10 +362,11 @@ while loop_var:
                     temp_product['price'] = temp_count * temp_product['PricePerUnit']
                     actBasketProducts[temp_product_id] = temp_product
                 actProductsCount += temp_count
-                actSumTotal += actBasketProducts[temp_product_id]['price']
-
                 if actBasketProducts[temp_product_id]['withdrawal_units'] == 0:
                   actBasketProducts.pop(temp_product_id, None) #Remove from list
+    
+    for k, v in actBasketProducts.items():
+      actSumTotal += v['price']
 
     actBasket = {"data": actBasketProducts, "total": actSumTotal, "products_count": actProductsCount}
     if last_actBasket != actBasket: #change to basket? --> publish!
