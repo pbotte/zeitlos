@@ -1,11 +1,12 @@
 ```mermaid
 graph TD
-  W1["Waagen 1..8"] <--> |I2C| WC1
-  W2["Waagen 1..8"] <--> |I2C| WC2
-  W3["Waagen 1..8"] <--> |I2C| WCN
-  WC1["shelf-controller.py 1"] ==> |Rohdaten| WI
-  WC2["shelf-controller.py 2"] ==> |Rohdaten| WI
-  WCN["shelf-controller.py N"] ==> |Rohdaten| WI
+  W1["Waagen 1..N"] <--> |I2C| WC1
+  W2["Waagen 1..N"] <--> |I2C| WC2
+  W3["Waagen 1..N"] <--> |I2C| WCN
+
+  WC1["shelf-controller.py 1"] ==> |Messwerte| SC
+  WC2["shelf-controller.py 2"] ==> |Messwerte| SC
+  WCN["shelf-controller.py N"] ==> |Messwerte| SC
 
   L1["Lidar 1..4"] --> |Serial| ST1
   L2["Lidar 1..4"] --> |Serial| ST2
@@ -17,11 +18,12 @@ graph TD
 
   Türkontakt --> |Klingeldraht| IOR
 
-  SC["Shop controller\nDNS: Controller"]
-
+  SC["Shop controller"]
 
 subgraph Messdaten-Input
-  WI["Warenkorb Interpreter"]
+  WC1
+  WC2
+  WCN
   cardreader
   STI["shop-track-collector.py"]
   IOR["io-usb-readout"]
@@ -54,8 +56,7 @@ end
   FSR --> LA["Licht außen"]
   FSR --> Türöffner
 
-  WI ==> |Entnommene Ware| SC
-  STI ==> |Anz. Pixel>Schwelle| SC
+  STI ==> |Kunde im Laden?| SC
   cardreader <==> SC
 
   SC ==> FSR
