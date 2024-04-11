@@ -197,14 +197,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
     <table border="0" style="height: 100%; width: 100%; border-collapse: collapse;">
       <tbody>
         <tr>
-          <td style="width: 10%; background-color: white; ">
-            <p>&nbsp;</p>
-          </td>
-          <td style="width: 0%; height: 100%; text-align: center; background-color: white; vertical-align: center;" id="fullTable">
+          <td style="width: 100%; height: 100%; text-align: center; background-color: white; vertical-align: center;" id="fullTable">
             <div align="center" id="mytext">Verbinden...</div>
-          </td>
-          <td style="width: 10%; background-color: white; ">
-            <p>&nbsp;</p>
           </td>
         </tr>
 
@@ -245,7 +239,23 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             { message: "Authentifiziert.<br>Laden wird vorbereitet.", backgroundColor: "#44ff44" },
             { message: "Laden wird gerade betreten / verlassen.<br>Bitte warten.", backgroundColor: "white" },
             { message: "Überprüfung, ob Laden belegt.<br>Bitte warten..", backgroundColor: "white" },
-            { message: '<font size=\"30\">Kassenbon<br>Anzeige für 60 Sekunden.</font> <p align="right"><img id="qrpic"></p><iframe id="myIframe" width="600" height="950" style="-webkit-transform:scale(1.5);-moz-transform-scale(1.5);" frameBorder="0"></iframe>', backgroundColor: "white" },
+            { message: `<table border="0" style="height: 1020; width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="width: 30%; height: 100%; text-align: center; background-color: white; vertical-align: center;" id="fullTable">
+            <div align="center">
+              <p><font size=\"30\">Kassenbon</font></p>
+              <p><img id="qrpic"></p>
+              <p><font size=\"20\">Anzeige für 60 Sekunden.</font></p>
+            </div>
+            <div align="center" id="mytext"></div>
+          </td>
+          <td style="width: 70%; height: 100%; text-align: center; background-color: white; vertical-align: top;" id="fullTable">
+            <div align="center">
+              <iframe id="myIframe" width="600" height="1100" style="transform-origin: top left;transform: scale(0.9,0.9);-webkit-transform: scale(0.9,0.9);-moz-transform: scale(0.9,0.9);" frameBorder="0"></iframe>
+            </div>
+          </td>
+        </tr>
+    </table>`, backgroundColor: "white" },
             { message: "-", backgroundColor: "white" },
             { message: "Vorbereitung. Bitte warten.", backgroundColor: "white" },
             { message: "Ein technischer Fehler ist aufgetreten.", backgroundColor: "#FF4444" },

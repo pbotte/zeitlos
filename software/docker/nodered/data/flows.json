@@ -387,6 +387,27 @@
         "height": 1
     },
     {
+        "id": "d6d9e35c71debafd",
+        "type": "ui_group",
+        "name": "Anzeigen Debug",
+        "tab": "564fb3f8a786add3",
+        "order": 4,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "99270712d6a33698",
+        "type": "ui_spacer",
+        "z": "5f8b5286451f333f",
+        "name": "spacer",
+        "group": "d6d9e35c71debafd",
+        "order": 2,
+        "width": 1,
+        "height": 1
+    },
+    {
         "id": "73e3bbce7808f2b5",
         "type": "ui_button",
         "z": "993296db21e0de95",
@@ -3227,7 +3248,7 @@
         "type": "ui_text",
         "z": "5f8b5286451f333f",
         "group": "5a30b569fe0f7853",
-        "order": 2,
+        "order": 1,
         "width": 0,
         "height": 0,
         "name": "",
@@ -3396,7 +3417,7 @@
         "z": "5f8b5286451f333f",
         "name": "",
         "group": "5a30b569fe0f7853",
-        "order": 9,
+        "order": 5,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -3440,10 +3461,9 @@
         "id": "19acb0cfea736bc5",
         "type": "ui_button",
         "z": "5f8b5286451f333f",
-        "d": true,
         "name": "",
-        "group": "5a30b569fe0f7853",
-        "order": 4,
+        "group": "d6d9e35c71debafd",
+        "order": 1,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -3592,6 +3612,52 @@
         "wires": [
             [
                 "910414beb817d5b9"
+            ]
+        ]
+    },
+    {
+        "id": "7b6f49071031cf0f",
+        "type": "mqtt out",
+        "z": "5f8b5286451f333f",
+        "name": "",
+        "topic": "homie/shop_controller/invoice_json",
+        "qos": "0",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 560,
+        "y": 940,
+        "wires": []
+    },
+    {
+        "id": "46cb10b50f0bd27e",
+        "type": "ui_button",
+        "z": "5f8b5286451f333f",
+        "name": "",
+        "group": "d6d9e35c71debafd",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Einkaufsbon schicken",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "{\"d\": {\"p\": [[\"Sahnekefir auf Pfirsisch-Marakuja 150g\", 2, 1.09, 1], [\"Sahnekefir auf Blaubeere 150g\", 1, 1.09, 1]], \"c\": \"    K-U-N-D-E-N-B-E-L-E-G     \\n                              \\n                              \\n           Hemmes24           \\n     Ockenheimer Str. 69      \\n    DE-55435 Gau-Algesheim    \\n                              \\n    Kartenzahlung girocard    \\n                              \\nMaximalbetrag        50,00 EUR\\nVerf\\u00fcgungsbetrag      3,27 EUR\\n                              \\n10.04.2024               18:45\\nTerminal-ID           60336390\\nTA-Nr. 000096   Beleg-Nr. 0072\\nKartennr.  ###############0138\\nK.folg.Nr                 0000\\nChip                    Online\\nVU-Nummer      FD61B00100     \\nAutorisierungsnummer    060151\\n                              \\n                              \\n                              \\n**  Autorisierung erfolgt   **\", \"t\": 1712767821}}",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 200,
+        "y": 940,
+        "wires": [
+            [
+                "7b6f49071031cf0f"
             ]
         ]
     },
