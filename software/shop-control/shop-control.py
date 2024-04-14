@@ -56,10 +56,10 @@ scales_mass_actual = {}
 def get_all_data_from_db():
     global products, scales_products
     db_prepare()
-    cur.execute("SELECT ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit, VAT FROM Products ") 
-    for ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit, VAT in cur: 
+    cur.execute("SELECT ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit, VAT, Supplier FROM Products ") 
+    for ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit, VAT, Supplier in cur: 
         products[ProductID] = {"ProductID":ProductID, "ProductName":ProductName, "ProductDescription": ProductDescription, 
-        "PriceType": PriceType, "PricePerUnit":PricePerUnit, "kgPerUnit":kgPerUnit, "VAT": VAT}
+        "PriceType": PriceType, "PricePerUnit":PricePerUnit, "kgPerUnit":kgPerUnit, "VAT": VAT, "Supplier": Supplier}
     cur.execute("SELECT ProductID, ScaleID FROM Products_Scales GROUP BY ScaleID"); #Group By verhindert, falls in der Datenbank zwei Produkte für eine Waage eingetragen sind.
     for ProductID, ScaleID in cur:
         scales_products[ScaleID.lower()] = ProductID
@@ -77,6 +77,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe("homie/"+mqtt_client_name+"/update_data_from_db")
         client.subscribe("homie/shop-track-collector/pixels-above-reference")
         client.subscribe("homie/public_webpage_viewer/message_input")
+        client.subscribe("homie/public_webpage_supplier/+/cmd/#")
         client.subscribe("homie/door/#")
         client.subscribe("homie/cardreader/#")
 
@@ -231,7 +232,17 @@ while loop_var:
                 logger.info("public_webpage_viewer schließt den Laden.")
                 set_shop_status(10)
                 client.publish("homie/display-power-control-shop-door/power/set", '0', qos=1, retain=False) #schalte das Display außen aus 
-                
+                client.publish("homie/display-power-control-shop-display01/power/set", '0', qos=1, retain=False)
+                client.publish("homie/display-power-control-shop-display02/power/set", '0', qos=1, retain=False)
+        
+        #Fernsteuerung durch supplier_full.php
+        if len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "open_door":
+          if not shop_status in (8,): #Bei technischen Fehler soll diese Funktion nicht gegeben sein.
+            logger.info(f"Türöffner aktiviert durch supplier_full.php mit MQTT-topic: {message.topic.lower()}")
+            client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
+            client.publish("homie/fsr-control/innen/licht/set", '1', qos=1, retain=False)  # Licht an
+          else:
+            logger.warning(f"Fehler: Türöffner durch supplier_full.php mit MQTT-topic: {message.topic.lower()}. Kann jedoch nict durchgeführt werden, da shop_status: {shop_status}")
 
         if len(msplit) == 3 and msplit[2].lower() == "update_data_from_db":
            get_all_data_from_db()
@@ -426,18 +437,34 @@ while loop_var:
         # Tür offen in MQTT-Message: Wechsel zu next_shop_status = 3
     elif shop_status == 15: # Abrechnung wird vorbereitet
         # Abrechnung durchführen
+        last_invoiceid_inserted = None
         try:
-          sql_str = "INSERT INTO `Invoices` (`Products`) VALUES (?); "
+          sql_str = "INSERT INTO `Invoices` (`Products`, `ProductsCount`, `TotalAmount`) VALUES (?, ?, ?); "
           actBasket_str = json.dumps(actBasket)
           logger.info(f"Executed the following SQL Str: {sql_str} with ({actBasket_str})")
           db_prepare()
           try:
-            cur.execute(sql_str, (actBasket_str,)) #the last comma here is super important!!
+            cur.execute(sql_str, (actBasket_str, actBasket['products_count'], actBasket['total'], )) #the last comma here is super important, if only one elem provided
             conn.commit()
-            logger.info("Last Inserted ID: {}".format(cur.lastrowid))
+            last_invoiceid_inserted = cur.lastrowid
+            logger.info(f"Last Inserted ID into Invoices: {last_invoiceid_inserted}")
           except mariadb.Error as e:
             logger.warning(f"Error while SQL INSERT: {e}")
           db_close()
+
+          if last_invoiceid_inserted:
+            db_prepare()
+            for k,v in actBasket['data'].items():
+              sql_str = "INSERT INTO `InvoiceProducts` (`InvoiceID`, `ProductID`, `Supplier`, `ProductName`, `ProductDescription`, `PriceType`, `PricePerUnit`, `kgPerUnit`, `WithdrawalUnits`, `Price`, `VAT`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?); "
+              logger.info(f"Executed the following SQL Str: {sql_str} with ({last_invoiceid_inserted}, {v})")
+              try:
+                cur.execute(sql_str, (last_invoiceid_inserted, v['ProductID'], v['Supplier'], v['ProductName'], v['ProductDescription'], v['PriceType'], 
+                                      v['PricePerUnit'], v['kgPerUnit'], v['withdrawal_units'], v['price'], v['VAT'], )) #the last comma here is super important!!
+                conn.commit()
+                logger.info("Last Inserted ID into InvoiceProducts: {}".format(cur.lastrowid))
+              except mariadb.Error as e:
+                logger.warning(f"Error while SQL INSERT: {e}")
+            db_close()
 
           # Book money from reservation
           total_money_tobook_incents_str = round(actBasket["total"]*100)

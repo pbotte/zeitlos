@@ -1,2 +1,3 @@
 .DS_Store
 software/public-www/code/mqtt_broker_cred.js
+software/docker/mosquitto/data/config/mosquitto/conf.d/*.conf
