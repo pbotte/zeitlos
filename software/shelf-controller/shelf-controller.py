@@ -368,6 +368,22 @@ while True:
                 client.publish(f"homie/{mqtt_client_name}/scales/{w[1]['mac']}/zero_raw", waagen[w[0]]['zero'], qos=0, retain=True)
 
 
+        if len(msplit) == 6 and msplit[2].lower() == "cmd" and msplit[3].lower() == "scales" and msplit[5].lower() == "set_zero":
+            logger.info(f"Per MQTT empfangen: set_zero einer individuellen Waage {msplit[4].upper()} setzen")
+            if msplit[4].upper() in LUT_MAC_2_I2C_ADD:
+                i2c_address = LUT_MAC_2_I2C_ADD[msplit[4].upper()]
+                waagen[i2c_address]['zero'] = statistics.mean(list(waagen[i2c_address]['stack']))
+                logger.info(f"Waage {waagen[i2c_address]['mac']} Zero gesetzt auf: {waagen[i2c_address]['zero']}")
+
+                #write single bytes to scale
+                v=struct.pack('<f', waagen[i2c_address]['zero']) #returns eg: b'o\xfd\xf7\xff'
+                for i,x in enumerate(v):
+                    res6 = send_and_recv(f"w{i2c_address:02X}05{i+5:02X}{x:02X}") # write 1 byte to address i+5
+                    logger.info(f"Write Return (address {i+5}, value: {x}) {res6=}")
+                client.publish(f"homie/{mqtt_client_name}/scales/{waagen[i2c_address]['mac']}/zero_raw", waagen[i2c_address]['zero'], qos=0, retain=True)
+            else:
+                logger.warning(f"MAC not in local list: {msplit[4].upper()}")
+
         if len(msplit) == 6 and msplit[2].lower() == "cmd" and msplit[3].lower() == "scales" and msplit[5].lower() == "set_slope":
             logger.info(f"Per MQTT empfangen: individuelle Steigung der Waage {msplit[4].upper()} setzen: {m} kg")
             if msplit[4].upper() in LUT_MAC_2_I2C_ADD:

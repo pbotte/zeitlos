@@ -245,7 +245,7 @@
         "type": "ui_group",
         "name": "Kartenleser",
         "tab": "564fb3f8a786add3",
-        "order": 3,
+        "order": 2,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -316,7 +316,7 @@
         "type": "ui_group",
         "name": "Datenbank",
         "tab": "f92eb5dfeffee078",
-        "order": 2,
+        "order": 3,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -326,7 +326,7 @@
         "id": "e5e3c18954323c62",
         "type": "ui_group",
         "name": "Kalibration",
-        "tab": "564fb3f8a786add3",
+        "tab": "f92eb5dfeffee078",
         "order": 2,
         "disp": true,
         "width": "6",
@@ -360,7 +360,7 @@
         "type": "ui_group",
         "name": "Neus Produkt eintragen",
         "tab": "f92eb5dfeffee078",
-        "order": 3,
+        "order": 4,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -391,7 +391,7 @@
         "type": "ui_group",
         "name": "Anzeigen Debug",
         "tab": "564fb3f8a786add3",
-        "order": 4,
+        "order": 3,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -1781,8 +1781,7 @@
         "y": 480,
         "wires": [
             [
-                "48679570cc6a02d4",
-                "8eeddea9eecb46e7"
+                "48679570cc6a02d4"
             ]
         ]
     },
@@ -1791,7 +1790,7 @@
         "type": "function",
         "z": "362a0b93abc679d8",
         "name": "function 5",
-        "func": "const products = msg.payload;\n\nconst productArray = products.map(product => ({ [product.ProductName+' ('+product.Lieferant+')']: product.ProductID }));\n\n\nmsg.payload = productArray;\n\nreturn msg;",
+        "func": "const products = msg.payload;\n\nconst productArray = products.map(product => ({ [product.ProductName+' ('+product.Supplier+')']: product.ProductID }));\n\n\nmsg.payload = productArray;\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -1918,8 +1917,7 @@
         "y": 540,
         "wires": [
             [
-                "48679570cc6a02d4",
-                "8eeddea9eecb46e7"
+                "48679570cc6a02d4"
             ]
         ]
     },
@@ -2509,37 +2507,6 @@
         ]
     },
     {
-        "id": "8eeddea9eecb46e7",
-        "type": "ui_dropdown",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "label": "",
-        "tooltip": "",
-        "place": "Select option",
-        "group": "f15585e8aad578ca",
-        "order": 5,
-        "width": 0,
-        "height": 0,
-        "passthru": true,
-        "multiple": false,
-        "options": [
-            {
-                "label": "",
-                "value": "",
-                "type": "str"
-            }
-        ],
-        "payload": "",
-        "topic": "topic",
-        "topicType": "msg",
-        "className": "",
-        "x": 1090,
-        "y": 580,
-        "wires": [
-            []
-        ]
-    },
-    {
         "id": "d16a25ccc4f631d3",
         "type": "mqtt in",
         "z": "362a0b93abc679d8",
@@ -2710,6 +2677,100 @@
         ]
     },
     {
+        "id": "2f4fa94e2607639c",
+        "type": "ui_button",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "group": "e5e3c18954323c62",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Kalibration Zero einzelne Waage",
+        "tooltip": "nur die ausgewählte Waage",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 250,
+        "y": 1340,
+        "wires": [
+            [
+                "d3dd21ca24b02309"
+            ]
+        ]
+    },
+    {
+        "id": "d3dd21ca24b02309",
+        "type": "function",
+        "z": "362a0b93abc679d8",
+        "name": "set_zero single scale",
+        "func": "msg.topic = 'homie/' + flow.get('touched_USB_ID') + '/cmd/scales/' + flow.get('touched_scale_ID') + '/set_zero';\nmsg.payload = '0';\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 1340,
+        "wires": [
+            [
+                "04b0fe3e81871700"
+            ]
+        ]
+    },
+    {
+        "id": "04b0fe3e81871700",
+        "type": "mqtt out",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 730,
+        "y": 1340,
+        "wires": []
+    },
+    {
+        "id": "e440ca1587cc3488",
+        "type": "inject",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "homie/scale-shop-shelf06-0-1.2.5.5-1.0/scales/4930370A3419/touched",
+        "payload": "1",
+        "payloadType": "str",
+        "x": 150,
+        "y": 80,
+        "wires": [
+            [
+                "d254a38df0715e26"
+            ]
+        ]
+    },
+    {
         "id": "43d0ed6cbee63753",
         "type": "ui_text_input",
         "z": "de6d6197d0487792",
@@ -2743,7 +2804,7 @@
         "rules": [
             {
                 "t": "set",
-                "p": "d0.Lieferant",
+                "p": "d0.Supplier",
                 "pt": "flow",
                 "to": "payload",
                 "tot": "msg"
@@ -2889,7 +2950,7 @@
                 "t": "set",
                 "p": "topic",
                 "pt": "msg",
-                "to": "INSERT INTO `Products` (`Lieferant`, `ProductName`, `PricePerUnit`, `kgPerUnit`, `VAT`) VALUES (:Lieferant, :ProductName, :PricePerUnit, :kgPerUnit, :VAT)",
+                "to": "INSERT INTO `Products` (`Supplier`, `ProductName`, `PricePerUnit`, `kgPerUnit`, `VAT`) VALUES (:Supplier, :ProductName, :PricePerUnit, :kgPerUnit, :VAT)",
                 "tot": "str"
             },
             {
@@ -3658,6 +3719,34 @@
         "wires": [
             [
                 "7b6f49071031cf0f"
+            ]
+        ]
+    },
+    {
+        "id": "cb760613fb61607b",
+        "type": "ui_button",
+        "z": "5f8b5286451f333f",
+        "name": "",
+        "group": "8ee2a8be9e79749a",
+        "order": 8,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Technischer Fehler (8)",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "8",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 180,
+        "y": 460,
+        "wires": [
+            [
+                "910414beb817d5b9"
             ]
         ]
     },
