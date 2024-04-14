@@ -44,7 +44,6 @@ $pdo = new PDO(
     <th class="tg-fjir">Uhrzeit</th>
     <th class="tg-fjir">Kunden-Nr</th>
     <th class="tg-fjir">Products</th>
-    <th class="tg-fjir">Rechnungserstellung</th>
   </tr>
 </thead>
 <tbody>
@@ -69,7 +68,6 @@ kgPerUnit */
 }
 if ($i==0) {echo "<p>Keine Produkte gekauft.</p>"; }
 ?></td>
-    <td class="tg-0lax"><?=$ab["issuetimestamp"]?></td>
   </tr>
   <?php }} else { echo "No entries found."; }
 ?>
