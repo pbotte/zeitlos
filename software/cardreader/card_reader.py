@@ -97,15 +97,19 @@ async def main():
     # res = parse_res_from_chatfile(filename)
 
     will = aiomqtt.Will("homie/cardreader/state", payload="0", qos=2, retain=True)
-    mqtt_client = aiomqtt.Client(hostname="localhost", port=1883, will=will)
-    logger.info(f'MQTT Client created.')
-    logger.info(f'Trying to option connection to terminal... (if unsuccesful, check IP address)')
-    ptc = await make_pt_connection(args.terminal_ip, 20007, mqtt_client, logger) #comment for age test
+    ptc = None
 
     reconnect_interval = 5  # In seconds
     while continue_main_loop:
         try:
-            async with mqtt_client as client:
+            async with aiomqtt.Client(hostname="localhost", port=1883, will=will) as client:
+                logger.info(f'MQTT Client created.')
+                mqtt_client = client
+                if ptc is None:
+                    logger.info(f'Trying to option connection to terminal... (if unsuccesful, check IP address)')
+                    ptc = await make_pt_connection(args.terminal_ip, 20007, mqtt_client, logger) #comment for age test
+                else:
+                    ptc.set_mqtt_client(client)
                 await client.publish("homie/cardreader/state", payload="1", retain=True)
                 await client.publish("homie/cardreader/busy", payload="0", retain=True)
                 async with client.messages() as messages:

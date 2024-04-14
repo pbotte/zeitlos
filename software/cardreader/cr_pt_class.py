@@ -16,6 +16,9 @@ class PTConnection:
         self.mqtt_client = mqtt_client
         self.logger = logger
 
+    def set_mqtt_client(self, client):
+        self.mqtt_client = client
+
     async def recv_until_len(self, msg: bytearray, length):
         while len(msg) < length:
             msg += await self.reader.read(length - len(msg))
