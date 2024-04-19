@@ -55,6 +55,8 @@ scales_mass_reference = {} #masses before client started shopping
 scales_mass_actual = {}
 def get_all_data_from_db():
     global products, scales_products
+    products = {}
+    scales_products = {}
     db_prepare()
     cur.execute("SELECT ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit, VAT, Supplier FROM Products ") 
     for ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit, VAT, Supplier in cur: 
@@ -97,7 +99,7 @@ shop_status_descr = {
     3: "Kunde betritt/verlässt gerade den Laden", 
     4: "Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden",
     5: "Einkauf abgerechnet, Kassenbon-Anzeige", 
-    6: "ungenutzt",
+    6: "Einräumen durch Betreiber",
     7: "Warten auf: Vorbereitung für nächsten Kunden. Kartenterminal bereit?", 
     8: "Technischer Fehler aufgetreten", 
     9: "Kunde benötigt Hilfe",
@@ -109,6 +111,7 @@ shop_status_descr = {
     15: "Sicher: Kunde nicht mehr im Laden. Kartenterminal: buchen!",
     16: "Timeout Kartenterminal",
     17: "Warten auf: Kartenterminal Buchung erfolgreich",
+    18: "Einräumen durch Betreiber, Waage ausgewählt",
     }
 shop_status_timeout = {
     0: {'time':10,'next':8}, #Geräte Initialisierung
@@ -119,7 +122,7 @@ shop_status_timeout = {
                               # Falls die Sensoren nicht alles abdecken oder durch IR-Licht gestört werden, 
                               # dann hier einen größeren Zeit-Wert sicherheitshalber angeben.
     5: {'time':60,'next':7}, # Einkauf abgerechnet, Kassenbon-Anzeige
-    6: None, # Zustand aktuell nicht genutzt
+    6: None, # Einräumen durch Betreiber
     7: {'time':30,'next':8}, #Warten auf: Vorbereitung für nächsten Kunden
     8: None, # Technischer Fehler aufgetreten
     9: None, # Kunde benötigt Hilfe
@@ -131,6 +134,7 @@ shop_status_timeout = {
     15: {'time': 60,'next': 8}, # Sicher: Kunde nicht mehr im Laden. Kartenterminal buchen!
     16: {'time': 120,'next': 8}, # Timeout Kartenterminal
     17: {'time': 30,'next': 8}, # Warten auf: Kartenterminal Buchung erfolgreich
+    18: None, # Einräumen durch Betreiber, Waage ausgewählt
     }
 shop_status_last_change_timestamp = time.time()
 

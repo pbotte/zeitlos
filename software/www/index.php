@@ -37,6 +37,7 @@ if (strlen($str)>0) {
   <p>Weiter zu: <a href="./basket.php?debug=true">basket.php</a></p>
   <p>Weiter zu: <a href="./buttons.php?debug=true">buttons.php</a></p>
   <p>Weiter zu: <a href="./invoices.php">Rechungen</a></p>
+  <p>Weiter zu: <a href="./invoices3.php">Rechungen mit allen Details</a> (online auch unter <a href="https://www.hemmes24.de/code/invoices3.php?secret=CN87wLAdh1d">https://www.hemmes24.de/code/invoices3.php?secret=CN87wLAdh1d</a>)</p> 
 
   <p>&nbsp;</p>
   <p><a href="http://192.168.10.10:8080/">phpMyAdmin</a></p>
