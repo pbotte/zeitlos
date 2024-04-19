@@ -8,5 +8,7 @@ bridge_cafile /mosquitto/config/mosquitto/certs/emqxsl-ca.crt
 remote_clientid shop-controller
 remote_username shop-controller
 remote_password ...
+
 topic homie/shop_controller/# out
 topic homie/public_webpage_viewer/# in
+topic homie/public_webpage_supplier/+/cmd/# in

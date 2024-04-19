@@ -44,11 +44,9 @@
         "type": "junction",
         "z": "362a0b93abc679d8",
         "x": 360,
-        "y": 140,
+        "y": 300,
         "wires": [
-            [
-                "e545fc8c59bcfe48"
-            ]
+            []
         ]
     },
     {
@@ -296,7 +294,7 @@
         "type": "ui_group",
         "name": "Waage",
         "tab": "f92eb5dfeffee078",
-        "order": 1,
+        "order": 2,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -316,7 +314,7 @@
         "type": "ui_group",
         "name": "Datenbank",
         "tab": "f92eb5dfeffee078",
-        "order": 2,
+        "order": 3,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -360,7 +358,7 @@
         "type": "ui_group",
         "name": "Neus Produkt eintragen",
         "tab": "f92eb5dfeffee078",
-        "order": 3,
+        "order": 4,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -382,7 +380,7 @@
         "z": "362a0b93abc679d8",
         "name": "spacer",
         "group": "ce23d23a7801273d",
-        "order": 5,
+        "order": 6,
         "width": 1,
         "height": 1
     },
@@ -406,6 +404,17 @@
         "order": 2,
         "width": 1,
         "height": 1
+    },
+    {
+        "id": "6f8bf75f6373759b",
+        "type": "ui_group",
+        "name": "Ladenstatus",
+        "tab": "f92eb5dfeffee078",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
     },
     {
         "id": "73e3bbce7808f2b5",
@@ -499,7 +508,7 @@
         "wires": [
             [
                 "2e15aad63a168040",
-                "776a46bb5c6c43fc"
+                "74e63b6af371dbc2"
             ]
         ]
     },
@@ -1073,25 +1082,6 @@
         ]
     },
     {
-        "id": "776a46bb5c6c43fc",
-        "type": "function",
-        "z": "993296db21e0de95",
-        "name": "ID -> Str",
-        "func": "var shop_status_descr = {\n    0: \"Geräte Initialisierung\", \n    1: \"Bereit, Kein Kunde im Laden\", \n    2: \"Kunde authentifiziert/Waagen tara\",\n    3: \"Kunde betritt/verlässt gerade den Laden\", \n    4: \"Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden\",\n    5: \"Einkauf beendet und abgerechnet\", \n    6: \"ungenutzt\",\n    7: \"Warten auf: Vorbereitung für nächsten Kunden\", \n    8: \"Technischer Fehler aufgetreten\", \n    9: \"Kunde benötigt Hilfe\",\n    10: \"Laden geschlossen\", \n    11: \"Kunde möglicherweise im Laden\", \n    12: \"Kunde sicher im Laden\", \n    13: \"Fehler bei Authentifizierung\",\n    14: \"Bitte Laden betreten\", \n    15: \"Kunde nicht mehr im Laden. Abrechnung wird vorbereitet.\",\n    16: \"Timeout Kartenterminal\",\n    17: \"Warten auf: Kartenterminal Buchung erfolgreich\"\n};\n\nif (msg.payload in shop_status_descr) {\n    msg.payload = shop_status_descr[msg.payload];\n} else {\n    msg.payload = \"Invalid status\";\n}\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 360,
-        "y": 200,
-        "wires": [
-            [
-                "982f959b98dd2657"
-            ]
-        ]
-    },
-    {
         "id": "982f959b98dd2657",
         "type": "ui_text",
         "z": "993296db21e0de95",
@@ -1472,23 +1462,21 @@
         ]
     },
     {
-        "id": "74eda7bd7c324529",
-        "type": "mqtt in",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "topic": "homie/+/scales/+/touched",
-        "qos": "0",
-        "datatype": "auto-detect",
-        "broker": "b1634a54dc9da698",
-        "nl": false,
-        "rap": true,
-        "rh": 0,
-        "inputs": 0,
-        "x": 190,
-        "y": 180,
+        "id": "74e63b6af371dbc2",
+        "type": "function",
+        "z": "993296db21e0de95",
+        "name": "ID -> Str",
+        "func": "var shop_status_descr = {\n    0: \"Geräte Initialisierung\", \n    1: \"Bereit, Kein Kunde im Laden\", \n    2: \"Kunde authentifiziert/Waagen tara\",\n    3: \"Kunde betritt/verlässt gerade den Laden\", \n    4: \"Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden\",\n    5: \"Einkauf beendet und abgerechnet\", \n    6: \"Einräumen durch Betreiber\",\n    7: \"Warten auf: Vorbereitung für nächsten Kunden\", \n    8: \"Technischer Fehler aufgetreten\", \n    9: \"Kunde benötigt Hilfe\",\n    10: \"Laden geschlossen\", \n    11: \"Kunde möglicherweise im Laden\", \n    12: \"Kunde sicher im Laden\", \n    13: \"Fehler bei Authentifizierung\",\n    14: \"Bitte Laden betreten\", \n    15: \"Kunde nicht mehr im Laden. Abrechnung wird vorbereitet.\",\n    16: \"Timeout Kartenterminal\",\n    17: \"Warten auf: Kartenterminal Buchung erfolgreich\",\n    18: \"Einräumen durch Betreiber, Waage ausgewählt\"\n};\n\nif (msg.payload in shop_status_descr) {\n    msg.payload = shop_status_descr[msg.payload];\n} else {\n    msg.payload = \"Invalid status\";\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 400,
+        "y": 200,
         "wires": [
             [
-                "d254a38df0715e26"
+                "982f959b98dd2657"
             ]
         ]
     },
@@ -1514,7 +1502,7 @@
         "payload": "1",
         "payloadType": "str",
         "x": 150,
-        "y": 120,
+        "y": 280,
         "wires": [
             [
                 "d254a38df0715e26"
@@ -1522,86 +1510,11 @@
         ]
     },
     {
-        "id": "e545fc8c59bcfe48",
-        "type": "function",
-        "z": "362a0b93abc679d8",
-        "name": "topic and message split",
-        "func": "const inputString = msg.topic;\nconst parts = inputString.split('/'); // Split the string by \"/\"\n\nlet msg_USB_ID = { payload: parts[1]};\nlet msg_scales_ID = { payload: parts[3]};\nlet msg_m = {payload: msg.payload};\nreturn [msg_USB_ID, msg_scales_ID, msg_m];",
-        "outputs": 3,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 530,
-        "y": 140,
-        "wires": [
-            [
-                "1e777df7393c8bc5",
-                "861847d36ea6f486"
-            ],
-            [
-                "e0f687fd0ce5fd77",
-                "2e57c1df929c1bbe"
-            ],
-            []
-        ]
-    },
-    {
-        "id": "1e777df7393c8bc5",
-        "type": "change",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "rules": [
-            {
-                "t": "set",
-                "p": "touched_USB_ID",
-                "pt": "flow",
-                "to": "payload",
-                "tot": "msg"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 840,
-        "y": 80,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "e0f687fd0ce5fd77",
-        "type": "change",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "rules": [
-            {
-                "t": "set",
-                "p": "touched_scale_ID",
-                "pt": "flow",
-                "to": "payload",
-                "tot": "msg"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 840,
-        "y": 160,
-        "wires": [
-            []
-        ]
-    },
-    {
         "id": "861847d36ea6f486",
         "type": "ui_text",
         "z": "362a0b93abc679d8",
         "group": "ce23d23a7801273d",
-        "order": 2,
+        "order": 1,
         "width": 0,
         "height": 0,
         "name": "",
@@ -1613,8 +1526,8 @@
         "font": "",
         "fontSize": 16,
         "color": "#000000",
-        "x": 780,
-        "y": 120,
+        "x": 820,
+        "y": 200,
         "wires": []
     },
     {
@@ -1622,7 +1535,7 @@
         "type": "ui_text",
         "z": "362a0b93abc679d8",
         "group": "ce23d23a7801273d",
-        "order": 3,
+        "order": 2,
         "width": 0,
         "height": 0,
         "name": "",
@@ -1634,8 +1547,8 @@
         "font": "",
         "fontSize": 16,
         "color": "#000000",
-        "x": 780,
-        "y": 200,
+        "x": 820,
+        "y": 240,
         "wires": []
     },
     {
@@ -1653,7 +1566,7 @@
         "expiry": "",
         "broker": "b1634a54dc9da698",
         "x": 490,
-        "y": 340,
+        "y": 500,
         "wires": []
     },
     {
@@ -1677,7 +1590,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 160,
-        "y": 340,
+        "y": 500,
         "wires": [
             [
                 "e9ac0a72e96cc359",
@@ -1692,7 +1605,7 @@
         "server": "6d381aa10c3661fa",
         "name": "",
         "x": 490,
-        "y": 400,
+        "y": 560,
         "wires": [
             [
                 "7520a8bc076209ed",
@@ -1718,7 +1631,7 @@
         "onceDelay": 0.1,
         "topic": "",
         "x": 90,
-        "y": 400,
+        "y": 560,
         "wires": [
             [
                 "91ce8d56f0efe79a"
@@ -1734,10 +1647,10 @@
         "tooltip": "",
         "place": "Select option",
         "group": "ce23d23a7801273d",
-        "order": 10,
+        "order": 4,
         "width": 0,
         "height": 0,
-        "passthru": true,
+        "passthru": false,
         "multiple": false,
         "options": [
             {
@@ -1751,10 +1664,11 @@
         "topicType": "msg",
         "className": "",
         "x": 1090,
-        "y": 540,
+        "y": 700,
         "wires": [
             [
-                "bd49bcfa3cacf086"
+                "bd49bcfa3cacf086",
+                "d585a75bc0c65299"
             ]
         ]
     },
@@ -1778,7 +1692,7 @@
         "to": "",
         "reg": false,
         "x": 850,
-        "y": 480,
+        "y": 640,
         "wires": [
             [
                 "48679570cc6a02d4"
@@ -1797,56 +1711,10 @@
         "finalize": "",
         "libs": [],
         "x": 640,
-        "y": 480,
+        "y": 640,
         "wires": [
             [
                 "65e5ca2ed1ccdbbf"
-            ]
-        ]
-    },
-    {
-        "id": "d926ce94f3aa2534",
-        "type": "Stackhero-MySQL",
-        "z": "362a0b93abc679d8",
-        "server": "6d381aa10c3661fa",
-        "name": "",
-        "x": 530,
-        "y": 740,
-        "wires": [
-            [
-                "abd2448a56fa8cc8",
-                "7b1b855b4d17ce1c",
-                "9846002c9322affe"
-            ]
-        ]
-    },
-    {
-        "id": "6a9b0598029631a3",
-        "type": "inject",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "props": [
-            {
-                "p": "topic",
-                "vt": "str"
-            },
-            {
-                "p": "payload"
-            }
-        ],
-        "repeat": "",
-        "crontab": "",
-        "once": false,
-        "onceDelay": 0.1,
-        "topic": "SELECT * FROM `Products_Scales` WHERE `ScaleID` LIKE :scaleid",
-        "payload": "{\"scaleid\": \"49303779470B\"}",
-        "payloadType": "json",
-        "x": 290,
-        "y": 620,
-        "wires": [
-            [
-                "d926ce94f3aa2534",
-                "63d68bbff85801c7"
             ]
         ]
     },
@@ -1862,7 +1730,7 @@
         "finalize": "",
         "libs": [],
         "x": 640,
-        "y": 400,
+        "y": 560,
         "wires": [
             [
                 "584a4e9b2a934894"
@@ -1889,7 +1757,7 @@
         "to": "",
         "reg": false,
         "x": 860,
-        "y": 400,
+        "y": 560,
         "wires": [
             []
         ]
@@ -1914,59 +1782,10 @@
         "to": "",
         "reg": false,
         "x": 850,
-        "y": 540,
+        "y": 700,
         "wires": [
             [
                 "48679570cc6a02d4"
-            ]
-        ]
-    },
-    {
-        "id": "3fbdf9f34d05fe96",
-        "type": "ui_button",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "group": "ce23d23a7801273d",
-        "order": 4,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Berührte Waage nachschlagen",
-        "tooltip": "",
-        "color": "",
-        "bgcolor": "",
-        "className": "",
-        "icon": "",
-        "payload": "",
-        "payloadType": "str",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 170,
-        "y": 740,
-        "wires": [
-            [
-                "d3abe070e3f6e119",
-                "10bfdef9974c782b",
-                "7c0cae51ce80987c"
-            ]
-        ]
-    },
-    {
-        "id": "d3abe070e3f6e119",
-        "type": "function",
-        "z": "362a0b93abc679d8",
-        "name": "function 7",
-        "func": "msg.topic = \"SELECT * FROM`Products_Scales` WHERE `ScaleID` LIKE :scaleid\";\nmsg.payload = { \"scaleid\": flow.get('touched_scale_ID') };\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 400,
-        "y": 740,
-        "wires": [
-            [
-                "d926ce94f3aa2534"
             ]
         ]
     },
@@ -1977,7 +1796,7 @@
         "name": "Berührte Waage im Dropdown auswählen",
         "info": "",
         "x": 180,
-        "y": 660,
+        "y": 820,
         "wires": []
     },
     {
@@ -1985,12 +1804,12 @@
         "type": "ui_text",
         "z": "362a0b93abc679d8",
         "group": "ce23d23a7801273d",
-        "order": 9,
+        "order": 3,
         "width": 0,
         "height": 0,
         "name": "",
-        "label": "Gedrückte ProduktID",
-        "format": "{{msg.payload[0].ProductID}}",
+        "label": "ProduktID",
+        "format": "{{msg.payload}}",
         "layout": "row-spread",
         "className": "",
         "style": false,
@@ -1998,36 +1817,8 @@
         "fontSize": 16,
         "color": "#000000",
         "x": 820,
-        "y": 740,
+        "y": 280,
         "wires": []
-    },
-    {
-        "id": "a5c6ba909c178afb",
-        "type": "ui_button",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "group": "ce23d23a7801273d",
-        "order": 11,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Produkt hier setzen",
-        "tooltip": "",
-        "color": "",
-        "bgcolor": "",
-        "className": "",
-        "icon": "",
-        "payload": "",
-        "payloadType": "str",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 210,
-        "y": 1080,
-        "wires": [
-            [
-                "36e2945b0ab0b035"
-            ]
-        ]
     },
     {
         "id": "bd49bcfa3cacf086",
@@ -2049,7 +1840,7 @@
         "to": "",
         "reg": false,
         "x": 1310,
-        "y": 540,
+        "y": 700,
         "wires": [
             []
         ]
@@ -2061,7 +1852,7 @@
         "name": "DB auslesen",
         "info": "",
         "x": 90,
-        "y": 300,
+        "y": 460,
         "wires": []
     },
     {
@@ -2071,7 +1862,7 @@
         "name": "Schreibe Options Liste des Dropdown-Menüs",
         "info": "",
         "x": 910,
-        "y": 440,
+        "y": 600,
         "wires": []
     },
     {
@@ -2081,41 +1872,8 @@
         "name": "Wähle aus der Dropdown-Liste aus",
         "info": "",
         "x": 860,
-        "y": 520,
+        "y": 680,
         "wires": []
-    },
-    {
-        "id": "e3005420cf7ee79b",
-        "type": "function",
-        "z": "362a0b93abc679d8",
-        "name": "Lösche Waagen Zuordnung",
-        "func": "msg.topic = \"DELETE FROM `Products_Scales` WHERE `ScaleID` LIKE :scaleid\";\nmsg.payload = { \"scaleid\": flow.get('touched_scale_ID') };\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 520,
-        "y": 1120,
-        "wires": [
-            [
-                "e6acb73fa6213876"
-            ]
-        ]
-    },
-    {
-        "id": "e6acb73fa6213876",
-        "type": "Stackhero-MySQL",
-        "z": "362a0b93abc679d8",
-        "server": "6d381aa10c3661fa",
-        "name": "",
-        "x": 750,
-        "y": 1120,
-        "wires": [
-            [
-                "dd41ad8e67fe25e7"
-            ]
-        ]
     },
     {
         "id": "e6e82c51daf8aee1",
@@ -2123,7 +1881,7 @@
         "z": "362a0b93abc679d8",
         "name": "",
         "group": "ce23d23a7801273d",
-        "order": 12,
+        "order": 5,
         "width": 0,
         "height": 0,
         "passthru": false,
@@ -2138,28 +1896,12 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 240,
-        "y": 1120,
+        "y": 1280,
         "wires": [
             [
-                "e3005420cf7ee79b"
+                "1d8878f0b05fdd2b"
             ]
         ]
-    },
-    {
-        "id": "dd41ad8e67fe25e7",
-        "type": "debug",
-        "z": "362a0b93abc679d8",
-        "name": "debug 1",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 920,
-        "y": 1120,
-        "wires": []
     },
     {
         "id": "91ce8d56f0efe79a",
@@ -2186,103 +1928,13 @@
         "to": "",
         "reg": false,
         "x": 330,
-        "y": 400,
+        "y": 560,
         "wires": [
             [
                 "56f9ab02abc20493",
                 "b4940b08fca90d5f"
             ]
         ]
-    },
-    {
-        "id": "9846002c9322affe",
-        "type": "debug",
-        "z": "362a0b93abc679d8",
-        "name": "debug 2",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 780,
-        "y": 700,
-        "wires": []
-    },
-    {
-        "id": "63d68bbff85801c7",
-        "type": "change",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "rules": [
-            {
-                "t": "set",
-                "p": "touched_scale_ID",
-                "pt": "flow",
-                "to": "49303779470B",
-                "tot": "str"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 500,
-        "y": 620,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "36e2945b0ab0b035",
-        "type": "function",
-        "z": "362a0b93abc679d8",
-        "name": "Eintragen Waagen Zuordnung",
-        "func": "msg.topic = \"INSERT INTO`Products_Scales`(`ProductID`, `ScaleID`) VALUES(:productid, :scaleid )\";\nmsg.payload = { \"productid\": flow.get(\"product_ID_selected\"), \"scaleid\": flow.get('touched_scale_ID') };\n\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 530,
-        "y": 1080,
-        "wires": [
-            [
-                "0341ea296ec75b84"
-            ]
-        ]
-    },
-    {
-        "id": "0341ea296ec75b84",
-        "type": "Stackhero-MySQL",
-        "z": "362a0b93abc679d8",
-        "server": "6d381aa10c3661fa",
-        "name": "",
-        "x": 750,
-        "y": 1080,
-        "wires": [
-            [
-                "5eefd9adaf6289ac"
-            ]
-        ]
-    },
-    {
-        "id": "5eefd9adaf6289ac",
-        "type": "debug",
-        "z": "362a0b93abc679d8",
-        "name": "debug 3",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "false",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 920,
-        "y": 1080,
-        "wires": []
     },
     {
         "id": "b4940b08fca90d5f",
@@ -2298,7 +1950,7 @@
         "statusVal": "",
         "statusType": "auto",
         "x": 420,
-        "y": 480,
+        "y": 640,
         "wires": []
     },
     {
@@ -2322,7 +1974,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 220,
-        "y": 1220,
+        "y": 1380,
         "wires": [
             [
                 "31c3b0196ca4bc79"
@@ -2341,7 +1993,7 @@
         "finalize": "",
         "libs": [],
         "x": 420,
-        "y": 1220,
+        "y": 1380,
         "wires": [
             [
                 "f328194ff57d9fe1"
@@ -2363,7 +2015,7 @@
         "expiry": "",
         "broker": "b1634a54dc9da698",
         "x": 570,
-        "y": 1220,
+        "y": 1380,
         "wires": []
     },
     {
@@ -2387,7 +2039,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 220,
-        "y": 1300,
+        "y": 1460,
         "wires": [
             [
                 "abbbb331bc9a7566"
@@ -2414,7 +2066,7 @@
         "to": "",
         "reg": false,
         "x": 470,
-        "y": 1260,
+        "y": 1420,
         "wires": [
             []
         ]
@@ -2431,7 +2083,7 @@
         "finalize": "",
         "libs": [],
         "x": 420,
-        "y": 1300,
+        "y": 1460,
         "wires": [
             [
                 "89d8fc9dba8241a4"
@@ -2453,7 +2105,7 @@
         "expiry": "",
         "broker": "b1634a54dc9da698",
         "x": 570,
-        "y": 1300,
+        "y": 1460,
         "wires": []
     },
     {
@@ -2463,7 +2115,7 @@
         "name": "Kalibration",
         "info": "",
         "x": 100,
-        "y": 1180,
+        "y": 1340,
         "wires": []
     },
     {
@@ -2485,7 +2137,7 @@
         "className": "",
         "topicType": "msg",
         "x": 190,
-        "y": 1260,
+        "y": 1420,
         "wires": [
             [
                 "64d2e31cca80fe0b"
@@ -2499,48 +2151,10 @@
         "name": "DB Refresh",
         "links": [],
         "x": 95,
-        "y": 460,
+        "y": 620,
         "wires": [
             [
                 "91ce8d56f0efe79a"
-            ]
-        ]
-    },
-    {
-        "id": "d16a25ccc4f631d3",
-        "type": "mqtt in",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "topic": "",
-        "qos": "2",
-        "datatype": "auto-detect",
-        "broker": "b1634a54dc9da698",
-        "nl": false,
-        "rap": true,
-        "rh": 0,
-        "inputs": 1,
-        "x": 530,
-        "y": 840,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "10bfdef9974c782b",
-        "type": "function",
-        "z": "362a0b93abc679d8",
-        "name": "function 9",
-        "func": "msg.topic = \"homie/\" + flow.get(\"touched_USB_ID\")+\"/scales/\" + flow.get('touched_scale_ID')+\"/mass\";\nmsg.action = \"subscribe\";\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 400,
-        "y": 840,
-        "wires": [
-            [
-                "d16a25ccc4f631d3"
             ]
         ]
     },
@@ -2549,7 +2163,7 @@
         "type": "ui_text",
         "z": "362a0b93abc679d8",
         "group": "ce23d23a7801273d",
-        "order": 8,
+        "order": 7,
         "width": 0,
         "height": 0,
         "name": "",
@@ -2561,99 +2175,9 @@
         "font": "",
         "fontSize": 16,
         "color": "#000000",
-        "x": 670,
-        "y": 840,
+        "x": 930,
+        "y": 1060,
         "wires": []
-    },
-    {
-        "id": "fa2f73aa3d88d305",
-        "type": "ui_text",
-        "z": "362a0b93abc679d8",
-        "group": "ce23d23a7801273d",
-        "order": 7,
-        "width": 0,
-        "height": 0,
-        "name": "",
-        "label": "WaagenID",
-        "format": "{{msg.payload}}",
-        "layout": "row-spread",
-        "className": "",
-        "style": false,
-        "font": "",
-        "fontSize": 16,
-        "color": "#000000",
-        "x": 790,
-        "y": 780,
-        "wires": []
-    },
-    {
-        "id": "3e6c2593bdb3b7ef",
-        "type": "ui_text",
-        "z": "362a0b93abc679d8",
-        "group": "ce23d23a7801273d",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "name": "",
-        "label": "Zuletzt berührte Waage",
-        "format": "{{msg.payload}}",
-        "layout": "col-center",
-        "className": "",
-        "style": false,
-        "font": "",
-        "fontSize": 16,
-        "color": "#000000",
-        "x": 150,
-        "y": 840,
-        "wires": []
-    },
-    {
-        "id": "7ffa621557cc2078",
-        "type": "ui_text",
-        "z": "362a0b93abc679d8",
-        "group": "ce23d23a7801273d",
-        "order": 6,
-        "width": 0,
-        "height": 0,
-        "name": "",
-        "label": "Ausgewählte Waage",
-        "format": "{{msg.payload}}",
-        "layout": "col-center",
-        "className": "",
-        "style": false,
-        "font": "",
-        "fontSize": 16,
-        "color": "#000000",
-        "x": 140,
-        "y": 880,
-        "wires": []
-    },
-    {
-        "id": "7c0cae51ce80987c",
-        "type": "change",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "rules": [
-            {
-                "t": "set",
-                "p": "payload",
-                "pt": "msg",
-                "to": "touched_scale_ID",
-                "tot": "flow"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 430,
-        "y": 780,
-        "wires": [
-            [
-                "fa2f73aa3d88d305"
-            ]
-        ]
     },
     {
         "id": "818688328023ff53",
@@ -2669,7 +2193,7 @@
         "rh": 0,
         "inputs": 0,
         "x": 610,
-        "y": 900,
+        "y": 1060,
         "wires": [
             [
                 "126611169a3171c2"
@@ -2697,7 +2221,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 250,
-        "y": 1340,
+        "y": 1500,
         "wires": [
             [
                 "d3dd21ca24b02309"
@@ -2716,7 +2240,7 @@
         "finalize": "",
         "libs": [],
         "x": 520,
-        "y": 1340,
+        "y": 1500,
         "wires": [
             [
                 "04b0fe3e81871700"
@@ -2738,7 +2262,7 @@
         "expiry": "",
         "broker": "b1634a54dc9da698",
         "x": 730,
-        "y": 1340,
+        "y": 1500,
         "wires": []
     },
     {
@@ -2763,10 +2287,257 @@
         "payload": "1",
         "payloadType": "str",
         "x": 150,
-        "y": 80,
+        "y": 240,
         "wires": [
             [
                 "d254a38df0715e26"
+            ]
+        ]
+    },
+    {
+        "id": "3da32b7b17581be1",
+        "type": "comment",
+        "z": "362a0b93abc679d8",
+        "name": "Einräum-Modus starten",
+        "info": "",
+        "x": 120,
+        "y": 20,
+        "wires": []
+    },
+    {
+        "id": "0fa52edf59706f19",
+        "type": "ui_button",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "group": "6f8bf75f6373759b",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Einräumen starten / Neue Waage wählen",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "6",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 220,
+        "y": 60,
+        "wires": [
+            [
+                "77c218a4a6408e83"
+            ]
+        ]
+    },
+    {
+        "id": "77c218a4a6408e83",
+        "type": "mqtt out",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "homie/shop_controller/set_shop_status",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 540,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "fc0ab6fe23f0f144",
+        "type": "mqtt in",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "homie/shop_controller/shop_status",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 200,
+        "y": 100,
+        "wires": [
+            [
+                "fc4310d9f0e432be"
+            ]
+        ]
+    },
+    {
+        "id": "9f8ce6deecbc2ef6",
+        "type": "ui_text",
+        "z": "362a0b93abc679d8",
+        "group": "6f8bf75f6373759b",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Shop Status",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": "",
+        "color": "#000000",
+        "x": 650,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "fc4310d9f0e432be",
+        "type": "function",
+        "z": "362a0b93abc679d8",
+        "name": "ID -> Str",
+        "func": "var shop_status_descr = {\n    0: \"Geräte Initialisierung\", \n    1: \"Bereit, Kein Kunde im Laden\", \n    2: \"Kunde authentifiziert/Waagen tara\",\n    3: \"Kunde betritt/verlässt gerade den Laden\", \n    4: \"Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden\",\n    5: \"Einkauf beendet und abgerechnet\", \n    6: \"Einräumen durch Betreiber\",\n    7: \"Warten auf: Vorbereitung für nächsten Kunden\", \n    8: \"Technischer Fehler aufgetreten\", \n    9: \"Kunde benötigt Hilfe\",\n    10: \"Laden geschlossen\", \n    11: \"Kunde möglicherweise im Laden\", \n    12: \"Kunde sicher im Laden\", \n    13: \"Fehler bei Authentifizierung\",\n    14: \"Bitte Laden betreten\", \n    15: \"Kunde nicht mehr im Laden. Abrechnung wird vorbereitet.\",\n    16: \"Timeout Kartenterminal\",\n    17: \"Warten auf: Kartenterminal Buchung erfolgreich\",\n    18: \"Einräumen durch Betreiber, Waage ausgewählt\"\n};\n\nif (msg.payload in shop_status_descr) {\n    msg.payload = shop_status_descr[msg.payload];\n} else {\n    msg.payload = \"Invalid status\";\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 100,
+        "wires": [
+            [
+                "9f8ce6deecbc2ef6"
+            ]
+        ]
+    },
+    {
+        "id": "6aea80657ec914bf",
+        "type": "comment",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "info": "",
+        "x": 80,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "45c2ea1f0b6738d7",
+        "type": "mqtt in",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "homie/shop_controller/last_touched/product_id",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 800,
+        "y": 780,
+        "wires": [
+            [
+                "48679570cc6a02d4"
+            ]
+        ]
+    },
+    {
+        "id": "1d8878f0b05fdd2b",
+        "type": "mqtt out",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "homie/shop_controller/last_touched/set_product_id",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 590,
+        "y": 1280,
+        "wires": []
+    },
+    {
+        "id": "d585a75bc0c65299",
+        "type": "mqtt out",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "homie/shop_controller/last_touched/set_product_id",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 1370,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "7824f18cd28d9090",
+        "type": "mqtt in",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "homie/shop_controller/last_touched/shelf_str",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 490,
+        "y": 200,
+        "wires": [
+            [
+                "861847d36ea6f486"
+            ]
+        ]
+    },
+    {
+        "id": "dbc0f6d5c2c8aea4",
+        "type": "mqtt in",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "homie/shop_controller/last_touched/scale_str",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 490,
+        "y": 240,
+        "wires": [
+            [
+                "2e57c1df929c1bbe"
+            ]
+        ]
+    },
+    {
+        "id": "55e27c6596eb8c07",
+        "type": "mqtt in",
+        "z": "362a0b93abc679d8",
+        "name": "",
+        "topic": "homie/shop_controller/last_touched/product_id",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 560,
+        "y": 280,
+        "wires": [
+            [
+                "7b1b855b4d17ce1c"
             ]
         ]
     },
@@ -3178,7 +2949,7 @@
         "type": "function",
         "z": "5f8b5286451f333f",
         "name": "ID -> Str",
-        "func": "var shop_status_descr = {\n    0: \"Geräte Initialisierung\", \n    1: \"Bereit, Kein Kunde im Laden. Kartenterminal aktiv \", \n    2: \"Kunde authentifiziert/Waagen tara wird ausgeführt\",\n    3: \"Kunde betritt/verlässt gerade den Laden\", \n    4: \"Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden\",\n    5: \"Einkauf abgerechnet, Kassenbon-Anzeige\", \n    6: \"ungenutzt\",\n    7: \"Warten auf: Vorbereitung für nächsten Kunden. Kartenterminal bereit?\", \n    8: \"Technischer Fehler aufgetreten\", \n    9: \"Kunde benötigt Hilfe\",\n    10: \"Laden geschlossen\", \n    11: \"Kunde möglicherweise im Laden\", \n    12: \"Kunde sicher im Laden\", \n    13: \"Fehler bei Kartenterminal\",\n    14: \"Bitte Laden betreten\", \n    15: \"Sicher: Kunde nicht mehr im Laden.\\nKartenterminal: buchen!\",\n    16: \"Timeout Kartenterminal\",\n    17: \"Warten auf: Kartenterminal Buchung erfolgreich\"\n};\n\nif (msg.payload in shop_status_descr) {\n    msg.payload = shop_status_descr[msg.payload];\n} else {\n    msg.payload = \"Invalid status\";\n}\n\nreturn msg;",
+        "func": "var shop_status_descr = {\n    0: \"Geräte Initialisierung\",\n    1: \"Bereit, Kein Kunde im Laden\",\n    2: \"Kunde authentifiziert/Waagen tara\",\n    3: \"Kunde betritt/verlässt gerade den Laden\",\n    4: \"Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden\",\n    5: \"Einkauf beendet und abgerechnet\",\n    6: \"Einräumen durch Betreiber\",\n    7: \"Warten auf: Vorbereitung für nächsten Kunden\",\n    8: \"Technischer Fehler aufgetreten\",\n    9: \"Kunde benötigt Hilfe\",\n    10: \"Laden geschlossen\",\n    11: \"Kunde möglicherweise im Laden\",\n    12: \"Kunde sicher im Laden\",\n    13: \"Fehler bei Authentifizierung\",\n    14: \"Bitte Laden betreten\",\n    15: \"Kunde nicht mehr im Laden. Abrechnung wird vorbereitet.\",\n    16: \"Timeout Kartenterminal\",\n    17: \"Warten auf: Kartenterminal Buchung erfolgreich\",\n    18: \"Einräumen durch Betreiber, Waage ausgewählt\"\n};\n\nif (msg.payload in shop_status_descr) {\n    msg.payload = shop_status_descr[msg.payload];\n} else {\n    msg.payload = \"Invalid status\";\n}\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
