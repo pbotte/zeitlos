@@ -1,10 +1,18 @@
 <?php
-$debugClientStrSuffix = "";
-if (array_key_exists('debug', $_GET)) {
-	$debugClientStrSuffix = '_debug';
+$mqtt_user_name = "Gude";
+if (array_key_exists('mqttusername', $_POST)) {
+	$mqtt_user_name = $_POST['mqttusername'];
+}
+$mqtt_password = "Gude";
+if (array_key_exists('mqttpassword', $_POST)) {
+	$mqtt_password = $_POST['mqttpassword'];
 }
 ?>
 <html>
+<script>
+var mqtt_user_name = '<?php echo $mqtt_user_name; ?>';
+var mqtt_password = '<?php echo $mqtt_password; ?>';
+</script>
 <style>
 
     /*
@@ -29,7 +37,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
     }
     h1 {
         font-family: Verdana, Arial, Helvetica, sans-serif;
-        font-size: 100px;
+        font-size: 30;
     }
 </style>
 
@@ -67,18 +75,18 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
     </script>
     <!--Show the following sign until a MQTT connection is establised-->
     <div id="overlay" style="display:block">
-        <div id="text">Error:<br>no connection to MQTT server</div>
+        <div id="text">Fehler: Keine Verbindung zum MQTT-Server.<br><br>Stimmen die <a href="supplier_full_landing.php">Benutzerdaten</a>?</div>
     </div>
 
 
-    <title>Testeinkäufer Zugang</title>
+    <title>Lieferant Zugang</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!--For the plain library-->
     <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.js" type="text/javascript"></script>-->
     <!--For the minified library: -->
     <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js" type="text/javascript"></script>-->
     <script src="mqttws31.min.js" type="text/javascript"></script>
-    <script src="mqtt_broker_cred.js" type="text/javascript"></script>
+    <script src="mqtt_broker_cred_full.js" type="text/javascript"></script>
 
     <script type="text/javascript">
 
@@ -137,14 +145,12 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         }
 
 
-	function sendMQTTMessage(value) {
-		if ((value == 0) || (value == 1)) {
-		  message = new Paho.MQTT.Message(value.toString());
-		  message.destinationName = "homie/public_webpage_viewer/message_input";
-		  console.log("Prepare Public Submit Message from Public Viewer")
-		  mqtt.send(message);
-		  console.log("Message successfully sent.")
-	  }
+	function sendMQTTMessage() {
+	  message = new Paho.MQTT.Message("0");
+	  message.destinationName = "homie/public_webpage_supplier/"+mqtt_user_name+"/cmd/open_door";
+	  console.log("Prepare Public Submit Message from Supplier")
+	  mqtt.send(message);
+	  console.log("Message successfully sent.")
 	}
     </script>
 
@@ -156,7 +162,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         var connected_flag = 0;
         var shop_status = 0; //client in shop
         console.log("Set up the MQTT client to connect to " + host + ":" + port);
-        var mqtt = new Paho.MQTT.Client(host, port, "public_webpage_viewer_"+location.hostname+"_"+Math.floor(Math.random() * 100000)+"<?php echo "$debugClientStrSuffix";?>");
+        var mqtt = new Paho.MQTT.Client(host, port, "public_webpage_viewer_"+location.hostname+"_"+Math.floor(Math.random() * 100000));
         mqtt.onConnectionLost = onConnectionLost;
         mqtt.onMessageArrived = onMessageArrived;
         mqtt.onConnected = onConnected;
@@ -169,7 +175,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           3: "Kunde betritt/verlässt gerade den Laden", 
           4: "Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden",
           5: "Einkauf beendet und abgerechnet", 
-          6: "ungenutzt",
+          6: "Einräumen durch Betreiber",
           7: "Warten auf: Vorbereitung für nächsten Kunden", 
           8: "Technischer Fehler aufgetreten", 
           9: "Kunde benötigt Hilfe",
@@ -179,8 +185,9 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           13: "Fehler bei Authentifizierung",
           14: "Bitte Laden betreten", 
           15: "Kunde nicht mehr im Laden. Abrechnung wird vorbereitet.",
-	  16: "Timeout Kartenterminal",
-          17: "Warten auf: Kartenterminal Buchung erfolgreich"
+          16: "Timeout Kartenterminal",
+          17: "Warten auf: Kartenterminal Buchung erfolgreich",
+          18: "Einräumen durch Betreiber, Waage ausgewählt."
         };
 
 
@@ -203,8 +210,25 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 
 
     <style>
-      button {
+      .block_green {
+        display: block;
+        width: 100%;
+        border: none;
+        background-color: #04AA6D;
+        padding: 14px 28px;
         font-size: 20px;
+        cursor: pointer;
+        text-align: center;
+    }
+      .block_red {
+        display: block;
+        width: 100%;
+        border: none;
+        background-color: #CE1510;
+        padding: 14px 28px;
+        font-size: 20px;
+        cursor: pointer;
+        text-align: center;
     }
     </style>
 
@@ -215,19 +239,12 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             <p>&nbsp;</p>
           </td>
           <td style="width: 0%; height: 100%; text-align: center; background-color: white; vertical-align: center;" id="fullTable">
-	    <p><font size="20"><b>Hemmes24-Laden-Tester</b></font></p>
+            <h1>Hemmes24<br>Lieferanten-Zugang</h1>
+            <p>Eingeloggt als: <?php echo $mqtt_user_name; ?></p>
             <p id="mytext">...</p>
-	    <p><br><b>Anleitung:</b></p>
-            <p>1. <button type="button" class="block_green" onClick="sendMQTTMessage(1);">Zugang aktivieren</button></p>
-	    <p><br>2. Mit Girocard den Laden öffnen und Einkaufen. <br>Nach Abschluss des Einkaufs wird auf dem Monitor außen an der Tür der Kassenbon angezeigt. </p>
-	    <p>3. <button type="button" onClick="sendMQTTMessage(0);" >Zugang deaktivieren</button></p>
-	    <p>4. Fertig! <br>&nbsp;<br>
-	    <form action="mailto:rueckmeldung@hemmes24.de?subject=Rückmeldung%20zu%20meinem%20Einkauf" method="post" enctype="text/plain">
-	        Meine Rückmeldung:<br>
-	        <textarea id="feedback" name="feedback" rows="5" cols="40"></textarea><br><br>
-	        <input type="submit" value="Via E-Mail absenden">
-	    </form>
-	    </p>
+            <p>
+              <button type="button" class="block_green" onClick="sendMQTTMessage();">Türe öffnen</button>
+            </p>
           </td>
           <td style="width: 10%; background-color: white; ">
             <p>&nbsp;</p>

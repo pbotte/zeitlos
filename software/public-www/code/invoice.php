@@ -26,7 +26,7 @@ if (array_key_exists("d", $_GET)) {
   if ($correct_check_str == $entered_check_str) $check_ok = true;
 }
 if ($check_ok == false) {
-  echo "<pre>data_str: $data_str\nentered_check_str: $entered_check_str\ncorrect_check_str: $correct_check_str</pre>";
+  //echo "<pre>data_str: $data_str\nentered_check_str: $entered_check_str\ncorrect_check_str: $correct_check_str</pre>";
   throw new Exception('check string not valid.');
 }
 
@@ -72,7 +72,7 @@ Gartenfeldstr. 1
 55435 Gau-Algesheim
 Deutschland 
 Tel.: 067254924
-E-Mail: info@hemmes.de 
+E‑Mail: info@hemmes.de 
 UST. ID-Nr.: DE 197966562
 www.hemmes24.de
 </p>';

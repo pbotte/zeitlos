@@ -29,7 +29,17 @@ subgraph Permanente Zustände
   W["Laden geschlossen (10)"]
   Z8["Technischer Fehler aufgetreten (8)"]:::StyleHighlightError
   Z9["Kunde benötigt Hilfe (9)"]:::StyleHighlightError
+  Z19["Wartung der Technik (19)"]
 end
+
+subgraph Einräumen durch Betreiber
+  Z6["Einräumen durch Betreiber (6)"]
+  Z18["Einräumen durch Betreiber, Waage im Regal ausgewählt (18)"]
+end
+
+  Z6 --> Z18
+  Z18 --> Z6
+
   Z0 ==> Z7
   Z0 --> |Timeout| Z8
   A ==> |Kartenterminal gültig| B

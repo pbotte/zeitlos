@@ -1,0 +1,9 @@
+<?php
+define("My_DB_HOST", "...");
+define("My_DB_NAME", "dbs...");
+define("My_DB_USER", "dbu...");
+define("My_DB_PASSWORD", "...");
+
+
+$expected_secret_key = '...';
+?>
