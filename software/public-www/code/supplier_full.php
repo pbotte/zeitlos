@@ -89,6 +89,71 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
     <script src="mqtt_broker_cred_full.js" type="text/javascript"></script>
 
     <script type="text/javascript">
+    
+	// Function to parse JSON string and populate dropdown
+	function populateDropdownFromJsonString(jsonString) {
+	    // Parse the JSON string into an object
+	    const data = JSON.parse(jsonString);
+
+	    // Convert the object to an array and sort it based on ProductName
+	    const sortedData = Object.values(data).sort((a, b) => {
+	        const nameA = a.Supplier.toUpperCase()+' '+a.ProductName.toUpperCase(); // ignore upper and lowercase
+	        const nameB = b.Supplier.toUpperCase()+' '+b.ProductName.toUpperCase(); // ignore upper and lowercase
+	        if (nameA < nameB) {
+	            return -1;
+	        }
+	        if (nameA > nameB) {
+	            return 1;
+	        }
+	        return 0;
+	    });
+
+	    // Get the dropdown element
+	    const select = document.getElementById('productDropdown');
+	    select.innerHTML = ''; // Clear existing options if any
+
+		//Füge einen ersten leeren Eintrag hinzu
+	        const option = document.createElement('option');
+	        option.value = -1;
+	        option.textContent = '-';
+	        select.appendChild(option);
+
+	    // Create and append options from the sorted data
+	    sortedData.forEach(product => {
+	        const option = document.createElement('option');
+	        option.value = product.ProductID;
+	        option.textContent = product.ProductName || "No Name";  // Fallback text if product name is missing
+		option.textContent = product.Supplier+' | '+option.textContent+' | '+product.kgPerUnit+'kg | '+product.PricePerUnit+'€ ';
+	        select.appendChild(option);
+	    });
+
+	    // Add event listener to update display when a product is selected
+	    select.addEventListener('change', function() {
+	    	if (this.value>=0) {
+		        document.getElementById('productIdDisplay').textContent = this.value;
+			sendMQTTMessage_assign_product(this.value);
+		}
+	    });
+	}
+
+    	// Function to select a dropdown entry by ProductID
+	function selectProductById(productId) {
+	    const select = document.getElementById('productDropdown');
+	    const options = select.options;
+	    for (let option of options) {
+	        if (option.value == productId) {
+	            select.value = productId;
+		    if (productId == -1) {
+		            document.getElementById('productIdDisplay').textContent = 'keine Auswahl';
+		    } else {
+		            document.getElementById('productIdDisplay').textContent = productId;
+		    }
+	            break;
+	        }
+	    }
+	}
+    
+    
 
 
         function onConnectionLost() {
@@ -112,6 +177,24 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
                 console.log("trigger page reload via MQTT");
                 location.reload();
             }
+	    
+            if (r_message.destinationName == "homie/shop_controller/shop_overview/products") {
+                //console.log("Products: ");
+		//console.log(r_message.payloadString);
+		populateDropdownFromJsonString(r_message.payloadString);
+            }
+	    
+            if (r_message.destinationName == "homie/shop_controller/last_touched/product_id") {
+                //console.log("Products: ");
+		if (r_message.payloadString.length >0) {
+			console.log('Wähle in Dropdown-Menü aus: '+r_message.payloadString);
+			selectProductById(parseInt(r_message.payloadString));
+		} else {
+			selectProductById(-1);
+		}
+            }
+	    
+	    
         }
 
         function onConnected(recon, url) {
@@ -126,6 +209,9 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             console.log("connected_flag= ", connected_flag);
             mqtt.subscribe("homie/shop_controller/shop_status");
             mqtt.subscribe("homie/shop_controller/triggerHTMLPagesReload");
+            mqtt.subscribe("homie/shop_controller/shop_overview/products");
+            mqtt.subscribe("homie/shop_controller/last_touched/#");
+	    
         }
 
         function MQTTconnect() {
@@ -145,10 +231,38 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         }
 
 
-	function sendMQTTMessage() {
+	function sendMQTTMessage_open_door() {
 	  message = new Paho.MQTT.Message("0");
 	  message.destinationName = "homie/public_webpage_supplier/"+mqtt_user_name+"/cmd/open_door";
 	  console.log("Prepare Public Submit Message from Supplier")
+	  mqtt.send(message);
+	  console.log("Message successfully sent.")
+	}
+	function sendMQTTMessage_close_shop() {
+	  message = new Paho.MQTT.Message("0");
+	  message.destinationName = "homie/public_webpage_supplier/"+mqtt_user_name+"/cmd/close_shop";
+	  console.log("Prepare Public Submit Message from Supplier: close_shop")
+	  mqtt.send(message);
+	  console.log("Message successfully sent.")
+	}
+	function sendMQTTMessage_open_shop() {
+	  message = new Paho.MQTT.Message("0");
+	  message.destinationName = "homie/public_webpage_supplier/"+mqtt_user_name+"/cmd/open_shop";
+	  console.log("Prepare Public Submit Message from Supplier: open_shop")
+	  mqtt.send(message);
+	  console.log("Message successfully sent.")
+	}
+	function sendMQTTMessage_start_assign() {
+	  message = new Paho.MQTT.Message("0");
+	  message.destinationName = "homie/public_webpage_supplier/"+mqtt_user_name+"/cmd/start_assign";
+	  console.log("Prepare Public Submit Message from Supplier: start_assign")
+	  mqtt.send(message);
+	  console.log("Message successfully sent.")
+	}
+	function sendMQTTMessage_assign_product(product_id) {
+	  message = new Paho.MQTT.Message(product_id.toString());
+	  message.destinationName = "homie/public_webpage_supplier/"+mqtt_user_name+"/cmd/assign_product";
+	  console.log("Prepare Public Submit Message from Supplier: sendMQTTMessage_assign_product with parameter: "+product_id)
 	  mqtt.send(message);
 	  console.log("Message successfully sent.")
 	}
@@ -198,7 +312,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         setInterval(function () { if (connected_flag == 0) MQTTconnect() }, 5 * 1000);
 
         setInterval(function () {
-          if (shop_status>=0 && shop_status<=16) {
+          if (shop_status>=0 && shop_status<=18) {
             document.getElementById("mytext").innerHTML = "Aktuell: "+shop_status_descr[shop_status];
           } else {
             document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";
@@ -243,8 +357,29 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             <p>Eingeloggt als: <?php echo $mqtt_user_name; ?></p>
             <p id="mytext">...</p>
             <p>
-              <button type="button" class="block_green" onClick="sendMQTTMessage();">Türe öffnen</button>
+              <button type="button" class="block_green" onClick="sendMQTTMessage_open_door();">Türe öffnen</button>
             </p>
+	    <p>&nbsp;</p>
+	    <p>&nbsp;</p>
+
+            <p>
+              <button type="button" class="block_green" onClick="sendMQTTMessage_start_assign();">Einräumen starten / Neue Waage wählen</button>
+            </p>
+            
+	    <label for="productDropdown">Produkt wählen:</label>
+	    <select id="productDropdown"></select> <!-- Dropdown will be populated by JavaScript -->
+	    <p>Ausgewählte Produkt-Nr: <span id="productIdDisplay">Bitte ein Produkt auswählen.</span></p>
+	    
+	    <p>&nbsp;</p>
+	    <p>&nbsp;</p>
+	    <p>&nbsp;</p>
+	    <p>
+              <button type="button" class="block_green" onClick="sendMQTTMessage_open_shop();">Laden öffnen</button>
+            </p>
+            <p>
+              <button type="button" class="block_green" onClick="sendMQTTMessage_close_shop();">Laden schließen</button>
+            </p>
+	    
           </td>
           <td style="width: 10%; background-color: white; ">
             <p>&nbsp;</p>
@@ -253,6 +388,10 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 
       </tbody>
     </table>
+    
+    
+    
+    
 
 </body>
 

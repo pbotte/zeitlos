@@ -169,7 +169,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           3: "Kunde betritt/verlässt gerade den Laden", 
           4: "Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden",
           5: "Einkauf beendet und abgerechnet", 
-          6: "ungenutzt",
+          6: "Einräumen durch Betreiber",
           7: "Warten auf: Vorbereitung für nächsten Kunden", 
           8: "Technischer Fehler aufgetreten", 
           9: "Kunde benötigt Hilfe",
@@ -179,8 +179,9 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           13: "Fehler bei Authentifizierung",
           14: "Bitte Laden betreten", 
           15: "Kunde nicht mehr im Laden. Abrechnung wird vorbereitet.",
-	  16: "Timeout Kartenterminal",
-          17: "Warten auf: Kartenterminal Buchung erfolgreich"
+          16: "Timeout Kartenterminal",
+          17: "Warten auf: Kartenterminal Buchung erfolgreich",
+          18: "Einräumen durch Betreiber, Waage ausgewählt."
         };
 
 
@@ -191,7 +192,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         setInterval(function () { if (connected_flag == 0) MQTTconnect() }, 5 * 1000);
 
         setInterval(function () {
-          if (shop_status>=0 && shop_status<=16) {
+          if (shop_status>=0 && shop_status<=18) {
             document.getElementById("mytext").innerHTML = "Aktuell: "+shop_status_descr[shop_status];
           } else {
             document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";
