@@ -40,11 +40,19 @@
         "env": []
     },
     {
+        "id": "ee2e0e687435698b",
+        "type": "tab",
+        "label": "Kalibration",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
         "id": "d254a38df0715e26",
         "type": "junction",
         "z": "362a0b93abc679d8",
-        "x": 360,
-        "y": 300,
+        "x": 260,
+        "y": 260,
         "wires": [
             []
         ]
@@ -243,7 +251,7 @@
         "type": "ui_group",
         "name": "Kartenleser",
         "tab": "564fb3f8a786add3",
-        "order": 3,
+        "order": 2,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -323,9 +331,9 @@
     {
         "id": "e5e3c18954323c62",
         "type": "ui_group",
-        "name": "Kalibration",
-        "tab": "564fb3f8a786add3",
-        "order": 2,
+        "name": "Einzelne Waage",
+        "tab": "5180a469a74dc7fa",
+        "order": 3,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -389,7 +397,7 @@
         "type": "ui_group",
         "name": "Anzeigen Debug",
         "tab": "564fb3f8a786add3",
-        "order": 4,
+        "order": 3,
         "disp": true,
         "width": "6",
         "collapse": false,
@@ -415,6 +423,69 @@
         "width": "6",
         "collapse": false,
         "className": ""
+    },
+    {
+        "id": "5180a469a74dc7fa",
+        "type": "ui_tab",
+        "name": "Kalibration",
+        "icon": "dashboard",
+        "order": 5,
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "940756b46830354e",
+        "type": "ui_group",
+        "name": "Ganzes Regal",
+        "tab": "5180a469a74dc7fa",
+        "order": 5,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "1127f1970cf17e42",
+        "type": "ui_group",
+        "name": "Ausgewählt",
+        "tab": "5180a469a74dc7fa",
+        "order": 2,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "1acb4a9db88d67b5",
+        "type": "ui_group",
+        "name": "Shop Status",
+        "tab": "5180a469a74dc7fa",
+        "order": 1,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "56bdd99623bbd31d",
+        "type": "ui_group",
+        "name": "Regal LEDs",
+        "tab": "5180a469a74dc7fa",
+        "order": 4,
+        "disp": true,
+        "width": "6",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "9619702129f21f57",
+        "type": "ui_spacer",
+        "z": "ee2e0e687435698b",
+        "name": "spacer",
+        "group": "e5e3c18954323c62",
+        "order": 2,
+        "width": 1,
+        "height": 1
     },
     {
         "id": "73e3bbce7808f2b5",
@@ -1795,8 +1866,8 @@
         "z": "362a0b93abc679d8",
         "name": "Berührte Waage im Dropdown auswählen",
         "info": "",
-        "x": 180,
-        "y": 820,
+        "x": 220,
+        "y": 760,
         "wires": []
     },
     {
@@ -1954,197 +2025,6 @@
         "wires": []
     },
     {
-        "id": "1bc152e9cbd4a1e6",
-        "type": "ui_button",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "group": "e5e3c18954323c62",
-        "order": 1,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Regal Tara Kalibration",
-        "tooltip": "",
-        "color": "",
-        "bgcolor": "",
-        "className": "",
-        "icon": "",
-        "payload": "touched_USB_ID",
-        "payloadType": "flow",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 220,
-        "y": 1380,
-        "wires": [
-            [
-                "31c3b0196ca4bc79"
-            ]
-        ]
-    },
-    {
-        "id": "31c3b0196ca4bc79",
-        "type": "function",
-        "z": "362a0b93abc679d8",
-        "name": "set_zero",
-        "func": "msg.topic = 'homie/'+msg.payload+'/cmd/set_zero';\nmsg.payload = '0';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 420,
-        "y": 1380,
-        "wires": [
-            [
-                "f328194ff57d9fe1"
-            ]
-        ]
-    },
-    {
-        "id": "f328194ff57d9fe1",
-        "type": "mqtt out",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "topic": "",
-        "qos": "1",
-        "retain": "false",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "b1634a54dc9da698",
-        "x": 570,
-        "y": 1380,
-        "wires": []
-    },
-    {
-        "id": "c3e8c6bf8545722f",
-        "type": "ui_button",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "group": "e5e3c18954323c62",
-        "order": 3,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Kalibration Steigung",
-        "tooltip": "",
-        "color": "",
-        "bgcolor": "",
-        "className": "",
-        "icon": "",
-        "payload": "temp_mass_for_calibration",
-        "payloadType": "flow",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 220,
-        "y": 1460,
-        "wires": [
-            [
-                "abbbb331bc9a7566"
-            ]
-        ]
-    },
-    {
-        "id": "64d2e31cca80fe0b",
-        "type": "change",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "rules": [
-            {
-                "t": "set",
-                "p": "temp_mass_for_calibration",
-                "pt": "flow",
-                "to": "payload",
-                "tot": "msg"
-            }
-        ],
-        "action": "",
-        "property": "",
-        "from": "",
-        "to": "",
-        "reg": false,
-        "x": 470,
-        "y": 1420,
-        "wires": [
-            []
-        ]
-    },
-    {
-        "id": "abbbb331bc9a7566",
-        "type": "function",
-        "z": "362a0b93abc679d8",
-        "name": "set_slope",
-        "func": "msg.topic = 'homie/' + flow.get('touched_USB_ID') + '/cmd/scales/' + flow.get('touched_scale_ID')+'/set_slope'\nmsg.payload = msg.payload;\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 420,
-        "y": 1460,
-        "wires": [
-            [
-                "89d8fc9dba8241a4"
-            ]
-        ]
-    },
-    {
-        "id": "89d8fc9dba8241a4",
-        "type": "mqtt out",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "topic": "",
-        "qos": "1",
-        "retain": "false",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "b1634a54dc9da698",
-        "x": 570,
-        "y": 1460,
-        "wires": []
-    },
-    {
-        "id": "519cd62c198d88da",
-        "type": "comment",
-        "z": "362a0b93abc679d8",
-        "name": "Kalibration",
-        "info": "",
-        "x": 100,
-        "y": 1340,
-        "wires": []
-    },
-    {
-        "id": "0999d5c129f52e6d",
-        "type": "ui_text_input",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "label": "Masse in kg",
-        "tooltip": "",
-        "group": "e5e3c18954323c62",
-        "order": 2,
-        "width": 0,
-        "height": 0,
-        "passthru": true,
-        "mode": "number",
-        "delay": 300,
-        "topic": "topic",
-        "sendOnBlur": true,
-        "className": "",
-        "topicType": "msg",
-        "x": 190,
-        "y": 1420,
-        "wires": [
-            [
-                "64d2e31cca80fe0b"
-            ]
-        ]
-    },
-    {
         "id": "f27e660d285e3e7d",
         "type": "link in",
         "z": "362a0b93abc679d8",
@@ -2157,113 +2037,6 @@
                 "91ce8d56f0efe79a"
             ]
         ]
-    },
-    {
-        "id": "126611169a3171c2",
-        "type": "ui_text",
-        "z": "362a0b93abc679d8",
-        "group": "ce23d23a7801273d",
-        "order": 7,
-        "width": 0,
-        "height": 0,
-        "name": "",
-        "label": "Masse",
-        "format": "{{msg.payload | number:3}} kg",
-        "layout": "row-spread",
-        "className": "",
-        "style": false,
-        "font": "",
-        "fontSize": 16,
-        "color": "#000000",
-        "x": 930,
-        "y": 1060,
-        "wires": []
-    },
-    {
-        "id": "818688328023ff53",
-        "type": "mqtt in",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "topic": "homie/scale-shop-shelf02-0-1.1-1.0/scales/493037B31449/mass",
-        "qos": "2",
-        "datatype": "auto-detect",
-        "broker": "b1634a54dc9da698",
-        "nl": false,
-        "rap": true,
-        "rh": 0,
-        "inputs": 0,
-        "x": 610,
-        "y": 1060,
-        "wires": [
-            [
-                "126611169a3171c2"
-            ]
-        ]
-    },
-    {
-        "id": "2f4fa94e2607639c",
-        "type": "ui_button",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "group": "e5e3c18954323c62",
-        "order": 3,
-        "width": 0,
-        "height": 0,
-        "passthru": false,
-        "label": "Kalibration Zero einzelne Waage",
-        "tooltip": "nur die ausgewählte Waage",
-        "color": "",
-        "bgcolor": "",
-        "className": "",
-        "icon": "",
-        "payload": "",
-        "payloadType": "str",
-        "topic": "topic",
-        "topicType": "msg",
-        "x": 250,
-        "y": 1500,
-        "wires": [
-            [
-                "d3dd21ca24b02309"
-            ]
-        ]
-    },
-    {
-        "id": "d3dd21ca24b02309",
-        "type": "function",
-        "z": "362a0b93abc679d8",
-        "name": "set_zero single scale",
-        "func": "msg.topic = 'homie/' + flow.get('touched_USB_ID') + '/cmd/scales/' + flow.get('touched_scale_ID') + '/set_zero';\nmsg.payload = '0';\nreturn msg;",
-        "outputs": 1,
-        "noerr": 0,
-        "initialize": "",
-        "finalize": "",
-        "libs": [],
-        "x": 520,
-        "y": 1500,
-        "wires": [
-            [
-                "04b0fe3e81871700"
-            ]
-        ]
-    },
-    {
-        "id": "04b0fe3e81871700",
-        "type": "mqtt out",
-        "z": "362a0b93abc679d8",
-        "name": "",
-        "topic": "",
-        "qos": "1",
-        "retain": "false",
-        "respTopic": "",
-        "contentType": "",
-        "userProps": "",
-        "correl": "",
-        "expiry": "",
-        "broker": "b1634a54dc9da698",
-        "x": 730,
-        "y": 1500,
-        "wires": []
     },
     {
         "id": "e440ca1587cc3488",
@@ -2346,7 +2119,7 @@
         "correl": "",
         "expiry": "",
         "broker": "b1634a54dc9da698",
-        "x": 540,
+        "x": 600,
         "y": 60,
         "wires": []
     },
@@ -2434,8 +2207,8 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 800,
-        "y": 780,
+        "x": 340,
+        "y": 820,
         "wires": [
             [
                 "48679570cc6a02d4"
@@ -2533,7 +2306,7 @@
         "rap": true,
         "rh": 0,
         "inputs": 0,
-        "x": 560,
+        "x": 500,
         "y": 280,
         "wires": [
             [
@@ -3475,7 +3248,7 @@
         "width": 0,
         "height": 0,
         "passthru": false,
-        "label": "Einkaufsbon schicken",
+        "label": "Demo Einkaufsbon schicken",
         "tooltip": "",
         "color": "",
         "bgcolor": "",
@@ -3485,7 +3258,7 @@
         "payloadType": "str",
         "topic": "topic",
         "topicType": "msg",
-        "x": 200,
+        "x": 220,
         "y": 940,
         "wires": [
             [
@@ -4192,5 +3965,802 @@
         "x": 520,
         "y": 660,
         "wires": []
+    },
+    {
+        "id": "1bc152e9cbd4a1e6",
+        "type": "ui_button",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "group": "940756b46830354e",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Regal Tara Kalibration",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "touched_USB_ID",
+        "payloadType": "flow",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 180,
+        "y": 520,
+        "wires": [
+            [
+                "31c3b0196ca4bc79"
+            ]
+        ]
+    },
+    {
+        "id": "31c3b0196ca4bc79",
+        "type": "function",
+        "z": "ee2e0e687435698b",
+        "name": "set_zero",
+        "func": "msg.topic = 'homie/'+msg.payload+'/cmd/set_zero';\nmsg.payload = '0';\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 520,
+        "wires": [
+            [
+                "f328194ff57d9fe1"
+            ]
+        ]
+    },
+    {
+        "id": "f328194ff57d9fe1",
+        "type": "mqtt out",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "topic": "",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 530,
+        "y": 520,
+        "wires": []
+    },
+    {
+        "id": "c3e8c6bf8545722f",
+        "type": "ui_button",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "group": "e5e3c18954323c62",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Kalibration Steigung",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "temp_mass_for_calibration",
+        "payloadType": "flow",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 180,
+        "y": 600,
+        "wires": [
+            [
+                "abbbb331bc9a7566"
+            ]
+        ]
+    },
+    {
+        "id": "64d2e31cca80fe0b",
+        "type": "change",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "temp_mass_for_calibration",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 430,
+        "y": 560,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "abbbb331bc9a7566",
+        "type": "function",
+        "z": "ee2e0e687435698b",
+        "name": "set_slope",
+        "func": "msg.topic = 'homie/' + flow.get('touched_USB_ID') + '/cmd/scales/' + flow.get('touched_scale_ID')+'/set_slope'\nmsg.payload = msg.payload;\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 600,
+        "wires": [
+            [
+                "89d8fc9dba8241a4"
+            ]
+        ]
+    },
+    {
+        "id": "89d8fc9dba8241a4",
+        "type": "mqtt out",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "topic": "",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 530,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "0999d5c129f52e6d",
+        "type": "ui_text_input",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "label": "Masse in kg",
+        "tooltip": "",
+        "group": "e5e3c18954323c62",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": true,
+        "mode": "number",
+        "delay": 300,
+        "topic": "topic",
+        "sendOnBlur": true,
+        "className": "",
+        "topicType": "msg",
+        "x": 150,
+        "y": 560,
+        "wires": [
+            [
+                "64d2e31cca80fe0b"
+            ]
+        ]
+    },
+    {
+        "id": "2f4fa94e2607639c",
+        "type": "ui_button",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "group": "e5e3c18954323c62",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Kalibration Zero einzelne Waage",
+        "tooltip": "nur die ausgewählte Waage",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 210,
+        "y": 640,
+        "wires": [
+            [
+                "d3dd21ca24b02309"
+            ]
+        ]
+    },
+    {
+        "id": "d3dd21ca24b02309",
+        "type": "function",
+        "z": "ee2e0e687435698b",
+        "name": "set_zero single scale",
+        "func": "msg.topic = 'homie/' + flow.get('touched_USB_ID') + '/cmd/scales/' + flow.get('touched_scale_ID') + '/set_zero';\nmsg.payload = '0';\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 640,
+        "wires": [
+            [
+                "04b0fe3e81871700"
+            ]
+        ]
+    },
+    {
+        "id": "04b0fe3e81871700",
+        "type": "mqtt out",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "topic": "",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 690,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "e19d98951f8d556f",
+        "type": "ui_text",
+        "z": "ee2e0e687435698b",
+        "group": "1127f1970cf17e42",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "USB-ID",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 580,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "8fc0ed081ad70181",
+        "type": "ui_text",
+        "z": "ee2e0e687435698b",
+        "group": "1127f1970cf17e42",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Scale-ID",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 580,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "63324f8fd5df3ce5",
+        "type": "mqtt in",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "topic": "homie/shop_controller/last_touched/shelf_str",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 250,
+        "y": 300,
+        "wires": [
+            [
+                "e19d98951f8d556f",
+                "907a95e423bf5f0b"
+            ]
+        ]
+    },
+    {
+        "id": "0cdcc908e561a771",
+        "type": "mqtt in",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "topic": "homie/shop_controller/last_touched/scale_str",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 250,
+        "y": 380,
+        "wires": [
+            [
+                "8fc0ed081ad70181",
+                "82a5e92d3b13ec84"
+            ]
+        ]
+    },
+    {
+        "id": "907a95e423bf5f0b",
+        "type": "change",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "touched_USB_ID",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 640,
+        "y": 340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "82a5e92d3b13ec84",
+        "type": "change",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "rules": [
+            {
+                "t": "set",
+                "p": "touched_scale_ID",
+                "pt": "flow",
+                "to": "payload",
+                "tot": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 640,
+        "y": 420,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e3d286c469cca0ba",
+        "type": "mqtt out",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "topic": "homie/shop_controller/set_shop_status",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 660,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "01561fd66ff8a502",
+        "type": "ui_button",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "group": "1127f1970cf17e42",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Einräumen starten / Neue Waage wählen",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "6",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 260,
+        "y": 60,
+        "wires": [
+            [
+                "e3d286c469cca0ba"
+            ]
+        ]
+    },
+    {
+        "id": "38385d700ac3a5b8",
+        "type": "function",
+        "z": "ee2e0e687435698b",
+        "name": "ID -> Str",
+        "func": "var shop_status_descr = {\n    0: \"Geräte Initialisierung\", \n    1: \"Bereit, Kein Kunde im Laden\", \n    2: \"Kunde authentifiziert/Waagen tara\",\n    3: \"Kunde betritt/verlässt gerade den Laden\", \n    4: \"Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden\",\n    5: \"Einkauf beendet und abgerechnet\", \n    6: \"Einräumen durch Betreiber\",\n    7: \"Warten auf: Vorbereitung für nächsten Kunden\", \n    8: \"Technischer Fehler aufgetreten\", \n    9: \"Kunde benötigt Hilfe\",\n    10: \"Laden geschlossen\", \n    11: \"Kunde möglicherweise im Laden\", \n    12: \"Kunde sicher im Laden\", \n    13: \"Fehler bei Authentifizierung\",\n    14: \"Bitte Laden betreten\", \n    15: \"Kunde nicht mehr im Laden. Abrechnung wird vorbereitet.\",\n    16: \"Timeout Kartenterminal\",\n    17: \"Warten auf: Kartenterminal Buchung erfolgreich\",\n    18: \"Einräumen durch Betreiber, Waage ausgewählt\"\n};\n\nif (msg.payload in shop_status_descr) {\n    msg.payload = shop_status_descr[msg.payload];\n} else {\n    msg.payload = \"Invalid status\";\n}\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 460,
+        "y": 180,
+        "wires": [
+            [
+                "6006ba496ce74d34"
+            ]
+        ]
+    },
+    {
+        "id": "42f530e718172e21",
+        "type": "mqtt in",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "topic": "homie/shop_controller/shop_status",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 240,
+        "y": 140,
+        "wires": [
+            [
+                "e1067be41c099b89",
+                "38385d700ac3a5b8",
+                "3db7d518979865b8"
+            ]
+        ]
+    },
+    {
+        "id": "6006ba496ce74d34",
+        "type": "ui_text",
+        "z": "ee2e0e687435698b",
+        "group": "1acb4a9db88d67b5",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Shop Status",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": "",
+        "color": "#000000",
+        "x": 610,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "e1067be41c099b89",
+        "type": "ui_text",
+        "z": "ee2e0e687435698b",
+        "group": "1acb4a9db88d67b5",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Shop Status",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": "",
+        "color": "#000000",
+        "x": 610,
+        "y": 140,
+        "wires": []
+    },
+    {
+        "id": "9ba298315a9525ce",
+        "type": "mqtt in",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "topic": "homie/+/scales/+/mass",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 180,
+        "y": 800,
+        "wires": [
+            [
+                "9fa85f87ccd9aa10"
+            ]
+        ]
+    },
+    {
+        "id": "9fa85f87ccd9aa10",
+        "type": "function",
+        "z": "ee2e0e687435698b",
+        "name": "function 7",
+        "func": "var touched_USB_ID = flow.get('touched_USB_ID');\nvar touched_scale_ID = flow.get('touched_scale_ID');\n\nvar components = msg.topic.split(\"/\");\n\nif ( (components[1] == flow.get('touched_USB_ID')) &&\n    (components[3].toUpperCase() == flow.get('touched_scale_ID').toUpperCase()) ) {\n     msg.payload = msg.payload;\n } else {\n     msg = null;\n }\n\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 800,
+        "wires": [
+            [
+                "31bdd864d69947a9",
+                "ddd8796f796a832a"
+            ]
+        ]
+    },
+    {
+        "id": "31bdd864d69947a9",
+        "type": "ui_text",
+        "z": "ee2e0e687435698b",
+        "group": "1127f1970cf17e42",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Masse akt. Waage",
+        "format": "{{msg.payload | number:3}} kg",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 570,
+        "y": 800,
+        "wires": []
+    },
+    {
+        "id": "ddd8796f796a832a",
+        "type": "ui_chart",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "group": "1127f1970cf17e42",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "label": "Masse ausgew. Waage",
+        "chartType": "line",
+        "legend": "false",
+        "xformat": "HH:mm:ss",
+        "interpolate": "step",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "60",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "1",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 590,
+        "y": 860,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "3db7d518979865b8",
+        "type": "rbe",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "func": "rbe",
+        "gap": "",
+        "start": "",
+        "inout": "out",
+        "septopics": true,
+        "property": "payload",
+        "topi": "topic",
+        "x": 290,
+        "y": 900,
+        "wires": [
+            [
+                "69b235f2fd72d6ad"
+            ]
+        ]
+    },
+    {
+        "id": "69b235f2fd72d6ad",
+        "type": "change",
+        "z": "ee2e0e687435698b",
+        "name": "leer",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "[]",
+                "tot": "json"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 410,
+        "y": 900,
+        "wires": [
+            [
+                "ddd8796f796a832a"
+            ]
+        ]
+    },
+    {
+        "id": "a6394cf94fccd597",
+        "type": "comment",
+        "z": "ee2e0e687435698b",
+        "name": "Löschen bei Waagenwechsel",
+        "info": "",
+        "x": 360,
+        "y": 860,
+        "wires": []
+    },
+    {
+        "id": "74fbfd7e4fd5de8e",
+        "type": "function",
+        "z": "ee2e0e687435698b",
+        "name": "leds ein",
+        "func": "msg.topic = 'homie/'+msg.payload+'/cmd/leds';\nmsg.payload = '1';\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 1020,
+        "wires": [
+            [
+                "62578bc0c227396c"
+            ]
+        ]
+    },
+    {
+        "id": "df5bc3574852104c",
+        "type": "ui_button",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "group": "56bdd99623bbd31d",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "LEDS am Regal ein",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "touched_USB_ID",
+        "payloadType": "flow",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 170,
+        "y": 1020,
+        "wires": [
+            [
+                "74fbfd7e4fd5de8e"
+            ]
+        ]
+    },
+    {
+        "id": "62578bc0c227396c",
+        "type": "mqtt out",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "topic": "",
+        "qos": "1",
+        "retain": "false",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 530,
+        "y": 1020,
+        "wires": []
+    },
+    {
+        "id": "f32aae08d06294f3",
+        "type": "comment",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "info": "",
+        "x": 120,
+        "y": 980,
+        "wires": []
+    },
+    {
+        "id": "2bd781bee8342b6c",
+        "type": "function",
+        "z": "ee2e0e687435698b",
+        "name": "leds aus",
+        "func": "msg.topic = 'homie/'+msg.payload+'/cmd/leds';\nmsg.payload = '0';\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 380,
+        "y": 1060,
+        "wires": [
+            [
+                "62578bc0c227396c"
+            ]
+        ]
+    },
+    {
+        "id": "c2caeb1a11b2b4b7",
+        "type": "ui_button",
+        "z": "ee2e0e687435698b",
+        "name": "",
+        "group": "56bdd99623bbd31d",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "LEDS am Regal aus",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "touched_USB_ID",
+        "payloadType": "flow",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 180,
+        "y": 1060,
+        "wires": [
+            [
+                "2bd781bee8342b6c"
+            ]
+        ]
     }
 ]

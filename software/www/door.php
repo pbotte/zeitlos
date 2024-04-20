@@ -236,7 +236,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         var statusData = [
             { message: "Initialisierung, bitte warten.", backgroundColor: "white" },
             { message: "Laden ist frei.<br><br><font size=\"50\">Halten Sie Ihre Girocard, Kreditkarte oder Handy mit aktivierter Bezahlfunktion vor das Kartenlesegerät rechts der Türe.</font>", backgroundColor: "#44ff44" },
-            { message: "Authentifiziert.<br>Laden wird vorbereitet.", backgroundColor: "#44ff44" },
+            { message: "Bitte warten.<br>Laden wird vorbereitet.", backgroundColor: "#44ff44" },
             { message: "Laden wird gerade betreten / verlassen.<br>Bitte warten.", backgroundColor: "white" },
             { message: "Überprüfung, ob Laden belegt.<br>Bitte warten..", backgroundColor: "white" },
             { message: `<table border="0" style="height: 1020; width: 100%; border-collapse: collapse;">
@@ -256,7 +256,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           </td>
         </tr>
     </table>`, backgroundColor: "white" },
-            { message: "-", backgroundColor: "white" },
+            { message: "Laden geschlossen. Neue Produkte werden gerade eingelegt.", backgroundColor: "#FF4444" },
             { message: "Vorbereitung. Bitte warten.", backgroundColor: "white" },
             { message: "Ein technischer Fehler ist aufgetreten.", backgroundColor: "#FF4444" },
             { message: "Kunde benötigt Hilfe.", backgroundColor: "#FF4444" },
@@ -267,7 +267,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             { message: "Bitte den Laden betreten", backgroundColor: "#44ff44" },
             { message: "Abrechnung wird vorbereitet.", backgroundColor: "white" },
             { message: "Kartenterminal: Zeit abgelaufen.", backgroundColor: "white" }, 
-            { message: "Warten auf Kartenterminal.", backgroundColor: "white" }
+            { message: "Warten auf Kartenterminal.", backgroundColor: "white" },
+            { message: "Laden geschlossen. Neue Produkte werden gerade eingelegt.", backgroundColor: "#FF4444" }
         ];
 
         var connected_flag = 0;
