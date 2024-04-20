@@ -118,6 +118,7 @@ def on_connect(client, userdata, flags, rc):
     logger.info("MQTT connected OK. Return code "+str(rc) )
     client.subscribe("homie/"+mqtt_client_name+"/cmd/#")
     client.subscribe(f"homie/{mqtt_client_name}/cmd/scales/+/led")
+    client.subscribe("homie/shop_controller/shop_status")
     logger.info("MQTT: Success, subscribed to all topics")
   else:
     logger.error("Bad connection. Return code="+str(rc))
@@ -159,7 +160,7 @@ client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
 anzahl_waagen = 0
 waagen = {} #index: i2c_add   eg: 9: {'mac': "493037D20E1B", 'address': 9, 'slope': 1, 'zero':0, 'state': 0, ...},}
 LUT_MAC_2_I2C_ADD = {} #LUT to get I2C address from MAC address
-
+shop_status = 0
 
 ##############################################################################
 def signal_handler(sig, frame):
@@ -419,6 +420,9 @@ while True:
             else:
                 logger.warning(f"MAC not in local list: {msplit[4].upper()}")
 
+        if message.topic.lower() == "homie/shop_controller/shop_status":
+            shop_status = int(m)
+
 
             
 
@@ -456,7 +460,7 @@ while True:
                 act_distance_stdev = statistics.stdev(list(waagen[w[0]]['stack'])[:-4])
                 act_distance_avg_old = statistics.mean(list(waagen[w[0]]['stack'])[:-4])
 
-                if act_distance_stdev<20: act_distance_stdev=20 #to avoid too small std deviations
+                if act_distance_stdev<50: act_distance_stdev=50 #to avoid too small std deviations
                 act_touched = 1 if abs(act_distance_avg_new - act_distance_avg_old) > act_distance_stdev*10 else 0
                 
                 if waagen[w[0]]['touched'] != act_touched:
@@ -464,10 +468,11 @@ while True:
                     client.publish(f"homie/{mqtt_client_name}/scales/{waagen[w[0]]['mac']}/touched", act_touched, qos=0, retain=False)
                     waagen[w[0]]['touched'] = act_touched
 
-                    if act_touched == 1:
-                        send_and_recv(f"w{i2c_address:02X}03")
-                    else:
-                        send_and_recv(f"w{i2c_address:02X}02")
+                    if not shop_status in (6,18,): #not during scale products assignment state
+                        if act_touched == 1:
+                            send_and_recv(f"w{i2c_address:02X}03")
+                        else:
+                            send_and_recv(f"w{i2c_address:02X}02")
             # check for touch functionality end
             #######################################################################
 
