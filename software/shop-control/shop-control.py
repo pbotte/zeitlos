@@ -69,6 +69,34 @@ def get_all_data_from_db():
     logger.debug(f"scales_products from db: {scales_products=}")
     db_close()
 
+#db operation: Einer Waage eine Produkt zuordnen. Zuvor_db_prepare() und anschließend db_close() aufrufen!
+# Wenn die Routine mit act_product_id=="" aufgerufen wird, wird die Zuordnung lediglich gelöscht und kein
+# neues Produkt zugeordnet
+def set_product_id_to_scale(act_scale_id, act_product_id=""):
+  #Bisherigen Eintrag löschen
+  try:
+    sql_str = "DELETE FROM `Products_Scales` WHERE `ScaleID` LIKE ?; "
+    logger.info(f"Execute the following SQL Str: {sql_str} with ({act_scale_id})")
+    cur.execute(sql_str, (act_scale_id, )) #the last comma here is super important, if only one elem provided
+    conn.commit()
+  except mariadb.Error as e:
+    logger.warning(f"Error while SQL DELETE: {e}")
+
+  #neue Produktzuordnung eintragen, nur wenn Zahl übergeben ist
+  if act_product_id:
+    try:
+      sql_str = "INSERT INTO`Products_Scales`(`ProductID`, `ScaleID`) VALUES(?, ? ); "
+      logger.info(f"Execute the following SQL Str: {sql_str} with ({int(act_product_id)}, {act_scale_id})")
+      cur.execute(sql_str, (int(act_product_id), act_scale_id, )) #the last comma here is super important, if only one elem provided
+      conn.commit()
+      last_product_scale_id_inserted = cur.lastrowid
+      logger.info(f"Last Inserted ID into Products_Scales: {last_product_scale_id_inserted}")
+    except mariadb.Error as e:
+      logger.warning(f"Error while SQL INSERT: {e}")
+  else:
+      logger.info(f"Waagenzuordnung wurde nur gelöscht und kein neuer Eintrag getätigt.")
+
+
 get_all_data_from_db()
 
 def on_connect(client, userdata, flags, rc):
@@ -324,31 +352,10 @@ while loop_var:
               m = None
             
             db_prepare()
-            #Bisherigen Eintrag löschen
-            try:
-              sql_str = "DELETE FROM `Products_Scales` WHERE `ScaleID` LIKE ?; "
-              logger.info(f"Execute the following SQL Str: {sql_str} with ({status_last_touched_scale_str})")
-              cur.execute(sql_str, (status_last_touched_scale_str, )) #the last comma here is super important, if only one elem provided
-              conn.commit()
-            except mariadb.Error as e:
-              logger.warning(f"Error while SQL DELETE: {e}")
-
-            #neue Produktzuordnung eintragen, nur wenn Zahl übergeben ist
-            if m:
-              try:
-                sql_str = "INSERT INTO`Products_Scales`(`ProductID`, `ScaleID`) VALUES(?, ? ); "
-                logger.info(f"Execute the following SQL Str: {sql_str} with ({int(m)}, {status_last_touched_scale_str})")
-                cur.execute(sql_str, (int(m), status_last_touched_scale_str, )) #the last comma here is super important, if only one elem provided
-                conn.commit()
-                last_product_scale_id_inserted = cur.lastrowid
-                logger.info(f"Last Inserted ID into Products_Scales: {last_product_scale_id_inserted}")
-              except mariadb.Error as e:
-                logger.warning(f"Error while SQL INSERT: {e}")
-            else:
-               logger.info(f"Waagenzuordnung wurde nur gelöscht und kein neuer Eintrag getätigt.")
+            set_product_id_to_scale(status_last_touched_scale_str, m)
             db_close()
 
-            #Aktuelel Daten von DB einlesen und versenden
+            #Aktuelle Daten von DB einlesen und versenden
             logger.info("Lese die DB neu ein und verschicke sie per MQTT")
             get_all_data_from_db()
             send_basket_products_scales_to_mqtt()
@@ -357,6 +364,31 @@ while loop_var:
           else:
             logger.warning(f"Produkt konnte nicht gesetzt werden, da die Variablen nicht gefüllt sind oder weil shop_status nicht 18 ist: {status_last_touched_shelf_str=} {status_last_touched_scale_str=} {shop_status=}")
 
+        #Unterstützung, um über die Webseite supplier_full.php mehrere Waagen gleichzeitig mit Produkte zu besetzen
+        #homie/public_webpage_supplier/lfr_akern/cmd/assign_multiple_products {"435339f11338":179,"49303700312d":2,"49303702261d":131}
+        if (len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "assign_multiple_products"):
+          if shop_status in (6,18,):
+            logger.info(f"Neue Produkt-Waagen-Zuordnung (assign_multiple_products) erhalten. Eintragen: {m}")
+#            try:
+            t = json.loads(m)
+            if len(t) >0:
+              db_prepare()
+              for k,v in t.items():
+                logger.info(f"Eintragen von: {k=} {v=}")
+                set_product_id_to_scale(k, v)
+              db_close()
+
+              #Aktuelle Daten von DB einlesen und versenden
+              logger.info("Lese die DB neu ein und verschicke sie per MQTT")
+              get_all_data_from_db()
+              send_basket_products_scales_to_mqtt()
+            else:
+               logger.info("Es wurden keine Einträge übermittelt.")
+#            except:
+#               logger.warning(f"Ein Fehler beim Eintragen ist aufgetreten.")
+            set_shop_status(6) #reset der LED und der Variablen werden in dieser Routine durchgeführt
+          else:
+            logger.warning(f"Produkte konnten nicht gesetzt werden, weil shop_status nicht 6 oder 18 ist: {shop_status=}")
 
         # tracker information to know immediate person presence
         if len(msplit) == 3 and msplit[1].lower() == "shop-track-collector" and msplit[2].lower() == "pixels-above-reference":

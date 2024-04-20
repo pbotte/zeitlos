@@ -266,6 +266,37 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 	  mqtt.send(message);
 	  console.log("Message successfully sent.")
 	}
+
+	function convertStringToInteger(variable) {
+	    if (typeof variable === 'string') {
+	        let parsedInt = parseInt(variable);
+	        if (!isNaN(parsedInt)) {
+	            return parsedInt;
+	        } else {
+	            console.error("The string does not contain numbers that can be converted to an integer.");
+	        }
+	    }
+            return variable;
+	}
+	function sendMQTTMessage_assign_multiple_products_to_scales(day_of_week) {
+          console.log("day_of_week: "+day_of_week);
+	  switch (convertStringToInteger(day_of_week)) {
+	    case 2: //Dienstag
+	      product_pre_set = {"435339f11338": 179, "49303700312d": 2, "49303702261d": 131 };
+	      break;
+	    case 3: //Mittwoch
+	      product_pre_set = {"49303700312d": 2, "49303702261d": 131 };
+	      break;
+	    default:
+              product_pre_set = {};
+	  }
+	  data_str = JSON.stringify(product_pre_set);
+	  message = new Paho.MQTT.Message(data_str);
+	  message.destinationName = "homie/public_webpage_supplier/"+mqtt_user_name+"/cmd/assign_multiple_products";
+	  console.log("Prepare Public Submit Message from Supplier: sendMQTTMessage_assign_multiple_products "+message.destinationName+" with parameter: "+data_str)
+	  mqtt.send(message);
+	  console.log("Message successfully sent.")
+	}
     </script>
 
 </head>
@@ -369,7 +400,24 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 	    <label for="productDropdown">Produkt wählen:</label>
 	    <select id="productDropdown"></select> <!-- Dropdown will be populated by JavaScript -->
 	    <p>Ausgewählte Produkt-Nr: <span id="productIdDisplay">Bitte ein Produkt auswählen.</span></p>
+	    <p>&nbsp;</p>
+	    <p>&nbsp;</p>
+	    <p>&nbsp;</p>
 	    
+	    
+            <p>
+	      <select id="weekdayDropdown">
+	        <option value="1">Montag</option>
+	        <option value="2">Dienstag</option>
+	        <option value="3">Mittwoch</option>
+	        <option value="4">Donnerstag</option>
+	        <option value="5">Freitag</option>
+	        <option value="6">Samstag</option>
+	        <option value="7">Sonntag</option>
+              </select>
+	      
+              <button type="button" class="block_green" onClick="sendMQTTMessage_assign_multiple_products_to_scales( document.getElementById('weekdayDropdown').value );">(Tages-Vorauswahl für Produkte setzen)</button>
+            </p>
 	    <p>&nbsp;</p>
 	    <p>&nbsp;</p>
 	    <p>&nbsp;</p>
