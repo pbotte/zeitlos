@@ -234,7 +234,7 @@ def search_waagen():
                                         'zero':0, 'state':0, 
                                         'stack': collections.deque(maxlen=10), #if maxlen is changed, check later for touch functionality that it still works
                                         'touched': 0,
-                                        'last_mass_submitted': None, 'last_mass_submitted_time': None}
+                                        'last_mass_submitted': None, 'last_mass_submitted_time': None, 'last_touched_time': 0}
             LUT_MAC_2_I2C_ADD[f"{res2:012X}"] = neue_i2c_adresse
 
             logger.info(f"Setze Wagge (Suchlauf {anzahl_waagen}): {res2:014_X} auf I2C Adresse {neue_i2c_adresse:02X}")
@@ -442,11 +442,12 @@ while True:
             # calculate mass and submit if change large enough
             v_mean = statistics.mean(list(waagen[w[0]]['stack'])[-4:]) #get the last 4 readings
             mass = ( v_mean - waagen[w[0]]['zero'] ) * waagen[w[0]]['slope']
-            #submit only, when change is larger than 0.05kg OR every 10 seconds
+            #submit only, when change is larger than 0.05kg OR every 10 seconds OR 5seconds after the last touch
             if (waagen[w[0]]['last_mass_submitted'] is None) or \
                 (abs(mass-waagen[w[0]]['last_mass_submitted']) > 0.05) or \
                 (waagen[w[0]]['last_mass_submitted_time'] is None) or \
-                ((time.time()-waagen[w[0]]['last_mass_submitted_time']) > 10 ):
+                ((time.time()-waagen[w[0]]['last_mass_submitted_time']) > 10 ) or \
+                ((time.time()-waagen[w[0]]['last_touched_time']) < 5):
                 client.publish(f"homie/{mqtt_client_name}/scales/{waagen[w[0]]['mac']}/mass", mass, qos=0, retain=True)            
                 waagen[w[0]]['last_mass_submitted'] = mass
                 waagen[w[0]]['last_mass_submitted_time'] = time.time()
@@ -467,6 +468,7 @@ while True:
                     logger.info(f"touched changed to {act_touched} for i2c address 0x{i2c_address:02X} mac {waagen[w[0]]['mac']}: New: {act_distance_avg_new:.1f} Diff: {(act_distance_avg_new-act_distance_avg_old):.1f} Std: {act_distance_stdev:.1f}")
                     client.publish(f"homie/{mqtt_client_name}/scales/{waagen[w[0]]['mac']}/touched", act_touched, qos=0, retain=False)
                     waagen[w[0]]['touched'] = act_touched
+                    waagen[w[0]]['last_touched_time'] = time.time()
 
                     if not shop_status in (6,18,): #not during scale products assignment state
                         if act_touched == 1:
