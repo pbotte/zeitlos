@@ -1,5 +1,8 @@
 
-sudo apt install mpg321
+sudo apt install mpg321 
+
+#Falls Raspbian lite installiert wurde, dann muss noch folgendes installiert werden
+# sudo apt install puleaudio
 
 pip install -r requirements.txt
 

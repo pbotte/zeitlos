@@ -4495,7 +4495,8 @@
         "y": 800,
         "wires": [
             [
-                "9fa85f87ccd9aa10"
+                "9fa85f87ccd9aa10",
+                "c80b5e7f78a94956"
             ]
         ]
     },
@@ -4504,7 +4505,7 @@
         "type": "function",
         "z": "ee2e0e687435698b",
         "name": "function 7",
-        "func": "var touched_USB_ID = flow.get('touched_USB_ID');\nvar touched_scale_ID = flow.get('touched_scale_ID');\n\nvar components = msg.topic.split(\"/\");\n\nif ( (components[1] == flow.get('touched_USB_ID')) &&\n    (components[3].toUpperCase() == flow.get('touched_scale_ID').toUpperCase()) ) {\n     msg.payload = msg.payload;\n } else {\n     msg = null;\n }\n\nreturn msg;",
+        "func": "var touched_USB_ID = flow.get('touched_USB_ID') || \"\";\nvar touched_scale_ID = flow.get('touched_scale_ID') || \"\";\n\nvar components = msg.topic.split(\"/\");\n\nif ((components[1] == touched_USB_ID) &&\n    (components[3].toString().toUpperCase() == touched_scale_ID.toString().toUpperCase()) ) {\n     msg.payload = msg.payload;\n } else {\n     msg = null;\n }\n\nreturn msg;",
         "outputs": 1,
         "noerr": 0,
         "initialize": "",
@@ -4637,7 +4638,7 @@
         "z": "ee2e0e687435698b",
         "name": "Löschen bei Waagenwechsel",
         "info": "",
-        "x": 360,
+        "x": 320,
         "y": 860,
         "wires": []
     },
@@ -4762,5 +4763,21 @@
                 "2bd781bee8342b6c"
             ]
         ]
+    },
+    {
+        "id": "c80b5e7f78a94956",
+        "type": "debug",
+        "z": "ee2e0e687435698b",
+        "name": "debug 6",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 420,
+        "y": 740,
+        "wires": []
     }
 ]

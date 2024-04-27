@@ -6,6 +6,16 @@ sh get-docker.sh
 sudo usermod -aG docker pi
 ```
 
+clear Logs regularly 
+```bash
+0 3 * * * truncate -s 0 /var/lib/docker/containers/**/*-json.log
+```
+or alternatively, let this do docker for you:
+```
+docker run --log-opt max-size=10m --log-opt max-file=5  ...
+```
+
+
 # Start containers with
 
 ## PHP with Apache

@@ -175,6 +175,16 @@ def set_shop_status(v):
     global status_last_touched_shelf_str, status_last_touched_scale_str
     if shop_status == v:
         return
+
+    if v == 6 and shop_status!=18:
+      client.publish("homie/tts-shop-shelf02/say", "Laden im Wartungsmodus.", qos=1, retain=False)
+    if v == 0:
+      client.publish("homie/tts-shop-shelf02/say", "Laden wird vorbereitet.", qos=1, retain=False)
+    if v == 0:
+      client.publish("homie/tts-shop-shelf02/say", "Laden ist bereit und wartet auf Kunden.", qos=1, retain=False)
+    if v == 10:
+      client.publish("homie/tts-shop-shelf02/say", "Laden geschlossen.", qos=1, retain=False)
+    
     shop_status = v
     shop_status_last_change_timestamp = time.time()
     logger.info(f"Set Shop Status to {shop_status}: {shop_status_descr[shop_status]}")
@@ -354,6 +364,15 @@ while loop_var:
             db_prepare()
             set_product_id_to_scale(status_last_touched_scale_str, m)
             db_close()
+
+            if m:
+              if m in products:
+                client.publish("homie/tts-shop-shelf02/say", f"{products[m]['ProductName']}. wurde zugeordnet", qos=1, retain=False)
+              else:
+                client.publish("homie/tts-shop-shelf02/say", f"Fehler: Waage wurde einem Produkt zugeordnet, welches jedoch nicht in Datenbank vorhanden ist.", qos=1, retain=False)
+                logger.warning("Fehler: Waage wurde einem Produkt zugeordnet, welches jedoch nicht Datenbank vorhanden ist.")
+            else:
+              client.publish("homie/tts-shop-shelf02/say", "Kein Produkt mehr zugeodnet.", qos=1, retain=False)
 
             #Aktuelle Daten von DB einlesen und versenden
             logger.info("Lese die DB neu ein und verschicke sie per MQTT")
