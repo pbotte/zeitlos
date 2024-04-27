@@ -1,0 +1,18 @@
+[Unit]
+Description=Raspi Text to Speech
+After=network.target syslog.target
+
+[Service]
+WorkingDirectory=/home/pi/zeitlos/software/tts/
+ExecStart=/home/pi/zeitlos/software/tts/tts.py -b 192.168.10.10 -v
+Restart=always
+RestartSec=15
+User=pi
+Group=pi
+
+# Note: setting PYTHONUNBUFFERED is necessary to see the output of this service in the journal
+# See https://docs.python.org/2/using/cmdline.html#envvar-PYTHONUNBUFFERED
+Environment=PYTHONUNBUFFERED=true
+
+[Install]
+WantedBy=multi-user.target
