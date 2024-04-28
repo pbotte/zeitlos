@@ -143,6 +143,7 @@ shop_status_descr = {
     16: "Timeout Kartenterminal",
     17: "Warten auf: Kartenterminal Buchung erfolgreich",
     18: "Einräumen durch Betreiber, Waage ausgewählt",
+    19: "Wartung der Technik"
     }
 shop_status_timeout = {
     0: {'time':10,'next':8}, #Geräte Initialisierung
@@ -166,6 +167,7 @@ shop_status_timeout = {
     16: {'time': 120,'next': 8}, # Timeout Kartenterminal
     17: {'time': 30,'next': 8}, # Warten auf: Kartenterminal Buchung erfolgreich
     18: None, # Einräumen durch Betreiber, Waage ausgewählt
+    19: None, # Wartung der Technik
     }
 shop_status_last_change_timestamp = time.time()
 
@@ -388,7 +390,6 @@ while loop_var:
         if (len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "assign_multiple_products"):
           if shop_status in (6,18,):
             logger.info(f"Neue Produkt-Waagen-Zuordnung (assign_multiple_products) erhalten. Eintragen: {m}")
-#            try:
             t = json.loads(m)
             if len(t) >0:
               db_prepare()
@@ -403,11 +404,107 @@ while loop_var:
               send_basket_products_scales_to_mqtt()
             else:
                logger.info("Es wurden keine Einträge übermittelt.")
-#            except:
-#               logger.warning(f"Ein Fehler beim Eintragen ist aufgetreten.")
             set_shop_status(6) #reset der LED und der Variablen werden in dieser Routine durchgeführt
           else:
             logger.warning(f"Produkte konnten nicht gesetzt werden, weil shop_status nicht 6 oder 18 ist: {shop_status=}")
+
+        #Neues Produkt in Datenbank anlegen, gesendet von der Lieferanten-Webseite
+        #homie/public_webpage_supplier/lfr_akern/cmd/create_product {"Supplier":"Hemmes", "ProductName":"Äpfel", "ProductDescription":"frisch vom Feld", "PricePerUnit":2.5, "kgPerUnit":1.1, "VAT":0.07}
+        if (len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "create_product"):
+          if not shop_status in (19,): #nur weiter, falls Laden nicht in Technik-Wartung
+            logger.info(f"Neues Produkt wird in Datenbank eingetragen: {m}")
+            t = json.loads(m)
+            if len(t) >0:
+              db_prepare()
+              try:
+                sql_str = "INSERT INTO `Products` (`Supplier`, `ProductName`, `ProductDescription`, `PricePerUnit`, `kgPerUnit`, `VAT`) VALUES (?, ?, ?, ?, ?, ?); "
+                logger.info(f"Execute the following SQL Str: {sql_str} with ({t=})")
+                cur.execute(sql_str, (t["Supplier"], t["ProductName"], t["ProductDescription"], t["PricePerUnit"], t["kgPerUnit"], t["VAT"], )) #the last comma here is super important, if only one elem provided
+                conn.commit()
+                last_product_id_inserted = cur.lastrowid
+                logger.info(f"Last Inserted ID into Products: {last_product_id_inserted}")
+              except mariadb.Error as e:
+                logger.warning(f"Error while SQL INSERT: {e}")
+              db_close()
+
+              #Aktuelle Daten von DB einlesen und versenden
+              logger.info("Lese die DB neu ein und verschicke sie per MQTT")
+              get_all_data_from_db()
+              send_basket_products_scales_to_mqtt()
+            else:
+               logger.info("Es wurden keine Einträge übermittelt.")
+          else:
+            logger.warning(f"Neues Produkt konnte nicht eingetragen werden, da der Laden nicht bereit ist: {shop_status=}")
+
+
+        #Bestehendes Produkt in Datenbank ändern, gesendet von der Lieferanten-Webseite
+        #homie/public_webpage_supplier/lfr_gast/cmd/edit_product {"ProductName":"test","ProductDescription":"","PriceType":"0","PricePerUnit":"1.00","kgPerUnit":"0.500","VAT":"0.07","Supplier":"test"}
+        if (len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "edit_product"):
+          if not shop_status in (19,2,3,4,9,11,12,14,15,17): #nur weiter, falls Laden nicht in Technik-Wartung, oder Kunde im Laden
+            logger.info(f"Bestehendes Produkt ändern: {m}")
+            t = json.loads(m)
+            if len(t) >0:
+              db_prepare()
+              try:
+                sql_str = "UPDATE `Products` SET `Supplier` = ?, `ProductName` = ?, `ProductDescription` = ?, `PriceType` = ?, `PricePerUnit` = ?, `kgPerUnit` = ?, `VAT` = ? WHERE `Products`.`ProductID` = ?; "
+                logger.info(f"Execute the following SQL Str: {sql_str} with ({t=})")
+                cur.execute(sql_str, (t["Supplier"], t["ProductName"], t["ProductDescription"], t["PriceType"], t["PricePerUnit"], t["kgPerUnit"], t["VAT"], t["ProductID"], )) #the last comma here is super important, if only one elem provided
+                conn.commit()
+                logger.info(f"Änderung erfolgreich.")
+              except mariadb.Error as e:
+                logger.warning(f"Error while SQL Update: {e}")
+              db_close()
+
+              #Aktuelle Daten von DB einlesen und versenden
+              logger.info("Lese die DB neu ein und verschicke sie per MQTT")
+              get_all_data_from_db()
+              send_basket_products_scales_to_mqtt()
+            else:
+               logger.info("Es wurden keine Einträge übermittelt.")
+          else:
+            logger.warning(f"Bestehendes Produkt konnte nicht geändert werden, da der Laden nicht bereit ist oder ein Kunde einkäuft: {shop_status=}")
+
+        #Produkt in Datenbank löschen, gesendet von der Lieferanten-Webseite, ProductID muss übergeben werden
+        # wird nur ausgeführt, falls keiner Waage zugewiesen
+        #homie/public_webpage_supplier/lfr_akern/cmd/delete_product 206
+        if (len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "delete_product"):
+          if not shop_status in (19,): #nur weiter, falls Laden nicht in Technik-Wartung
+            logger.info(f"Produkt in Datenbank löschen, ProduktID: {m=}")
+            if m.isdigit():
+              m = int(m)
+            else: 
+              m = None
+
+            if m:
+              #Test, ob ProductID keiner Waage zugewiesen
+              res = False
+              for k,v in scales_products.items():
+                if v == m:
+                  res = True #ist einer Waage zugeordnet
+
+              if not res: #Falls keiner Waage zugeordnet
+                db_prepare()
+                try:
+                  sql_str = "DELETE FROM Products WHERE `Products`.`ProductID` = ?; "
+                  logger.info(f"Execute the following SQL Str: {sql_str} with ({m=})")
+                  cur.execute(sql_str, (m, )) #the last comma here is super important, if only one elem provided
+                  conn.commit()
+                  logger.info(f"Produkt wurde gelöscht.")
+                except mariadb.Error as e:
+                  logger.warning(f"Error while SQL DELETE: {e}")
+                db_close()
+
+                #Aktuelle Daten von DB einlesen und versenden
+                logger.info("Lese die DB neu ein und verschicke sie per MQTT")
+                get_all_data_from_db()
+                send_basket_products_scales_to_mqtt()
+              else:
+                  logger.warning("Konnte nicht gelöscht werden, da noch mind. einer Waage zugeordnet.")
+            else:
+               logger.warning("Es wurden keine nummerische ProductID übermittelt.")
+          else:
+            logger.warning(f"Produkt konnte nicht gelöscht werden, da der Laden nicht bereit ist: {shop_status=}")
+
 
         # tracker information to know immediate person presence
         if len(msplit) == 3 and msplit[1].lower() == "shop-track-collector" and msplit[2].lower() == "pixels-above-reference":
