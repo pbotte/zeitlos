@@ -129,7 +129,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 
 	    // Add event listener to update display when a product is selected
 	    select.addEventListener('change', function() {
-	    	if (this.value>=0) {
+	    	if (this.value>=-1) {
 		        document.getElementById('productIdDisplay').textContent = this.value;
 			sendMQTTMessage_assign_product(this.value);
 		}
@@ -282,10 +282,10 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           console.log("day_of_week: "+day_of_week);
 	  switch (convertStringToInteger(day_of_week)) {
 	    case 2: //Dienstag
-	      product_pre_set = {"435339f11338": 179, "49303700312d": 2, "49303702261d": 131 };
+	      product_pre_set = {"493037062043": "", "493037f64347": "", "49303702261d": "", "493037ab264a": "", "49303739310a": "", "493037cb0f1d": "", "493037811f3c": "", "493037413118": "" };
 	      break;
 	    case 3: //Mittwoch
-	      product_pre_set = {"49303700312d": 2, "49303702261d": 131 };
+	      product_pre_set = {"493037062043": "", "493037f64347": "", "49303702261d": "", "493037ab264a": "", "49303739310a": "", "493037cb0f1d": "", "493037811f3c": "", "493037413118": "" };
 	      break;
 	    default:
               product_pre_set = {};
@@ -302,7 +302,6 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 </head>
 
 <body>
-
     <script>
         var connected_flag = 0;
         var shop_status = 0; //client in shop
@@ -332,7 +331,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           15: "Kunde nicht mehr im Laden. Abrechnung wird vorbereitet.",
           16: "Timeout Kartenterminal",
           17: "Warten auf: Kartenterminal Buchung erfolgreich",
-          18: "Einräumen durch Betreiber, Waage ausgewählt."
+          18: "Einräumen durch Betreiber, Waage ausgewählt.",
+          19: "Laden in technischer Wartung."
         };
 
 
@@ -343,7 +343,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         setInterval(function () { if (connected_flag == 0) MQTTconnect() }, 5 * 1000);
 
         setInterval(function () {
-          if (shop_status>=0 && shop_status<=18) {
+          if (shop_status>=0 && shop_status<=19) {
             document.getElementById("mytext").innerHTML = "Aktuell: "+shop_status_descr[shop_status];
           } else {
             document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";
@@ -386,6 +386,14 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           <td style="width: 0%; height: 100%; text-align: center; background-color: white; vertical-align: center;" id="fullTable">
             <h1>Hemmes24<br>Lieferanten-Zugang</h1>
             <p>Eingeloggt als: <?php echo $mqtt_user_name; ?></p>
+	    
+	    <form action="supplier_products.php" method="POST">
+	        <input type="hidden" name="mqttusername" value="<?php echo $mqtt_user_name; ?>">
+	        <input type="hidden" name="mqttpassword" value="<?php echo $mqtt_password; ?>">
+	        Ladenverwaltung: <button type="submit">Produktverwaltung</button>
+	    </form>
+
+
             <p id="mytext">...</p>
             <p>
               <button type="button" class="block_green" onClick="sendMQTTMessage_open_door();">Türe öffnen</button>

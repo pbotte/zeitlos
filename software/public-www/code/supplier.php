@@ -181,7 +181,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           15: "Kunde nicht mehr im Laden. Abrechnung wird vorbereitet.",
           16: "Timeout Kartenterminal",
           17: "Warten auf: Kartenterminal Buchung erfolgreich",
-          18: "Einräumen durch Betreiber, Waage ausgewählt."
+          18: "Einräumen durch Betreiber, Waage ausgewählt.",
+          19: "Laden in technischer Wartung."
         };
 
 
