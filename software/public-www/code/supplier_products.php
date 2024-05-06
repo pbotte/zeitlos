@@ -199,15 +199,6 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 		populateTableFromJsonString(r_message.payloadString);
             }
 	    
-            if (r_message.destinationName == "homie/shop_controller/last_touched/product_id") {
-                //console.log("Products: ");
-		if (r_message.payloadString.length >0) {
-			console.log('Wähle in Dropdown-Menü aus: '+r_message.payloadString);
-			selectProductById(parseInt(r_message.payloadString));
-		} else {
-			selectProductById(-1);
-		}
-            }
 	    
         }
 
@@ -224,7 +215,6 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             mqtt.subscribe("homie/shop_controller/shop_status");
             mqtt.subscribe("homie/shop_controller/triggerHTMLPagesReload");
             mqtt.subscribe("homie/shop_controller/shop_overview/products");
-            mqtt.subscribe("homie/shop_controller/last_touched/#");
 	    
         }
 
