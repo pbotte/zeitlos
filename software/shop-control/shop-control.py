@@ -159,7 +159,7 @@ shop_status_timeout = {
     8: None, # Technischer Fehler aufgetreten
     9: None, # Kunde benötigt Hilfe
     10: None, # Laden geschlossen
-    11: {'time': 5,'next':4}, # Kunde möglicherweise im Laden? Falls 5 Sek. kein Kunde im Laden -> Wechsel zu 4
+    11: {'time': 10,'next':4}, # Kunde möglicherweise im Laden? Falls 10 Sek. kein Kunde im Laden -> Wechsel zu 4
     12: {'time':60*15,'next':9}, # Kunde sicher im Laden
     13: {'time': 3,'next':7}, # Fehler bei Kartenterminal
     14: {'time': 15,'next':15}, # Bitte Laden betreten
@@ -175,10 +175,14 @@ def set_shop_status(v):
     global shop_status
     global shop_status_last_change_timestamp
     global status_last_touched_shelf_str, status_last_touched_scale_str
+    global shop_status_last_cycle
+
+    shop_status_last_cycle = shop_status
     if shop_status == v:
         return
 
     if v == 6 and shop_status!=18:
+      #nur 1x beim Wechsel in diesen Modus abspielen
       client.publish("homie/tts-shop-shelf02/say", "Laden im Wartungsmodus.", qos=1, retain=False)
     if v == 0:
       client.publish("homie/tts-shop-shelf02/say", "Laden wird vorbereitet.", qos=1, retain=False)
@@ -186,7 +190,11 @@ def set_shop_status(v):
       client.publish("homie/tts-shop-shelf02/say", "Laden ist bereit und wartet auf Kunden.", qos=1, retain=False)
     if v == 10:
       client.publish("homie/tts-shop-shelf02/say", "Laden geschlossen.", qos=1, retain=False)
-    
+
+    if v == 6:
+      #immer abspielen, wenn in diesen Modus
+      client.publish("homie/tts-shop-shelf02/say", f"Berühre eine Waage.", qos=1, retain=False)
+
     shop_status = v
     shop_status_last_change_timestamp = time.time()
     logger.info(f"Set Shop Status to {shop_status}: {shop_status_descr[shop_status]}")
@@ -258,6 +266,7 @@ def signal_handler(sig, frame):
   loop_var = False
 signal.signal(signal.SIGINT, signal_handler)
 
+shop_status_last_cycle = shop_status #shop_status_last_cycle is used for stuff which is only done the first time a status is reached
 while loop_var:
     ###########################################################################
     # Process MQTT messages
@@ -295,6 +304,7 @@ while loop_var:
                 client.publish("homie/display-power-control-shop-door/power/set", '0', qos=1, retain=False) #schalte das Display außen aus 
                 client.publish("homie/display-power-control-shop-display01/power/set", '0', qos=1, retain=False)
                 client.publish("homie/display-power-control-shop-display02/power/set", '0', qos=1, retain=False)
+                client.publish("homie/fsr-control/innen/licht/set", '0', qos=1, retain=False)  # Licht aus
         
         #Fernsteuerung durch supplier_full.php
         if len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "open_door":
@@ -346,6 +356,7 @@ while loop_var:
               #produkt-waagen-zuordnung nachschlagen
               if status_last_touched_scale_str in scales_products:
                 client.publish("homie/"+mqtt_client_name+"/last_touched/product_id", scales_products[status_last_touched_scale_str], qos=1, retain=True)
+                client.publish("homie/tts-shop-shelf02/say", f"Hier liegt: {products[scales_products[status_last_touched_scale_str]]['ProductName']}.", qos=1, retain=False)
 
               set_shop_status(18)
 
@@ -613,7 +624,7 @@ while loop_var:
       if temp_product_id in products: # should always be true, unless error in db (assignment scales <-> products) 
         if (k in scales_mass_reference) and (k in scales_mass_actual): #Hat eine Waage einen Wert zurückgeliefert, auf dem das Produkt liegt?
           if isinstance(products[temp_product_id]['kgPerUnit'], (int, float)): #valid number? to prevent division by zero
-            if products[temp_product_id]['kgPerUnit'] > 0.001: #mind. 1g per product
+            if products[temp_product_id]['kgPerUnit'] > -1.001: #mind. -1001g per product, to allow for deposit
               temp_product = copy.deepcopy(products[temp_product_id])
               temp_count = (scales_mass_reference[k] - scales_mass_actual[k]) / temp_product['kgPerUnit'] #double as return
               if not math.isnan(temp_count):
@@ -663,6 +674,8 @@ while loop_var:
     elif shop_status == 3: #Kunde betritt/verlässt gerade den Laden
         pass # Weiter gehts zu 11 in MQTT onMessage
     elif shop_status == 4: # Möglicherweise: Einkauf finalisiert / Kunde nicht mehr im Laden"
+        if shop_status_last_cycle != shop_status: # Damit es nur 1x ausgeführt wird.
+          client.publish("homie/tts-shop-shelf02/say", 'Kein Kunde mehr im Laden. Falls doch, dann laufen sie bitte zum "X" auf dem Boden.', qos=1, retain=False)
         #Tür==offen: Wechsel zu 3 über MQTT-Message
         if status_no_person_in_shop == False:
           next_shop_status = 12
@@ -683,11 +696,15 @@ while loop_var:
     elif shop_status == 10: #"Laden geschlossen"
         pass
     elif shop_status == 11: # Kunde möglichweise im Laden
-        if (time.time()-shop_status_last_change_timestamp > 2.5): # Zur Vermeidung von Melde-Verzögerungen der Distanzsensoren erst nach einiger Zeit auswerten
+        if shop_status_last_cycle != shop_status: # Damit es nur 1x ausgeführt wird.
+          client.publish("homie/tts-shop-shelf02/say", 'Willkommen in unserem Bauernladen. Bitte stellen Sie sich auf das "X" am Boden.', qos=1, retain=False)
+        if (time.time()-shop_status_last_change_timestamp > 1.5): # Zur Vermeidung von Melde-Verzögerungen der Distanzsensoren erst nach einiger Zeit auswerten
           if status_no_person_in_shop == False: # Kunde ist im Laden
             next_shop_status = 12 # Kunde sicher im Laden
     elif shop_status == 12: # Kunde sicher im Laden
-        pass # Tür==offen: Wechsel zu 3 über MQTT-Message
+        if shop_status_last_cycle != shop_status: # Damit es nur 1x ausgeführt wird.
+          client.publish("homie/tts-shop-shelf02/say", "Vielen Dank. Sie können nun einkaufen.", qos=1, retain=False)
+        #pass # Tür==offen: Wechsel zu 3 über MQTT-Message
     elif shop_status == 13: # Fehler bei Authentifizierung
         pass # geht über Timeout weiter zu 1
     elif shop_status == 14: # Bitte Laden betreten
@@ -756,7 +773,6 @@ while loop_var:
 
     #### Setzen des nächsten Shop-Status
     set_shop_status(next_shop_status)
-
 
     time.sleep(1-math.modf(time.time())[0])  # make the loop run every second
 
