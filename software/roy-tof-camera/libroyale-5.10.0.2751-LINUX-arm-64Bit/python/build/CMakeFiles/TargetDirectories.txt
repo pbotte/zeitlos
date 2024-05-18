@@ -1,0 +1,4 @@
+/home/pi/zeitlos/software/roy-tof-camera/libroyale-5.10.0.2751-LINUX-arm-64Bit/python/build/CMakeFiles/roypy.dir
+/home/pi/zeitlos/software/roy-tof-camera/libroyale-5.10.0.2751-LINUX-arm-64Bit/python/build/CMakeFiles/roypy_swig_compilation.dir
+/home/pi/zeitlos/software/roy-tof-camera/libroyale-5.10.0.2751-LINUX-arm-64Bit/python/build/CMakeFiles/edit_cache.dir
+/home/pi/zeitlos/software/roy-tof-camera/libroyale-5.10.0.2751-LINUX-arm-64Bit/python/build/CMakeFiles/rebuild_cache.dir

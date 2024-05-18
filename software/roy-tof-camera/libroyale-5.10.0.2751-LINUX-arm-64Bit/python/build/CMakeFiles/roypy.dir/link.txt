@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -shared  -o _roypy.so CMakeFiles/roypy.dir/bin/roypyPYTHON_wrap.cxx.o  -Wl,-rpath,/home/pi/zeitlos/software/roy-tof-camera/libroyale-5.10.0.2751-LINUX-arm-64Bit/bin /home/pi/zeitlos/software/roy-tof-camera/libroyale-5.10.0.2751-LINUX-arm-64Bit/bin/libroyale.so.5.10.0 /usr/lib/aarch64-linux-gnu/libpython3.11.so 
