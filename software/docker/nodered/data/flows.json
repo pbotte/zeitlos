@@ -3235,7 +3235,7 @@
         "expiry": "",
         "broker": "b1634a54dc9da698",
         "x": 560,
-        "y": 940,
+        "y": 1000,
         "wires": []
     },
     {
@@ -3259,7 +3259,7 @@
         "topic": "topic",
         "topicType": "msg",
         "x": 220,
-        "y": 940,
+        "y": 1000,
         "wires": [
             [
                 "7b6f49071031cf0f"
@@ -3291,6 +3291,35 @@
         "wires": [
             [
                 "910414beb817d5b9"
+            ]
+        ]
+    },
+    {
+        "id": "81c11c2b3b4d90da",
+        "type": "inject",
+        "z": "5f8b5286451f333f",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "00 03 * * *",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 190,
+        "y": 920,
+        "wires": [
+            [
+                "4a5e4cb3fb7ca564"
             ]
         ]
     },

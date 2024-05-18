@@ -121,49 +121,12 @@ class PTConnection:
         self.logger.info(f"query_pending_pre_auth(): receipt_no: {receipt_no}\n  full list: {tlv_return}")
         return receipt_no, tlv_return
 
-    async def wait_for_and_parse_status(self, msg):
-        while msg.startswith(b"\x04\xFF"):
-            skip_command_header(msg)
-            if self.mqtt_client and len(msg) > 3 and msg[2] == 6:
-                del msg[:3]
-                tlv = parse_tlv_containter(msg)
-                if text := tlv.get(0x24):
-                    if line := text.get(0x07):
-                        if type(line) == list:
-                            line_printout = ' '.join(x.decode(encoding=encoding) for x in line)
-                        else:
-                            line_printout = line.decode(encoding=encoding)
-                        self.logger.info(f"{line_printout=}")
-                        await self.mqtt_client.publish("homie/cardreader/text", payload=f'{json.dumps(line_printout)}')
-            msg = await self.recv_message()
-
-        if msg.startswith(b"\x06\xD3"): # text block
-          if self.mqtt_client:
-                        skip_command_header(msg)
-                        if pop_byte(msg) != 0x06:
-                            raise Exception('Test block data does not start with 06')
-                        tlv = parse_tlv_containter(msg)
-                        if 0x25 in tlv and 7 in tlv[0x25]:
-                            await self.mqtt_client.publish("homie/cardreader/text_block",
-                                payload="\n".join(map(lambda l: l.decode(encoding=encoding), tlv[0x25][7])))
-                        else:
-                            self.logger.error("text block in 06 D3 message not found")
-          msg = await self.recv_message()
-
-        if not msg.startswith(b"\x04\x0F"):
-            raise Exception(f"Instead 04 0F receivd {fmt_bytes(msg)}")
-        return parse_result_msg(msg, self.logger)
-
-    async def wait_for_completion(self, count):
-        res = 0
-        i = 0
-        while (i:=i+1) <= count:
-            self.logger.debug(f"wait_for_completion(): Loop {i}")
+    async def wait_for_completion(self, msg, timeout=-1):
+        res = {"return_code_completion": None}
+        while True:
+            self.logger.debug(f"wait_for_completion(): Loop")
             try:
-                msg = await asyncio.wait_for(self.recv_message(), timeout=10)
-#                msg = await self.do_with_timeout(self.recv_message(),10)
                 if msg.startswith(b"\x06\xD3"): # text block
-                    i -= 1
                     if self.mqtt_client:
                         skip_command_header(msg)
                         if pop_byte(msg) != 0x06:
@@ -189,20 +152,35 @@ class PTConnection:
                               self.logger.info(f"{line_printout=}")
                               await self.mqtt_client.publish("homie/cardreader/text", payload=f'{json.dumps(line_printout)}')
 
+                elif msg.startswith(b"\x04\x0F"):
+                    res.update(parse_result_msg(msg, self.logger))
+
                 elif msg == b"\x06\x1E\x01\x6C":
                     self.logger.info(f"wait_for_completion(): No card within time window presented. Return: {fmt_bytes(msg)}") #Exception
-                    res = 1
+                    res["return_code_completion"] = 1
+                    break
+                elif msg.startswith(b"\x06\x1E"):
+                    res["return_code_completion"] = 2
+                    self.logger.info(f"wait_for_completion(): Aborted with result code {msg[4]}")
+                    break
                 elif msg == b"\x06\x0F\x00":
                     self.logger.warning(f"wait_for_completion(): Received completion, with: {fmt_bytes(msg)}")
-                    res = 0 #payment completed, often in 2nd loop.
+                    res["return_code_completion"] = 0 #payment completed, often in 2nd loop.
+                    break
                 else:
                     self.logger.error(f"wait_for_completion(): Received not completion but {fmt_bytes(msg)}") #Exception
-                    #this often happens in the first loop, when some text data is received
-                    res = 2
+                    raise Exception(f"Received while waiting for completion: {fmt_bytes(msg)}")
+                if timeout > 0:
+                    msg = await asyncio.wait_for(self.recv_message(), timeout=timeout)
+                else:
+                    msg = await self.recv_message()
+                # msg = await self.do_with_timeout(self.recv_message(),10)
             except asyncio.TimeoutError:
                 self.logger.debug("wait_for_completion(): Gave up waiting, task canceled")
-                res = -1*abs(res) #value negative if some timeout occured, to preserve possible absolute value
-        self.logger.debug(f"wait_for_completion(): completed. result: {res}")
+                #value negative if some timeout occured, to preserve possible absolute value
+                if type(res['return_code_completion']) == int:
+                    res['return_code_completion'] = -1*abs(res['return_code_completion'])
+        self.logger.debug(f"wait_for_completion(): completed. result: {res['return_code_completion']}")
         return res
 
     async def send_preauth(self, amount_cents):
@@ -215,15 +193,12 @@ class PTConnection:
             + b"\x19\x40" #payment type
             + b"\x06\x04\x40\x02\xff\x00"
         )
-        self.logger.debug("send_preauth(): wait_for_and_parse_status")
-        res = await self.wait_for_and_parse_status(msg)
-        self.logger.debug(f"send_preauth(): wait_for_completion. result {res}")
-        res2 = await self.wait_for_completion(1)
-        self.logger.debug(f"send_preauth(): completed, res2: {res2}")
-        res["return_code_completion"] = res2
+        self.logger.debug(f"send_preauth(): wait_for_completion.")
+        res = await self.wait_for_completion(msg)
+        self.logger.debug(f"send_preauth(): completed, res: {res['return_code_completion']}")
     
         if self.mqtt_client:
-            if res2==0: #succesful
+            if res['return_code_completion']==0: #succesful
                 data = {"amount": res['amount'], "trace": res['trace'], "payment-type": res['payment-type'], "receipt-no": res['receipt-no'], "card-type": res['card-type'], "amount_book": -1}
                 await self.mqtt_client.publish("homie/cardreader/data_for_book_total_json", payload=json.dumps(data))
             
@@ -252,30 +227,24 @@ class PTConnection:
         )
         data = b"\x06\x24" + bytearray([len(data)]) + data
         msg = await self.send_query(data)
-        self.logger.debug("book_total(): wait_for_and_parse_status")
-        res = await self.wait_for_and_parse_status(msg)
-        self.logger.debug(f"book_total(): wait_for_completion. result {res}")
-        res2 = await self.wait_for_completion(1)
-        self.logger.debug(f"book_total(): completed. result: {res2}")
-        res["return_code_completion"] = res2
+        self.logger.debug(f"book_total(): wait_for_completion.")
+        res = await self.wait_for_completion(msg)
+        self.logger.debug(f"book_total(): completed. result: {res['return_code_completion']}")
         if self.mqtt_client:
-            await self.mqtt_client.publish("homie/cardreader/book_total", payload=f"{res2}")
+            await self.mqtt_client.publish("homie/cardreader/book_total", payload=f"{res['return_code_completion']}")
         return res
     
     # Abort
-    # does not currently work as it is not sent immediatelly if another operation (eg wait_for_and_parse_status) is still running
+    # does not currently work as it is not sent immediatelly if another operation is still running
     async def abort(self): # see pdf: 2.23 Abort (06 B0)
         self.logger.debug("abort(): start")
         data = b"\x06\xB0\x00"
         msg = await self.send_query(data)
-        self.logger.debug("abort(): wait_for_and_parse_status")
-        res = await self.wait_for_and_parse_status(msg)
-        self.logger.debug(f"abort(): wait_for_completion. result: {res}")
-        res2 = await self.wait_for_completion(1)
-        self.logger.debug(f"abort(): completed. result: {res2}")
-        res["return_code_completion"] = res2
+        self.logger.debug(f"abort(): wait_for_completion.")
+        res = await self.wait_for_completion(msg)
+        self.logger.debug(f"abort(): completed. result: {res['return_code_completion']}")
         if self.mqtt_client:
-            await self.mqtt_client.publish("homie/cardreader/abort", payload=f"{res2}")
+            await self.mqtt_client.publish("homie/cardreader/abort", payload=f"{res['return_code_completion']}")
         return res
     
 
@@ -286,15 +255,12 @@ class PTConnection:
         self.logger.debug("pt_activate_service_menu(): start")
         data = b"\x08\x01\x00"
         msg = await self.send_query(data)
-        self.logger.debug("pt_activate_service_menu(): wait_for_and_parse_status")
-#        res = await self.wait_for_and_parse_status(msg)
 #        self.logger.debug(f"pt_activate_service_menu(): wait_for_completion. result: {res}")
-        res2 = await self.wait_for_completion(1)
-        self.logger.debug(f"pt_activate_service_menu(): completed. result: {res2}")
-#        res["return_code_completion"] = res2
+        res = await self.wait_for_completion(msg)
+        self.logger.debug(f"pt_activate_service_menu(): completed. result: {res['return_code_completion']}")
         if self.mqtt_client:
-            await self.mqtt_client.publish("homie/cardreader/pt_activate_service_menu", payload=f"{res2}")
-        return res2    
+            await self.mqtt_client.publish("homie/cardreader/pt_activate_service_menu", payload=f"{res['return_code_completion']}")
+        return res
 
     # Request directly some money, wihtout pre_auth
     async def authorization(self, amount_cents): #0see pdf: 0601. Request money without preauth
@@ -309,14 +275,11 @@ class PTConnection:
         )
         data = b"\x06\x01" + bytearray([len(data)]) + data
         msg = await self.send_query(data)
-        self.logger.debug("authorization(): wait_for_and_parse_status")
-        res = await self.wait_for_and_parse_status(msg)
         self.logger.debug(f"authorization(): wait_for_completion. result: {res}")
-        res2 = await self.wait_for_completion(2)
-        self.logger.debug(f"authorization(): completed. result: {res2}")
-        res["return_code_completion"] = res2
+        res = await self.wait_for_completion(msg)
+        self.logger.debug(f"authorization(): completed. result: {res['return_code_completion']}")
         if self.mqtt_client:
-            await self.mqtt_client.publish("homie/cardreader/authorization", payload=f"{res2}")
+            await self.mqtt_client.publish("homie/cardreader/authorization", payload=f"{res['return_code_completion']}")
         return res
     
 
@@ -331,14 +294,10 @@ class PTConnection:
         data = b"\x06\x25" + bytearray([len(data)]) + data
 
         msg = await self.send_query(data)
-        self.logger.debug("pre_authorisation_reversal(): wait_for_and_parse_status")
-        res = await self.wait_for_and_parse_status(msg)
-        self.logger.debug(f"pre_authorisation_reversal(): wait_for_completion. result: {res}")
-        res2 = await self.wait_for_completion(1)
-        self.logger.debug(f"pre_authorisation_reversal(): completed. result: {res2}")
-        res["return_code_completion"] = res2
+        res = await self.wait_for_completion(msg)
+        self.logger.debug(f"pre_authorisation_reversal(): completed. result: {res}")
         if self.mqtt_client:
-            await self.mqtt_client.publish("homie/cardreader/pre_authorisation_reversal", payload=f"{res2}")
+            await self.mqtt_client.publish("homie/cardreader/pre_authorisation_reversal", payload=f"{res}")
         return res
 
 
@@ -350,12 +309,8 @@ class PTConnection:
         data = b"\x06\x50" + bytearray([len(data)]) + data
 
         msg = await self.send_query(data)
-        self.logger.debug("end_of_day(): wait_for_and_parse_status")
-        res = await self.wait_for_and_parse_status(msg)
-        self.logger.debug(f"pre_autend_of_dayhorisation_reversal(): wait_for_completion. result: {res}")
-        res2 = await self.wait_for_completion(1)
-        self.logger.debug(f"end_of_day(): completed. result: {res2}")
-        res["return_code_completion"] = res2
+        res = await self.wait_for_completion(msg)
+        self.logger.debug(f"end_of_day(): completed. result: {res['return_code_completion']}")
         if self.mqtt_client:
             await self.mqtt_client.publish("homie/cardreader/end_of_day", payload="done")
         return res
