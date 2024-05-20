@@ -99,6 +99,9 @@ def set_product_id_to_scale(act_scale_id, act_product_id=""):
 
 get_all_data_from_db()
 
+#global variable to store last values
+tofcamshoptof_value = 0
+pixels_above_reference = 0
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logger.info("MQTT connected OK. Return code "+str(rc))
@@ -106,6 +109,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe("homie/"+mqtt_client_name+"/set_shop_status")
         client.subscribe("homie/"+mqtt_client_name+"/update_data_from_db")
         client.subscribe("homie/shop-track-collector/pixels-above-reference")
+        client.subscribe("homie/tof-cam-shop-tof/value")
         client.subscribe("homie/public_webpage_viewer/message_input")
         client.subscribe("homie/public_webpage_supplier/+/cmd/#")
         client.subscribe("homie/door/#")
@@ -150,7 +154,7 @@ shop_status_timeout = {
     1: {'time':120,'next':8}, #Bereit, Keine Kunde im Laden. Kartenterminal aktiv. Timeout da ein Timeout vom Terminal erwartet wird
     2: {'time':10,'next':8}, #Kunde authentifiziert/Waagen tara wird ausgeführt
     3: {'time':60*10,'next':9}, #Kunde betritt/verlässt gerade den Laden
-    4: {'time':10,'next':15}, # Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden
+    4: {'time':2,'next':15}, # Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden
                               # Falls die Sensoren nicht alles abdecken oder durch IR-Licht gestört werden, 
                               # dann hier einen größeren Zeit-Wert sicherheitshalber angeben.
     5: {'time':60,'next':7}, # Einkauf abgerechnet, Kassenbon-Anzeige
@@ -159,7 +163,7 @@ shop_status_timeout = {
     8: None, # Technischer Fehler aufgetreten
     9: None, # Kunde benötigt Hilfe
     10: None, # Laden geschlossen
-    11: {'time': 10,'next':4}, # Kunde möglicherweise im Laden? Falls 10 Sek. kein Kunde im Laden -> Wechsel zu 4
+    11: {'time': 4,'next':4}, # Kunde möglicherweise im Laden? Falls 4 Sek. kein Kunde im Laden -> Wechsel zu 4
     12: {'time':60*15,'next':9}, # Kunde sicher im Laden
     13: {'time': 3,'next':7}, # Fehler bei Kartenterminal
     14: {'time': 15,'next':15}, # Bitte Laden betreten
@@ -216,7 +220,7 @@ cardreader_busy = False # set by MQTT messages from cardreader. When true, do no
 cardreader_last_textblock = "" # MQTT messages from cardread typically in receipe style from homie/cardreader/text_block
 
 actBasket = {"data": {}, "total": 0, "products_count": 0}
-status_no_person_in_shop = None # True if homie/shop-track-collector/pixels-above-reference == 0, else False
+status_no_person_in_shop = None # True if homie/shop-track-collector/pixels-above-reference == 0 and homie/tof-cam-shop-tof/value < Some_Threshold, else False
 status_door_closed = None
 
 # zum Abspeichern von Informationen aus: homie/scale-shop-shelf06-0-1.2.5.5-1.0/scales/4930370A3419/touched
@@ -519,7 +523,11 @@ while loop_var:
 
         # tracker information to know immediate person presence
         if len(msplit) == 3 and msplit[1].lower() == "shop-track-collector" and msplit[2].lower() == "pixels-above-reference":
-            status_no_person_in_shop = True if int(m) == 0 else False #all returns true if all elements are true
+            pixels_above_reference = int(m)
+        # tof camera information to know immediate person presence
+        if len(msplit) == 3 and msplit[1].lower() == "tof-cam-shop-tof" and msplit[2].lower() == "value":
+            tofcamshoptof_value = int(m)
+        status_no_person_in_shop = True if tofcamshoptof_value < 100 and pixels_above_reference == 0 else False
 
         # products withdrawal
         # eg homie/scale-shop-shelf02-0-1.2-1.0/scales/493037101F4B/mass
@@ -675,7 +683,7 @@ while loop_var:
         pass # Weiter gehts zu 11 in MQTT onMessage
     elif shop_status == 4: # Möglicherweise: Einkauf finalisiert / Kunde nicht mehr im Laden"
         if shop_status_last_cycle != shop_status: # Damit es nur 1x ausgeführt wird.
-          client.publish("homie/tts-shop-shelf02/say", 'Kein Kunde mehr im Laden. Falls doch, dann laufen sie bitte zum "X" auf dem Boden.', qos=1, retain=False)
+          client.publish("homie/tts-shop-shelf02/say", 'Kein Kunde mehr im Laden. Falls doch, dann melden sie uns bitte diesen Fehler.', qos=1, retain=False)
         #Tür==offen: Wechsel zu 3 über MQTT-Message
         if status_no_person_in_shop == False:
           next_shop_status = 12
@@ -697,13 +705,13 @@ while loop_var:
         pass
     elif shop_status == 11: # Kunde möglichweise im Laden
         if shop_status_last_cycle != shop_status: # Damit es nur 1x ausgeführt wird.
-          client.publish("homie/tts-shop-shelf02/say", 'Willkommen in unserem Bauernladen. Bitte stellen Sie sich auf das "X" am Boden.', qos=1, retain=False)
+          client.publish("homie/tts-shop-shelf02/say", 'Willkommen in unserem Bauernladen.', qos=1, retain=False)
         if (time.time()-shop_status_last_change_timestamp > 1.5): # Zur Vermeidung von Melde-Verzögerungen der Distanzsensoren erst nach einiger Zeit auswerten
           if status_no_person_in_shop == False: # Kunde ist im Laden
             next_shop_status = 12 # Kunde sicher im Laden
     elif shop_status == 12: # Kunde sicher im Laden
         if shop_status_last_cycle != shop_status: # Damit es nur 1x ausgeführt wird.
-          client.publish("homie/tts-shop-shelf02/say", "Vielen Dank. Sie können nun einkaufen.", qos=1, retain=False)
+          client.publish("homie/tts-shop-shelf02/say", "Sie können nun einkaufen.", qos=1, retain=False)
         #pass # Tür==offen: Wechsel zu 3 über MQTT-Message
     elif shop_status == 13: # Fehler bei Authentifizierung
         pass # geht über Timeout weiter zu 1
