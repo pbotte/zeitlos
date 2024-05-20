@@ -79,18 +79,18 @@ mqtt_client = None
 continue_main_loop = True
 
 
-def handle_sig_int():
-    global continue_main_loop
-    continue_main_loop = False
-    if mqtt_client is not None:
-        mqtt_client.disconnect()
+#def handle_sig_int(sig, frame):
+#    global continue_main_loop
+#    continue_main_loop = False
+#    logger.info(f"SIG Int called. Terminating via dies routine does not work yet.")
 
 
-signal.signal(signal.SIGINT, handle_sig_int)
+#signal.signal(signal.SIGINT, handle_sig_int)
 
 
 async def main():
     global mqtt_client
+    global continue_main_loop
     # filename = 'preauth_testkarte3_erfolgreich.log'
     # filename = 'preauth_girocard_eingeschoben.log'
     # filename = 'book_total.log'
@@ -170,6 +170,8 @@ async def main():
                             await client.publish("homie/cardreader/busy", retain=True, payload="1")
                             await ptc.abort()
                             await client.publish("homie/cardreader/busy", retain=True, payload="0")
+                        elif message.topic.matches("homie/cardreader/cmd/exit"): #leave the program
+                            continue_main_loop = False
                         elif message.topic.matches("homie/cardreader/cmd/pt_activate_service_menu"):
                             await client.publish("homie/cardreader/busy", retain=True, payload="1")
                             await ptc.pt_activate_service_menu()
@@ -177,11 +179,19 @@ async def main():
                         else:
                             logger.info(f'MQTT message received but not processed: {message.topic}')
 
+                        if continue_main_loop == False:
+                            logger.info("Terminating via MQTT called.")
+                            await client.publish("homie/cardreader/busy", retain=True, payload="0")
+                            await client.publish("homie/cardreader/state", payload="0", retain=True)
+                            await messages.aclose() #see: https://stackoverflow.com/questions/69836366/break-from-python-async-for
+#                            break #stop the while loop and by this close the MQTT session
+
         except aiomqtt.MqttError as error:
             logger.error(f'Error "{error}". Reconnecting in {reconnect_interval} seconds.')
             await asyncio.sleep(reconnect_interval)
 
-    await client.publish("homie/cardreader/state", payload="0", retain=True)
+    # from here on, the client is no longer connected
+#    await client.publish("homie/cardreader/state", payload="0", retain=True)
 
     # reverse pre_auth
     #   await ptc.pre_authorisation_reversal(list_rcpt_no[35][8][-1]) #the last entry in list = list_rcpt_no[35][8][-1]

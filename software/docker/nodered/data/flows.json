@@ -1552,6 +1552,139 @@
         ]
     },
     {
+        "id": "b15c54073fd0c0f4",
+        "type": "ui_text",
+        "z": "993296db21e0de95",
+        "group": "d4e8a1e8746ae8dc",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "Innentüre",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 640,
+        "y": 1240,
+        "wires": []
+    },
+    {
+        "id": "9c16fde78a9dd183",
+        "type": "change",
+        "z": "993296db21e0de95",
+        "name": "offen",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "offen",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 430,
+        "y": 1220,
+        "wires": [
+            [
+                "b15c54073fd0c0f4"
+            ]
+        ]
+    },
+    {
+        "id": "d1c8dc6d05472240",
+        "type": "change",
+        "z": "993296db21e0de95",
+        "name": "geschlossen",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "geschlossen",
+                "tot": "str"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 450,
+        "y": 1260,
+        "wires": [
+            [
+                "b15c54073fd0c0f4"
+            ]
+        ]
+    },
+    {
+        "id": "17fbb28815024a76",
+        "type": "switch",
+        "z": "993296db21e0de95",
+        "name": "",
+        "property": "payload",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "0",
+                "vt": "num"
+            },
+            {
+                "t": "eq",
+                "v": "1",
+                "vt": "num"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 290,
+        "y": 1240,
+        "wires": [
+            [
+                "9c16fde78a9dd183"
+            ],
+            [
+                "d1c8dc6d05472240"
+            ]
+        ],
+        "outputLabels": [
+            "offen",
+            "geschlossen"
+        ]
+    },
+    {
+        "id": "b0c348fc58e1277e",
+        "type": "mqtt in",
+        "z": "993296db21e0de95",
+        "name": "",
+        "topic": "homie/door/Pin0",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 140,
+        "y": 1240,
+        "wires": [
+            [
+                "17fbb28815024a76"
+            ]
+        ]
+    },
+    {
         "id": "f5aee131ef4e536c",
         "type": "inject",
         "z": "362a0b93abc679d8",
@@ -3324,6 +3457,52 @@
         ]
     },
     {
+        "id": "7ff05b83b1d7ea4e",
+        "type": "mqtt out",
+        "z": "5f8b5286451f333f",
+        "name": "",
+        "topic": "homie/cardreader/cmd/exit",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 540,
+        "y": 1160,
+        "wires": []
+    },
+    {
+        "id": "35e3bc6eda1a0191",
+        "type": "ui_button",
+        "z": "5f8b5286451f333f",
+        "name": "",
+        "group": "5a30b569fe0f7853",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "passthru": false,
+        "label": "Exit",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "x": 310,
+        "y": 1160,
+        "wires": [
+            [
+                "7ff05b83b1d7ea4e"
+            ]
+        ]
+    },
+    {
         "id": "8826e20861470d4e",
         "type": "mqtt in",
         "z": "e93210c72506d388",
@@ -3824,7 +4003,8 @@
                 "7e22ee6ca54d8e3b",
                 "18611bc6f6647bee",
                 "2530b909cff3b2ca",
-                "754bb9952ab45451"
+                "754bb9952ab45451",
+                "f7e6aa8c453a44a2"
             ]
         ]
     },
@@ -3973,7 +4153,8 @@
         "y": 660,
         "wires": [
             [
-                "197bc7357c79fcc7"
+                "197bc7357c79fcc7",
+                "5dea333c5f1c5a5e"
             ]
         ]
     },
@@ -3993,6 +4174,111 @@
         "broker": "b1634a54dc9da698",
         "x": 520,
         "y": 660,
+        "wires": []
+    },
+    {
+        "id": "fd69beae2e88d6eb",
+        "type": "mqtt in",
+        "z": "e93210c72506d388",
+        "name": "",
+        "topic": "homie/tof-cam-shop-tof/value",
+        "qos": "0",
+        "datatype": "auto-detect",
+        "broker": "b1634a54dc9da698",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 240,
+        "y": 780,
+        "wires": [
+            [
+                "d75ac27a70827af8",
+                "f7e6aa8c453a44a2"
+            ]
+        ]
+    },
+    {
+        "id": "d75ac27a70827af8",
+        "type": "ui_text",
+        "z": "e93210c72506d388",
+        "group": "ef058d427c4383aa",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "",
+        "label": "TOF Camera",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#000000",
+        "x": 470,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "f7e6aa8c453a44a2",
+        "type": "ui_chart",
+        "z": "e93210c72506d388",
+        "name": "",
+        "group": "e7001e04ca82ff4e",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "label": "TOF cam",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": 1,
+        "removeOlderPoints": "100",
+        "removeOlderUnit": "60",
+        "cutout": 0,
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 720,
+        "y": 780,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "5dea333c5f1c5a5e",
+        "type": "mqtt out",
+        "z": "e93210c72506d388",
+        "name": "",
+        "topic": "homie/tof-cam-shop-tof/cmd/set_zero",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "b1634a54dc9da698",
+        "x": 510,
+        "y": 700,
         "wires": []
     },
     {
