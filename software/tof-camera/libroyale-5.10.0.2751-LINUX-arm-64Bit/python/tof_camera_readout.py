@@ -53,7 +53,7 @@ def on_connect(client, userdata, flags, rc):
   if rc==0:
     logger.info("MQTT connected OK. Return code "+str(rc) )
     client.subscribe("homie/"+mqtt_client_name+"/cmd/#")
-#    client.subscribe("homie/shop_controller/shop_status")
+    client.subscribe("homie/shop_controller/shop_status")
     logger.info("MQTT: Success, subscribed to all topics")
   else:
     logger.error("Bad connection. Return code="+str(rc))
@@ -185,8 +185,9 @@ while True: #time.time() < t_end:
         msplit = re.split("/", message.topic)
 
         #Setze die Referenz, wenn kein Kunde im Laden ist.
-        if len(msplit) == 4 and msplit[2].lower() == "cmd" and msplit[3].lower() == "set_zero":
-            logger.info("Per MQTT empfangen: Setze Null.")
+        if (len(msplit) == 4 and msplit[2].lower() == "cmd" and msplit[3].lower() == "set_zero") or \
+            (message.topic.lower() == "homie/shop_controller/shop_status" and int(m) == 2):
+            logger.info("Via MQTT set_zero or shop_status == 2 received: Setting reference.")
             if len(tof_data_queue) < 8:
                 logger.warning("Zu wenig Daten bisher empfangen.")
             else:
@@ -239,3 +240,5 @@ while True: #time.time() < t_end:
         #l.paint(nv)
 
 cam.stopCapture()
+
+client.publish(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
