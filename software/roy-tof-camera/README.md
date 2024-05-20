@@ -1,3 +1,13 @@
+# Ausführung
+
+```bash
+pip install --break-system-packages -r requirements.txt
+
+python3 ./software/roy-tof-camera/libroyale-5.10.0.2751-LINUX-arm-64Bit/python/tof_camera_readout.py -v -b 192.168.10.10
+```
+
+# Vobereitung
+
 ### Hardware:
 - Raspi 4B, 1GB
 - Raspbian, 64bit, Desktop
