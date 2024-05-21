@@ -34,3 +34,23 @@ remote_password ...
 topic homie/shop_controller/# out
 topic homie/public_webpage_viewer/# in
 ```
+
+# EMQX Bridge Config
+
+## Benutzer
+
+Für jeden Benutzer muss ein Konto angelegt werden, z.B. `lfr_gast`. Für die Software wird gebraucht: `shop-controller` und `public_webpage_viewer`.
+
+## Berechtigungen
+
+* All Users erhalten für '#' ein `Deny`für `Publish & Subscribe`
+* `shop-controller` erhält für '#' ein `Allow` für `Publish & Subscribe`
+* Die einzelnen Nutzer ein `Allow` für `Subscribe`: 
+```
+homie/shop_controller/actualBasket
+homie/shop_controller/shop_overview/#
+homie/shop_controller/last_touched/#
+homie/shop_controller/triggerHTMLPagesReload
+homie/shop_controller/shop_status
+```
+und für `Publish`: `homie/public_webpage_supplier/lfr_gast/cmd/#`

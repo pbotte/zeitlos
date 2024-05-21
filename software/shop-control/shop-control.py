@@ -219,7 +219,8 @@ def set_shop_status(v):
 cardreader_busy = False # set by MQTT messages from cardreader. When true, do not submit any task to cardreader and simply wait
 cardreader_last_textblock = "" # MQTT messages from cardread typically in receipe style from homie/cardreader/text_block
 
-actBasket = {"data": {}, "total": 0, "products_count": 0}
+actBasketCorrections = {} #only filled with data, when basket was corrected remotely via '.../cmd/basket/set_product_count'. Fille with {"ProductID": "CorrectValue", ...}
+actBasket = {"data": {}, "total": 0, "products_count": 0, "corrections": actBasketCorrections} #data-field does already include the corrections from actBasketCorrections
 status_no_person_in_shop = None # True if homie/shop-track-collector/pixels-above-reference == 0 and homie/tof-cam-shop-tof/value < Some_Threshold, else False
 status_door_closed = None
 
@@ -522,6 +523,21 @@ while loop_var:
           else:
             logger.warning(f"Produkt konnte nicht gelöscht werden, da der Laden nicht bereit ist: {shop_status=}")
 
+        #Warenkorb korrigieren via Webpage
+        #homie/public_webpage_supplier/lfr_akern/cmd/basket/set_product_count {"ProductID":247,"NewCount":"0"}
+        if (len(msplit) == 6 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "basket" and msplit[5].lower() == "set_product_count"):
+          logger.info(f"Warenkorb-Korrektur steht an: {m=}")
+          t = json.loads(m)
+          if len(t) >0:
+            if "ProductID" in t and "NewCount" in t:
+              temp_ProductID = int(t["ProductID"])
+              temp_NewCount = int(t["NewCount"])
+              actBasketCorrections[temp_ProductID] = temp_NewCount
+              logger.info(f"Warenkorb-Korrektur: {actBasketCorrections}")
+          else:
+            logger.warning(f"Es wurden keine Daten übermittelt.")
+
+
 
         # tracker information to know immediate person presence
         if len(msplit) == 3 and msplit[1].lower() == "shop-track-collector" and msplit[2].lower() == "pixels-above-reference":
@@ -648,6 +664,11 @@ while loop_var:
       temp_count = mass / temp_product['kgPerUnit'] #double as return
       if not math.isnan(temp_count):
         temp_count = round(temp_count)
+
+        # Warenkorb Korrekturen, die durch die Webseite kamen, berücksichtigen
+        if temp_product_id in actBasketCorrections:
+          temp_count = actBasketCorrections[temp_product_id]
+
         if temp_count<=0 or temp_count>100: #the 100 here has no deeper meaning
           pass
 #          if temp_count !=0:  
@@ -662,7 +683,7 @@ while loop_var:
     for k, v in actBasketProducts.items():
       actSumTotal += v['price']
 
-    actBasket = {"data": actBasketProducts, "total": actSumTotal, "products_count": actProductsCount}
+    actBasket = {"data": actBasketProducts, "total": actSumTotal, "products_count": actProductsCount, "corrections": actBasketCorrections}
     if last_actBasket != actBasket: #change to basket? --> publish!
         client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
         last_actBasket = actBasket
@@ -679,6 +700,7 @@ while loop_var:
        # Wechsel zu 16 (Falls Kartenleser Timeout), oder 2 (OK) passiert in MQTT-onMessage, Wechsel zu 13 als Standard-Timeout
     elif shop_status == 2: #"Kunde authentifiziert / Waagen tara wird ausgeführt
         #Waagen tara ausführen:
+        actBasketCorrections = {} #Reset Warenkorb Korrekturen bei neuem Kunden
         scales_mass_reference = copy.deepcopy(scales_mass_actual) #always use deepcopy, see: https://stackoverflow.com/questions/2465921/how-to-copy-a-dictionary-and-only-edit-the-copy
         client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
         client.publish("homie/shop_controller/generic_pir/innen_licht", '{"v":1,"type":"Generic_PIR"}', qos=1, retain=False)
