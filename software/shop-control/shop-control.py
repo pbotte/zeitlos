@@ -361,6 +361,8 @@ while loop_var:
               if status_last_touched_scale_str in scales_products:
                 client.publish("homie/"+mqtt_client_name+"/last_touched/product_id", scales_products[status_last_touched_scale_str], qos=1, retain=True)
                 client.publish("homie/tts-shop-shelf02/say", f"Hier liegt: {products[scales_products[status_last_touched_scale_str]]['ProductName']}.", qos=1, retain=False)
+              else:
+                client.publish("homie/tts-shop-shelf02/say", f"Dieser Waage ist noch kein Produkt zugeodnet.", qos=1, retain=False)
 
               set_shop_status(18)
 
@@ -526,7 +528,7 @@ while loop_var:
             pixels_above_reference = int(m)
         # tof camera information to know immediate person presence
         if len(msplit) == 3 and msplit[1].lower() == "tof-cam-shop-tof" and msplit[2].lower() == "value":
-            tofcamshoptof_value = int(m)
+            tofcamshoptof_value = float(m)
         status_no_person_in_shop = True if tofcamshoptof_value < 100 and pixels_above_reference == 0 else False
 
         # products withdrawal
@@ -627,32 +629,36 @@ while loop_var:
     actBasketProducts = {}
     actSumTotal = 0
     actProductsCount = 0
+    actProductsMasses = {}
 
+    #Zuerst die gesamt Masse zu jedem Produkt bestimmen. Gleiche Produkte können auf mehreren Waagen stehen
     for k, temp_product_id in scales_products.items():
       if temp_product_id in products: # should always be true, unless error in db (assignment scales <-> products) 
         if (k in scales_mass_reference) and (k in scales_mass_actual): #Hat eine Waage einen Wert zurückgeliefert, auf dem das Produkt liegt?
           if isinstance(products[temp_product_id]['kgPerUnit'], (int, float)): #valid number? to prevent division by zero
             if products[temp_product_id]['kgPerUnit'] > -1.001: #mind. -1001g per product, to allow for deposit
-              temp_product = copy.deepcopy(products[temp_product_id])
-              temp_count = (scales_mass_reference[k] - scales_mass_actual[k]) / temp_product['kgPerUnit'] #double as return
-              if not math.isnan(temp_count):
-                temp_count = round(temp_count)
-                if temp_count<0: temp_count=0 #no negative numbers of items in basket! Negative numbers only for actProductsCount
-                if temp_count>100: 
-                  temp_count=100 # set some arbitrarily choosen limits
-                  logger.warning("Warenanzahllimit erreicht.")
+              if temp_product_id in actProductsMasses:
+                actProductsMasses[temp_product_id] += scales_mass_reference[k] - scales_mass_actual[k]
+              else:
+                actProductsMasses[temp_product_id] = scales_mass_reference[k] - scales_mass_actual[k]
 
-                if scales_products[k] in actBasketProducts: #in case product is sold on several scales and already in basket
-                    actBasketProducts[temp_product_id]['withdrawal_units'] += temp_count
-                    actBasketProducts[temp_product_id]['price'] = actBasketProducts[temp_product_id]['withdrawal_units'] * temp_product['PricePerUnit']
-                else:
-                    temp_product['withdrawal_units'] = temp_count
-                    temp_product['price'] = temp_count * temp_product['PricePerUnit']
-                    actBasketProducts[temp_product_id] = temp_product
-                actProductsCount += temp_count
-                if actBasketProducts[temp_product_id]['withdrawal_units'] == 0:
-                  actBasketProducts.pop(temp_product_id, None) #Remove from list
-    
+    #Jetzt die Stückzahlen zu den Massen bestimmen
+    for temp_product_id, mass in actProductsMasses.items():
+      temp_product = copy.deepcopy(products[temp_product_id])
+      temp_count = mass / temp_product['kgPerUnit'] #double as return
+      if not math.isnan(temp_count):
+        temp_count = round(temp_count)
+        if temp_count<=0 or temp_count>100: #the 100 here has no deeper meaning
+          pass
+#          if temp_count !=0:  
+#            logger.warning(f"Ungültige Warenanzahl erreicht: {temp_count=}")
+        else:
+          temp_product['withdrawal_units'] = temp_count
+          temp_product['price'] = temp_count * temp_product['PricePerUnit']
+          actBasketProducts[temp_product_id] = temp_product
+
+          actProductsCount += temp_count
+
     for k, v in actBasketProducts.items():
       actSumTotal += v['price']
 
