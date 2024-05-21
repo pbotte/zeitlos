@@ -211,7 +211,6 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             mqtt.subscribe("homie/shop_controller/triggerHTMLPagesReload");
             mqtt.subscribe("homie/shop_controller/shop_overview/products");
             mqtt.subscribe("homie/shop_controller/last_touched/#");
-	    
         }
 
         function MQTTconnect() {
@@ -391,6 +390,11 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 	        <input type="hidden" name="mqttusername" value="<?php echo $mqtt_user_name; ?>">
 	        <input type="hidden" name="mqttpassword" value="<?php echo $mqtt_password; ?>">
 	        Ladenverwaltung: <button type="submit">Produktverwaltung</button>
+	    </form>
+	    <form action="supplier_basket_help.php" method="POST">
+	        <input type="hidden" name="mqttusername" value="<?php echo $mqtt_user_name; ?>">
+	        <input type="hidden" name="mqttpassword" value="<?php echo $mqtt_password; ?>">
+	        Aktueller Einkauf: <button type="submit">Einkaufshilfe</button>
 	    </form>
 
 
