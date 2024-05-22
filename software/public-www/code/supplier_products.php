@@ -131,6 +131,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 	        row.innerHTML = `
 	            <td>${product.ProductName}</td>
 	            <td>${product.ProductDescription || ''}</td>
+	            <td>${product.PriceType}</td>
 	            <td>${product.PricePerUnit.toFixed(2)}</td>
 	            <td>${product.kgPerUnit.toFixed(3)}</td>
 	            <td>${product.VAT}</td>
@@ -297,9 +298,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 
             // ${product.ProductID}
 	    content.innerHTML = `
-	        <p>Hinweis: Bearbeitung von bestehenden Produkten noch nicht möglich.</p>
-
-	        <input type="hidden" id="productID" name="productID" value="${product.ProductID}">
+	        <label for="productID">Produkt ID:</label>
+		<input type="text" id="productID" name="productID" value="${product.ProductID}" readonly style="border:none; background-color:transparent;"><br>
 
 	        <label for="productName">Produktname:</label>
 	        <input type="text" id="productName" name="productName" value="${product.ProductName}"><br>
@@ -420,6 +420,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 	        <tr>
 	            <th>Name</th>
 	            <th>Beschreibung</th>
+		    <th>Preistyp</th>
 	            <th>€/Einheit</th>
 	            <th>kg/Einheit</th>
 	            <th>MWSt.</th>
@@ -481,6 +482,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 	</div>
 
 
+<p>Hinweis zum Preistyp: 0=Stückpreis, 2=Stückpreis plus Pfand 0,15€</p>
     
 </body>
 

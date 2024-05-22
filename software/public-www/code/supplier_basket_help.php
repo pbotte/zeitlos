@@ -294,13 +294,6 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
     }
     </style>
 
-    <table border="0" style="height: 100%; width: 100%; border-collapse: collapse;">
-      <tbody>
-        <tr>
-          <td style="width: 10%; background-color: white; ">
-            <p>&nbsp;</p>
-          </td>
-          <td style="width: 0%; height: 100%; text-align: center; background-color: white; vertical-align: center;" id="fullTable">
             <h1>Hemmes24<br>Lieferanten-Zugang</h1>
             <p>Eingeloggt als: <?php echo $mqtt_user_name; ?></p>
 	    
@@ -329,17 +322,6 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
     </table>
 
 
-            	    
-          </td>
-          <td style="width: 10%; background-color: white; ">
-            <p>&nbsp;</p>
-          </td>
-        </tr>
-
-      </tbody>
-    </table>
-    
-    
     
     
 
