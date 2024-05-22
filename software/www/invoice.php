@@ -1,5 +1,15 @@
 <?php
 
+/*
+Vorgehensweise zur Berechnung der MwSt.:
+
+1. Erst werden alle Brutto-Preise einer MwSt.-Kategorie addiert.
+2. Zu jeder Kategorie wird die Netto-Preis-Summe berechnet: Brutto-Summe / (1+MwSt.Satz) = Netto-Summe
+3. Runden
+4. Differenz zwischen Netto und Brutto ist die Steuer.
+
+*/
+
 $add_text = "";
 $add_products = array();
 $timestamp = 0;
@@ -139,13 +149,25 @@ if (isset($rechnungs_posten)) {
 		}
 		$html .="</table>";
 	
+		//Berechnung der MwSt: (0 = 0%, 1=red. Satz, 2=volle MwSt.)
+		$Netto_sum = array(0,0,0); //0%, reduced tax, full tax rate
+		$Netto_sum[0] = $USt_sum[0];
+		$Netto_sum[1] = round($USt_sum[1]/1.07, 2);
+		$Netto_sum[2] = round($USt_sum[2]/1.19, 2);
+		$Total_Netto_sum = $Netto_sum[0]+$Netto_sum[1]+$Netto_sum[2];
+
+		$VAT_sum = array(0,0,0); //0%, reduced tax, full tax rate
+		$VAT_sum[0] = $USt_sum[0] - $Netto_sum[0];
+		$VAT_sum[1] = $USt_sum[1] - $Netto_sum[1];
+		$VAT_sum[2] = $USt_sum[2] - $Netto_sum[2];
+		$Total_VAT_sum = $VAT_sum[1] + $VAT_sum[2];
 	
 		$html .= '
 		<hr>
 		<table cellpadding="5" cellspacing="0" style="width: 100%;" border="0">
 		<tr>
 		<td colspan="3"><b>Summe:</b></td>
-		<td style="text-align: center;"><b>'.number_format($gesamtpreis, 2, ',', '').'</b></td>
+		<td style="text-align: right;"><b>'.number_format($gesamtpreis, 2, ',', '').'</b>&nbsp;&nbsp;</td>
 		</tr>
 		</table>
 
@@ -158,28 +180,34 @@ if (isset($rechnungs_posten)) {
 		<hr>
 		<table cellpadding="1" cellspacing="0" style="width: 100%;" border="0">
 		<tr>
-			<td>UST</td>
+			<td>MwSt.</td>
 			<td style="text-align: right;">Netto</td>
 			<td style="text-align: right;">Steuer</td>
 			<td style="text-align: right;">Brutto</td>
 		</tr>
 		<tr>
 			<td>0 = 0%</td>
-			<td style="text-align: right;">'.number_format($USt_sum[0]*(1-0.00), 2, ',', '').'</td>
-			<td style="text-align: right;">'.number_format($USt_sum[0]*0 , 2, ',', '').'</td>
-			<td style="text-align: right;">'.number_format($USt_sum[0] , 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($Netto_sum[0], 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($VAT_sum[0], 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($USt_sum[0], 2, ',', '').'</td>
 		</tr>
 		<tr>
 			<td>1 = 7%</td>
-			<td style="text-align: right;">'.number_format($USt_sum[1]*(1-0.07), 2, ',', '').'</td>
-			<td style="text-align: right;">'.number_format($USt_sum[1]*0.07, 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($Netto_sum[1], 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($VAT_sum[1], 2, ',', '').'</td>
 			<td style="text-align: right;">'.number_format($USt_sum[1], 2, ',', '').'</td>
 		</tr>
 		<tr>
 			<td>2 = 19%</td>
-			<td style="text-align: right;">'.number_format($USt_sum[2]*(1-0.19), 2, ',', '').'</td>
-			<td style="text-align: right;">'.number_format($USt_sum[2]*0.19, 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($Netto_sum[2], 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($VAT_sum[2], 2, ',', '').'</td>
 			<td style="text-align: right;">'.number_format($USt_sum[2], 2, ',', '').'</td>
+		</tr>
+		<tr>
+			<td>Summe</td>
+			<td style="text-align: right;">'.number_format($Total_Netto_sum, 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($Total_VAT_sum, 2, ',', '').'</td>
+			<td style="text-align: right;">'.number_format($gesamtpreis, 2, ',', '').'</td>
 		</tr>
 		</table>
 		<hr>

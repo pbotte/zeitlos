@@ -615,17 +615,20 @@ while loop_var:
             try:
               m_json = json.loads(m)
               # Hier fehlt noch Code, der überprüft, ob es wirklich geklappt hat.
-              logger.info("Betrag wurde erfolgreih der Karte belastet.")
+              logger.info("Betrag wurde erfolgreich der Karte belastet.")
               
               # prepare invoice_json to be sent for outside customer display
               p = []
               ab = actBasket["data"]
               for i in ab:
                 v=ab[i]
-                p.append([v["ProductName"], v["withdrawal_units"], v["PricePerUnit"], 1]) # TODO: variable VAT support: 0:0%, 1:7%, 2:19%
+                temp_VAT = 2 #standard / full VAT
+                if v["VAT"] == 0.07: temp_VAT = 1 #reduced VAT
+                if v["VAT"] == 0.0: temp_VAT = 0 #no VAT
+                p.append([v["ProductName"], v["withdrawal_units"], v["PricePerUnit"], temp_VAT])
               a={'d': {"p":p, 'c': cardreader_last_textblock, 't':int(time.time())}}
               logger.info(f"Kassenbon: {a=}")
-              client.publish("homie/shop_controller/invoice_json", json.dumps(a), qos=1, retain=True)
+              client.publish(f"homie/{mqtt_client_name}/invoice_json", json.dumps(a), qos=1, retain=True)
 
               set_shop_status(5) #Anzeige des Belegs
             except:
