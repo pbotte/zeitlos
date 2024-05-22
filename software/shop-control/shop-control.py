@@ -662,9 +662,9 @@ while loop_var:
                 actProductsMasses[temp_product_id] = scales_mass_reference[k] - scales_mass_actual[k]
 
     #Jetzt die Stückzahlen zu den Massen bestimmen
+    actNumberOfDeposit = 0
     for temp_product_id, mass in actProductsMasses.items():
-      temp_product = copy.deepcopy(products[temp_product_id])
-      temp_count = mass / temp_product['kgPerUnit'] #double as return
+      temp_count = mass / products[temp_product_id]['kgPerUnit'] #double as return
       if not math.isnan(temp_count):
         temp_count = round(temp_count)
 
@@ -677,11 +677,24 @@ while loop_var:
 #          if temp_count !=0:  
 #            logger.warning(f"Ungültige Warenanzahl erreicht: {temp_count=}")
         else:
+          temp_product = copy.deepcopy(products[temp_product_id])
           temp_product['withdrawal_units'] = temp_count
           temp_product['price'] = temp_count * temp_product['PricePerUnit']
           actBasketProducts[temp_product_id] = temp_product
 
           actProductsCount += temp_count
+
+          if temp_product['PriceType'] == 2:
+            actNumberOfDeposit += temp_count
+
+    #Add Deposit to basket
+    if actNumberOfDeposit>0:
+      depositProductID_In_DB = 250
+      temp_product = copy.deepcopy(products[depositProductID_In_DB])
+      temp_product['withdrawal_units'] = actNumberOfDeposit
+      temp_product['price'] = actNumberOfDeposit * temp_product['PricePerUnit']
+      actBasketProducts[depositProductID_In_DB] = temp_product
+      #hint: do not increase actProductsCount
 
     for k, v in actBasketProducts.items():
       actSumTotal += v['price']
