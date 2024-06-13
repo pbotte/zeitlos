@@ -1,4 +1,9 @@
-from flask import Flask, send_file, make_response
+# start with: python webserver.py -v
+# navigate to http://localhost:8090
+# sub calls for image like: http://localhost:8090/getimage?productid=1
+#           for output as file: http://localhost:8090/getfile?productid=1
+
+from flask import Flask, send_file, request, render_template_string
 import threading
 import time
 import numpy as np
@@ -35,7 +40,7 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logger.info("MQTT connected OK. Return code "+str(rc))
         client.subscribe("homie/shop_controller/shop_overview/products")
-#        client.subscribe(f"homie/{mqtt_client_name}/reference")
+        client.subscribe("homie/shop_controller/shop_overview/scales_products")
 #        client.subscribe(f"homie/{mqtt_client_name}/reference/set")
         client.subscribe("homie/shop_controller/shop_status")
         logger.debug("MQTT: Subscribed to all topics")
@@ -89,6 +94,7 @@ signal.signal(signal.SIGTERM, signal_handler)
 ##############################################################################
 
 product_reference = {}
+scales_products_assignment = {}
 
 
 
@@ -98,18 +104,75 @@ product_reference = {}
 app = Flask(__name__)
 
 @app.route('/')
-def serve_image():
-    return send_file('price_tag_with_image.png', mimetype='image/png')
+def home():
+    html_content = """
+    <!doctype html>
+    <html lang="en">
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>eink server</title>
+      </head>
+      <body>
+        <h1>Commands available</h1>
+        <p>1: <a href="/getimage">/getimage</a></p>
+        <p>2: <a href="/products">/products</a></p>
+        <p>3: <a href="/assignment">/assignment</a></p>
+      </body>
+    </html>
+    """
+    return render_template_string(html_content)
+#    return send_file('price_tag_with_image.png', mimetype='image/png')
 
-@app.route('/grayscale')
+@app.route('/getimage')
 def serve_grayscale_image():
-    # Create a grayscale image stored in a NumPy array
-    array = np.random.randint(0, 256, (100, 100), dtype=np.uint8)  # Example grayscale image
-    array = generate_img.generate_image()
+    output_format = request.args.get('o', None) #call with &0=1 to get output for eink, otherwise as PNG
 
+    product_id = request.args.get('productid', None)
+    scale_id = request.args.get('scaleid', None)
+    if scale_id: scale_id=scale_id.lower()
+
+    product_id_via_scale_id = None
+    if scale_id and scale_id in scales_products_assignment:
+        product_id_via_scale_id = scales_products_assignment[scale_id]
+    logger.info(f"/getimage request with:{output_format=} {product_id=} {scale_id=} {product_id_via_scale_id=}")
+
+    if not product_id: 
+        product_id = product_id_via_scale_id
+    product_id = str(product_id) # of variable is int, make it a string for lookup in product_reference
+
+    if not product_id in product_reference: 
+        return "Product ID not provided or product does not exist. Call with GET parameters productid or scaleid"
+
+    def extract_number_before_g(text):
+        match = re.search(r'(\d+)\s*g', text)
+        if match:
+            return int(match.group(1))/1000
+        match = re.search(r'(\d+)\s*kg', text)
+        if match:
+            return int(match.group(1))
+        return None
+    product_mass_in_kg = extract_number_before_g(product_reference[product_id]['ProductName'])
+    if not product_mass_in_kg: product_mass_in_kg = extract_number_before_g(product_reference[product_id]['ProductDescription'])
+    logger.info(f"{product_mass_in_kg=} {product_reference[product_id]['kgPerUnit']=}")
+    bottom_text = ""
+    if product_mass_in_kg: 
+       bottom_text= f"{(product_mass_in_kg*1000):.0f}g    {(product_reference[product_id]['PricePerUnit']/product_mass_in_kg):.2f} €/kg".replace(".",",")
+
+    array = generate_img.generate_image(product_reference[product_id]['ProductName'], 
+                                        price=product_reference[product_id]['PricePerUnit'],
+                                        description=product_reference[product_id]['ProductDescription'],
+                                        supplier=product_reference[product_id]['Supplier'],
+                                        bottom_text=bottom_text )
+    #, PriceType, PricePerUnit, kgPerUnit, VAT, 
+
+    #output as text for eink display
+    if output_format:
+        return generate_img.process_image_to_string(array)
+
+    #if not, then output as png
     image = Image.fromarray(array)
 
-    
     # Save the image to a BytesIO object
     img_io = io.BytesIO()
     image.save(img_io, 'PNG')
@@ -119,11 +182,23 @@ def serve_grayscale_image():
 
 @app.route('/products')
 def products():
-    return f"{product_reference}"
+    product_id = request.args.get('productid', None)
+    product_id = str(product_id)
+    if product_id and product_id in product_reference:
+        return f"{product_reference[product_id]}"
+    else:
+        return f"{product_reference}"
 
-@app.route('/get')
-def product_file():
-    return generate_img.get_product_file(1)
+@app.route('/assignment')
+def assignment():
+    scale_id = request.args.get('id', '')
+    if scale_id:
+        if scale_id in scales_products_assignment:
+            return f"{scales_products_assignment[scale_id]}"
+        else:
+            return "-"
+    else:
+        return f"{scales_products_assignment}"
 
 def start_flask():
 #    app.run(host='0.0.0.0', port=80)
@@ -156,6 +231,10 @@ if __name__ == "__main__":
                 if message.topic.lower() == f"homie/shop_controller/shop_overview/products":
                     logger.info("product overview received")
                     product_reference = json.loads(m)
+
+                if message.topic.lower() == f"homie/shop_controller/shop_overview/scales_products":
+                    logger.info("products to scales assignment received")
+                    scales_products_assignment = json.loads(m)
 
                 if message.topic.lower() == f"homie/{mqtt_client_name}/reference":
                     logger.info("reference received")
