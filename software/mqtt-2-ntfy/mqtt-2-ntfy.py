@@ -12,16 +12,14 @@ import sys
 import re
 import parse #pip install parse
 import requests
+import signal
 
-logging.basicConfig(level=logging.WARNING,
-                    format='%(asctime)-6s %(levelname)-8s  %(message)s')
+logging.basicConfig(level=logging.WARNING, format='%(asctime)-6s %(levelname)-8s  %(message)s')
 logger = logging.getLogger("MQTT 2 ntfy")
 
 parser = argparse.ArgumentParser(description='MQTT 2 ntfy')
-parser.add_argument("-v", "--verbosity",
-                    help="increase output verbosity", default=0, action="count")
-parser.add_argument("-b", "--mqtt-broker-host",
-                    help="MQTT broker hostname. default=localhost", default="localhost")
+parser.add_argument("-v", "--verbosity", help="increase output verbosity", default=0, action="count")
+parser.add_argument("-b", "--mqtt-broker-host", help="MQTT broker hostname. default=localhost", default="localhost")
 args = parser.parse_args()
 logger.setLevel(logging.WARNING-(args.verbosity * 10 if args.verbosity <= 2 else 20))
 
@@ -32,6 +30,8 @@ def on_connect(client, userdata, flags, rc):
         logger.info("MQTT connected OK. Return code "+str(rc))
         client.subscribe("homie/shop_controller/shop_status")
         logger.debug("MQTT: Subscribed to all topics")
+
+        client.publish("homie/"+mqtt_client_name+"/state", '1', qos=1, retain=True)
     else:
         logger.error("Bad connection. Return code="+str(rc))
 
@@ -77,16 +77,39 @@ logger.info("Connecting to broker "+args.mqtt_broker_host)
 
 # start with MQTT connection and set last will
 logger.info("mqtt_client_name: {}".format(mqtt_client_name))
-client.will_set("homie/"+mqtt_client_name+"/state", 'offline', qos=1, retain=True)
+client.will_set("homie/"+mqtt_client_name+"/state", '0', qos=1, retain=True)
 client.connect(args.mqtt_broker_host)
 client.loop_start()
 logger.info("MQTT loop started.")
-client.publish("homie/"+mqtt_client_name+"/state", 'online', qos=1, retain=True)
+
+##############################################################################
+main_loop_var = True
+def signal_handler(sig, frame):
+    global main_loop_var
+    logger.info(f"Program terminating. Sending correct /state ... (this takes 1 second)")
+
+    main_loop_var = False
+#    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+##############################################################################
 
 
-while True:
+
+while main_loop_var:
     time.sleep(1-math.modf(time.time())[0])  # make the loop run every second
 
-client.disconnect()
+
+# Terminating everything
+logger.info(f"Terminating. Cleaning up.")
+
+# send state=0
+client.publish(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
+
+time.sleep(1) #to allow the published message to be delivered.
+
 client.loop_stop()
+client.disconnect()
+
 logger.info("Program stopped.")
