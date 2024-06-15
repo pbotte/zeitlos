@@ -165,6 +165,7 @@ shop_status = 0
 ##############################################################################
 main_loop_var = True
 def signal_handler(sig, frame):
+    global main_loop_var
     logger.info(f"Program terminating. Sending correct /state for all {anzahl_waagen} scales... (this takes 1 second)")
 
     main_loop_var = False
@@ -481,6 +482,7 @@ while main_loop_var:
 
 
 # Terminating everthing
+logger.info(f"Terminating. Cleaning up.")
 
 # send state=0
 for w in waagen.items():
