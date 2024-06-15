@@ -481,7 +481,7 @@ while main_loop_var:
 
 
 
-# Terminating everthing
+# Terminating everything
 logger.info(f"Terminating. Cleaning up.")
 
 # send state=0
@@ -496,3 +496,4 @@ client.loop_stop()
 client.disconnect()
 
 ser.close()
+logger.info("Programm stopped.")

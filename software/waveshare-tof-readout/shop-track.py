@@ -13,7 +13,7 @@ import struct
 import os, re
 import socket
 import collections, statistics
-
+import signal
 
 logging.basicConfig(
     level=logging.WARNING, format="%(asctime)-6s %(levelname)-8s  %(message)s"
@@ -63,24 +63,31 @@ client = paho.Client(paho.CallbackAPIVersion.VERSION1, mqtt_client_name)
 client.on_connect = on_connect
 client.on_disconnect = on_disconnect
 client.enable_logger(logger)
-logger.info("Conncting to broker " + args.mqtt_broker_host)
-client.will_set(
-    topic="homie/" + mqtt_client_name + "/state",
-    payload="0",
-    qos=1,
-    retain=True,
-)
+logger.info("connecting to broker: "+args.mqtt_broker_host+". If it fails, check whether the broker is reachable. Check the -b option.")
+
+# start with MQTT connection and set last will
+# logger.info(f"mqtt_client_name: {mqtt_client_name}")
+client.will_set(topic="homie/" + mqtt_client_name + "/state", payload="0", qos=1, retain=True )
 client.connect(args.mqtt_broker_host, keepalive=60, port=args.mqtt_broker_port)
-client.publish(
-    topic="homie/" + mqtt_client_name + "/state",
-    payload="1",
-    qos=1,
-    retain=True,
-)
+client.publish(topic="homie/" + mqtt_client_name + "/state", payload="1", qos=1, retain=True)
 client.loop_start()
 logger.info("MQTT loop started.")
 
 ser = serial.Serial(args.serial_device_name, 115200, timeout=0.1)
+
+
+##############################################################################
+main_loop_var = True
+def signal_handler(sig, frame):
+    global main_loop_var
+    logger.info(f"Program terminating. Sending correct /state  (this takes 1 second)")
+
+    main_loop_var = False
+#    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+##############################################################################
 
 
 ##########
@@ -110,7 +117,7 @@ time_last_data_submit = time_start # avoid to send data right at from the start
 
 WatchDogCounter = args.watchdog_timeout * 1000 # to convert from sec to msec
 
-while WatchDogCounter > 0:
+while (WatchDogCounter > 0) and main_loop_var:
   my_time = time.time()
   if (my_time - time_last_bus_access)*1000 > 5: # min distanace between read requests to avoid overlap read/write
     ActSensorID = -1
@@ -207,10 +214,16 @@ while WatchDogCounter > 0:
   time.sleep(.001)
 
 
+# Terminating everything
+logger.info(f"Terminating. Cleaning up.")
 
-# Programm beenden
-ser.close()
+# send state=0
+client.publish(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
+
+time.sleep(1) #to allow the published message to be delivered.
 
 client.loop_stop()
 client.disconnect()
+
+ser.close()
 logger.info("Programm stopped.")
