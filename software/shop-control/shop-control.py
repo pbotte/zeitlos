@@ -119,6 +119,9 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe("homie/"+mqtt_client_name+"/last_touched/set_product_id") #Neues Produkt auf Waage setzen
 
         logger.debug("MQTT: Subscribed to all topics")
+
+        client.publish("homie/"+mqtt_client_name+"/state", '1', qos=1, retain=True)
+
     else:
         logger.error("Bad connection. Return code="+str(rc))
 
@@ -248,11 +251,10 @@ logger.info("Connecting to broker "+args.mqtt_broker_host)
 
 # start with MQTT connection and set last will
 logger.info("mqtt_client_name: {}".format(mqtt_client_name))
-client.will_set("homie/"+mqtt_client_name+"/state", 'offline', qos=1, retain=True)
+client.will_set("homie/"+mqtt_client_name+"/state", '0', qos=1, retain=True)
 client.connect(args.mqtt_broker_host)
 client.loop_start()
 logger.info("MQTT loop started.")
-client.publish("homie/"+mqtt_client_name+"/state", 'online', qos=1, retain=True)
 
 
 set_shop_status(10) # Laden geschlossen. Sonst kann man den laden eröffnen durch Stromunterbrechung.

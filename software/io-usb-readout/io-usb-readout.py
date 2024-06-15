@@ -32,6 +32,9 @@ def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logger.info("MQTT connected OK. Return code "+str(rc))
         logger.debug("MQTT: Subscribed to all topics")
+
+        client.publish(topic='homie/'+mqtt_client_name+'/state',payload='1',qos=1,retain=True)
+
     else:
         logger.error("Bad connection. Return code="+str(rc))
 
@@ -63,7 +66,6 @@ client.enable_logger(logger)
 logger.info("Conncting to broker "+args.mqtt_broker_host)
 client.will_set(topic='homie/'+mqtt_client_name+'/state',payload='0',qos=1,retain=True)
 client.connect(args.mqtt_broker_host, keepalive=60, port=args.mqtt_broker_port)
-client.publish(topic='homie/'+mqtt_client_name+'/state',payload='1',qos=1,retain=True)
 client.loop_start()
 logger.info("MQTT loop started.")
 

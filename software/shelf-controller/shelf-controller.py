@@ -120,6 +120,9 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe(f"homie/{mqtt_client_name}/cmd/scales/+/led")
     client.subscribe("homie/shop_controller/shop_status")
     logger.info("MQTT: Success, subscribed to all topics")
+
+    client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
+
   else:
     logger.error("Bad connection. Return code="+str(rc))
 
@@ -152,7 +155,6 @@ client.will_set(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
 client.connect(args.mqtt_broker_host)
 client.loop_start() #start loop to process received messages in separate thread
 logger.debug("MQTT loop started.")
-client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
 
 ##############################################################################
 

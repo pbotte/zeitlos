@@ -33,6 +33,8 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe(f"homie/{mqtt_client_name}/reference/set")
         client.subscribe("homie/shop_controller/shop_status")
         logger.debug("MQTT: Subscribed to all topics")
+
+        client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
     else:
         logger.error("Bad connection. Return code="+str(rc))
 
@@ -42,13 +44,13 @@ def on_disconnect(client, userdata, rc):
 
 mqtt_queue=queue.Queue()
 def on_message(client, userdata, message):
-  global mqtt_queue
-  try:
-    mqtt_queue.put(message)
-    m = message.payload.decode("utf-8")
-    logger.debug("MQTT message received. Topic: "+message.topic+" Payload: "+m)
-  except Exception as err:
-    traceback.print_tb(err.__traceback__)
+    global mqtt_queue
+    try:
+        mqtt_queue.put(message)
+        m = message.payload.decode("utf-8")
+        logger.debug("MQTT message received. Topic: "+message.topic+" Payload: "+m)
+    except Exception as err:
+        traceback.print_tb(err.__traceback__)
 
 
 #connect to MQTT broker
@@ -65,7 +67,6 @@ client.will_set(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
 client.connect(args.mqtt_broker_host)
 client.loop_start() #start loop to process received messages in separate thread
 logger.debug("MQTT loop started.")
-client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
 
 ##############################################################################
 ##############################################################################
@@ -108,9 +109,9 @@ while main_loop_var:
 
         if message.topic.lower() == "homie/shop_controller/shop_status":
             if int(m) ==2:
-              logger.info("shop_status == 2 received, saving reference.")
-              values_reference = values.copy()
-              client.publish(f"homie/{mqtt_client_name}/reference", json.dumps(values_reference), qos=1, retain=True)
+                logger.info("shop_status == 2 received, saving reference.")
+                values_reference = values.copy()
+                client.publish(f"homie/{mqtt_client_name}/reference", json.dumps(values_reference), qos=1, retain=True)
         if message.topic.lower() == "homie/shop-track-collector/reference/set":
             logger.info("saving reference.")
             values_reference = values.copy()
@@ -132,8 +133,8 @@ while main_loop_var:
                     pass
                 else:
                     if (compare_list_ref[i] - compare_list_act[i]) > 300:
-                      logger.debug(f"The following pixel is below reference: {vr[0]} {i}")
-                      res += 1
+                        logger.debug(f"The following pixel is below reference: {vr[0]} {i}")
+                        res += 1
         else:
             if time.time()-time_last_message_missing_data > 60:
                 logger.warning(f"Reference values for {vr[0]} present, but no actual data (yet). This is a normal behaviour after a fresh restart until all data from all sensors got received.")

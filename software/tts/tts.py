@@ -28,6 +28,9 @@ def on_connect(client, userdata, flags, rc):
         logger.info("MQTT connected OK. Return code "+str(rc))
         client.subscribe("homie/"+mqtt_client_name+"/say")
         logger.debug("MQTT: Subscribed to all topics")
+
+        client.publish("homie/"+mqtt_client_name+"/state", '1', qos=1, retain=True)
+
     else:
         logger.error("Bad connection. Return code="+str(rc))
 
@@ -70,7 +73,6 @@ client.will_set("homie/"+mqtt_client_name+"/state", '0', qos=1, retain=True)
 client.connect(args.mqtt_broker_host)
 client.loop_start()
 logger.info("MQTT loop started.")
-client.publish("homie/"+mqtt_client_name+"/state", '1', qos=1, retain=True)
 
 while True: 
   while not mqtt_queue.empty():

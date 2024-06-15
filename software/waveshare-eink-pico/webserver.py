@@ -53,13 +53,14 @@ def on_disconnect(client, userdata, rc):
 
 mqtt_queue=queue.Queue()
 def on_message(client, userdata, message):
-  global mqtt_queue
-  try:
-    mqtt_queue.put(message)
-    m = message.payload.decode("utf-8")
-    logger.debug("MQTT message received. Topic: "+message.topic+" Payload: "+m)
-  except Exception as err:
-    traceback.print_tb(err.__traceback__)
+    global mqtt_queue
+    try:
+        mqtt_queue.put(message)
+        m = message.payload.decode("utf-8")
+        logger.debug("MQTT message received. Topic: "+message.topic+" Payload: "+m)
+        client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
+    except Exception as err:
+        traceback.print_tb(err.__traceback__)
 
 
 #connect to MQTT broker
@@ -76,7 +77,6 @@ client.will_set(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
 client.connect(args.mqtt_broker_host)
 client.loop_start() #start loop to process received messages in separate thread
 logger.debug("MQTT loop started.")
-client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
 
 ##############################################################################
 def signal_handler(sig, frame):
