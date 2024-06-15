@@ -163,21 +163,12 @@ LUT_MAC_2_I2C_ADD = {} #LUT to get I2C address from MAC address
 shop_status = 0
 
 ##############################################################################
+main_loop_var = True
 def signal_handler(sig, frame):
     logger.info(f"Program terminating. Sending correct /state for all {anzahl_waagen} scales... (this takes 1 second)")
 
-    for w in waagen.items():
-        client.publish(f"homie/{mqtt_client_name}/scales/{waagen[w[0]]['mac']}/state", 0, qos=0, retain=True)
-        waagen[w[0]]['state'] = 0
-
-    time.sleep(1) #to allow the published message to be delivered.
-
-    client.loop_stop()
-    client.disconnect()
-
-    ser.close()
-
-    sys.exit(0)
+    main_loop_var = False
+#    sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
@@ -324,7 +315,7 @@ def is_float(element: any) -> bool:
     except ValueError:
         return False
 
-while True:
+while main_loop_var:
     while not mqtt_queue.empty():
         message = mqtt_queue.get()
         if message is None:
@@ -487,6 +478,17 @@ while True:
 
     time.sleep(0.1)
 
+
+
+# Terminating everthing
+
+# send state=0
+for w in waagen.items():
+    client.publish(f"homie/{mqtt_client_name}/scales/{waagen[w[0]]['mac']}/state", 0, qos=0, retain=True)
+    waagen[w[0]]['state'] = 0
+client.publish(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
+
+time.sleep(1) #to allow the published message to be delivered.
 
 client.loop_stop()
 client.disconnect()
