@@ -273,6 +273,8 @@ def signal_handler(sig, frame):
   logger.info('You pressed Ctrl+C! Preparing for graceful exit.')
   loop_var = False
 signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+
 
 #to store all last +/+/state messages
 MQTT_last_states = {}
@@ -303,13 +305,13 @@ while loop_var:
 
         #store last message contents for all +/+/state
         if len(msplit) == 3 and msplit[2].lower() == "state":
-          m = 0
+          temp_m = 0
           try:
-            m = int(m)
+            temp_m = int(m)
           except:
             logger.warning(f"State for {msplit[1]} was not numeric: {m}")
-          MQTT_last_states[msplit[1]] = int(m)
-          logger.info(f"{MQTT_last_states=}")
+          MQTT_last_states[msplit[1]] = temp_m
+          logger.debug(f"{MQTT_last_states=}")
 
         #Fernsteuerung durch public_wegpage_viewer / supplier.php
         if message.topic.lower() == "homie/public_webpage_viewer/message_input":
@@ -730,7 +732,7 @@ while loop_var:
     elif shop_status == 1: #Bereit, kein Kunde im Laden
       all_values_are_one = all(value == 1 for value in MQTT_last_states.values())
       if not all_values_are_one:
-        logger.warning("There is minimum one sub system in state=0: {MQTT_last_states=}")
+        logger.warning(f"There is minimum one sub system in state=0: {MQTT_last_states=}")
         next_shop_status = 8 #technischer Fehler!
       # Wechsel zu 16 (Falls Kartenleser Timeout), oder 2 (OK) passiert in MQTT-onMessage, Wechsel zu 13 als Standard-Timeout
     elif shop_status == 2: #"Kunde authentifiziert / Waagen tara wird ausgeführt
