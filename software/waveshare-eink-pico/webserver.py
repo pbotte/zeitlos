@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+#
 # start with: python webserver.py -v
 # navigate to http://localhost:8090
 # sub calls for image like: http://localhost:8090/getimage?productid=1
