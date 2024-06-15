@@ -9,6 +9,7 @@ import math
 import re
 import os
 import socket
+import signal
 
 logging.basicConfig(level=logging.WARNING, format='%(asctime)-6s %(levelname)-8s  %(message)s')
 logger = logging.getLogger("Display power control")
@@ -60,6 +61,20 @@ def on_message(client, userdata, message):
     traceback.print_tb(err.__traceback__)
 
 
+##############################################################################
+main_loop_var = True
+def signal_handler(sig, frame):
+    global main_loop_var
+    logger.info(f"Program terminating. (this takes 1 second)")
+
+    main_loop_var = False
+#    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+##############################################################################
+
+
 client = paho.Client(paho.CallbackAPIVersion.VERSION1, mqtt_client_name)
 client.on_connect = on_connect
 client.on_message = on_message
@@ -69,16 +84,16 @@ logger.info("Connecting to broker "+args.mqtt_broker_host)
 
 # start with MQTT connection and set last will
 logger.info("mqtt_client_name: {}".format(mqtt_client_name))
-client.will_set("homie/"+mqtt_client_name+"/state", 'offline', qos=1, retain=True)
+client.will_set("homie/"+mqtt_client_name+"/state", '0', qos=1, retain=True)
 client.connect(args.mqtt_broker_host)
 client.loop_start()
 logger.info("MQTT loop started.")
-client.publish("homie/"+mqtt_client_name+"/state", 'online', qos=1, retain=True)
+client.publish("homie/"+mqtt_client_name+"/state", '1', qos=1, retain=True)
 
 
 last_check = 0
 last_change = time.time()
-while True: 
+while main_loop_var: 
   while not mqtt_queue.empty():
     message = mqtt_queue.get()
     if message is None:
@@ -121,6 +136,17 @@ while True:
   time.sleep(0.1) #save some power
 #  time.sleep(1-math.modf(time.time())[0])  # make the loop run every 1 second
 
-client.disconnect()
+
+
+# Terminating everthing
+logger.info(f"Terminating. Cleaning up.")
+
+# send state=0
+client.publish(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
+
+time.sleep(1) #to allow the published message to be delivered.
+
 client.loop_stop()
+client.disconnect()
+
 logger.info("Program stopped.")
