@@ -730,6 +730,7 @@ while loop_var:
     if shop_status == 0: #"Geräte Initialisierung"
         next_shop_status = 7
     elif shop_status == 1: #Bereit, kein Kunde im Laden
+      #Überprüfung: ob alle systeme funktionieren. Dies passiert bei Schritt 1 und 7
       all_values_are_one = all(value == 1 for value in MQTT_last_states.values())
       if not all_values_are_one:
         logger.warning(f"There is minimum one sub system in state=0: {MQTT_last_states=}")
@@ -761,7 +762,14 @@ while loop_var:
         scales_mass_reference = copy.deepcopy(scales_mass_actual) #Warenkorb zurücksetzen
         client.publish("homie/shop_controller/invoice_json", "", qos=1, retain=True)
         client.publish("homie/shop_controller/generic_pir/innen_licht", '{"v":0,"type":"Generic_PIR"}', qos=1, retain=False)
-        next_shop_status = 16
+        
+        #Überprüfung: ob alle systeme funktionieren. Dies passiert bei Schritt 1 und 7
+        all_values_are_one = all(value == 1 for value in MQTT_last_states.values())
+        if not all_values_are_one:
+          logger.warning(f"There is minimum one sub system in state=0: {MQTT_last_states=}")
+          #next_shop_status = 8 #technischer Fehler! #wird hier nicht aufgerufen, sondern auf das Timeout des Zustands vertraut.
+        else:
+          next_shop_status = 16
     elif shop_status == 8: #"Technischer Fehler aufgetreten"
         pass
     elif shop_status == 9: #"Kunde benötigt Hilfe"
