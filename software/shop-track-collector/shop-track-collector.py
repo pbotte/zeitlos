@@ -68,15 +68,14 @@ logger.debug("MQTT loop started.")
 client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
 
 ##############################################################################
+##############################################################################
+main_loop_var = True
 def signal_handler(sig, frame):
-    logger.info(f"Program terminating.")
+    global main_loop_var
+    logger.info(f"Program terminating. Sending correct /state ... (this takes 1 second)")
 
-    client.loop_stop()
-    client.disconnect()
-
-    time.sleep(0.1) #to allow all MQTT to be send
-
-    sys.exit(0)
+    main_loop_var = False
+#    sys.exit(0)
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
@@ -86,7 +85,9 @@ values={}
 values_reference = {}
 number_pixels_above_ref = None
 
-while True:
+time_last_message_missing_data = 0 #to not print to often msg about missing data
+
+while main_loop_var:
     while not mqtt_queue.empty():
         message = mqtt_queue.get()
         if message is None:
@@ -134,7 +135,9 @@ while True:
                       logger.debug(f"The following pixel is below reference: {vr[0]} {i}")
                       res += 1
         else:
-            logger.warning(f"Reference values for {vr[0]} present, but no actual data (yet). This is a normal behaviour after a fresh restart until all data from all sensors got received.")
+            if time.time()-time_last_message_missing_data > 60:
+                logger.warning(f"Reference values for {vr[0]} present, but no actual data (yet). This is a normal behaviour after a fresh restart until all data from all sensors got received.")
+                time_last_message_missing_data = time.time()
     logger.debug(f"Number of pixels different from reference: {res=}")
     if number_pixels_above_ref != res: 
         number_pixels_above_ref = res
@@ -144,6 +147,16 @@ while True:
 
     time.sleep(0.1)
 
-client.disconnect()
+
+# Terminating everything
+logger.info(f"Terminating. Cleaning up.")
+
+# send state=0
+client.publish(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
+
+time.sleep(1) #to allow the published message to be delivered.
+
 client.loop_stop()
-logger.info("Program stopped.")
+client.disconnect()
+
+logger.info("Programm stopped.")
