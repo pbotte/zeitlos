@@ -14,5 +14,7 @@ Group=pi
 # See https://docs.python.org/2/using/cmdline.html#envvar-PYTHONUNBUFFERED
 Environment=PYTHONUNBUFFERED=true
 
+KillSignal=SIGINT
+
 [Install]
 WantedBy=multi-user.target
