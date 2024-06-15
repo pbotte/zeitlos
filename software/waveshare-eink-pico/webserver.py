@@ -46,6 +46,8 @@ def on_connect(client, userdata, flags, rc):
 #        client.subscribe(f"homie/{mqtt_client_name}/reference/set")
         client.subscribe("homie/shop_controller/shop_status")
         logger.debug("MQTT: Subscribed to all topics")
+        client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
+
     else:
         logger.error("Bad connection. Return code="+str(rc))
 
@@ -60,7 +62,6 @@ def on_message(client, userdata, message):
         mqtt_queue.put(message)
         m = message.payload.decode("utf-8")
         logger.debug("MQTT message received. Topic: "+message.topic+" Payload: "+m)
-        client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
     except Exception as err:
         traceback.print_tb(err.__traceback__)
 
@@ -81,15 +82,12 @@ client.loop_start() #start loop to process received messages in separate thread
 logger.debug("MQTT loop started.")
 
 ##############################################################################
+main_loop_var = True
 def signal_handler(sig, frame):
-    logger.info(f"Program terminating.")
+    global main_loop_var
+    logger.info(f"Program terminating. Sending correct /state ... (this takes 1 second)")
 
-    client.loop_stop()
-    client.disconnect()
-
-    time.sleep(0.1) #to allow all MQTT to be send
-
-    sys.exit(0)
+    main_loop_var = False
 
 signal.signal(signal.SIGINT, signal_handler)
 signal.signal(signal.SIGTERM, signal_handler)
@@ -214,7 +212,7 @@ if __name__ == "__main__":
 
     # Main loop
     try:
-        while True:
+        while main_loop_var:
 
             while not mqtt_queue.empty():
                 message = mqtt_queue.get()
@@ -251,3 +249,16 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("Shutting down...")
 
+
+# Terminating everything
+logger.info(f"Terminating. Cleaning up.")
+
+# send state=0
+client.publish(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
+
+time.sleep(1) #to allow the published message to be delivered.
+
+client.loop_stop()
+client.disconnect()
+
+logger.info("Program stopped.")

@@ -1,0 +1,20 @@
+[Unit]
+Description=Shop eink Displys Server
+After=network.target syslog.target
+
+[Service]
+ExecStart=/home/pi/zeitlos/software/waveshare-eink-pico/webserver.py -v
+Restart=always
+RestartSec=15
+User=pi
+Group=pi
+
+# Note: setting PYTHONUNBUFFERED is necessary to see the output of this service in the journal
+# See https://docs.python.org/2/using/cmdline.html#envvar-PYTHONUNBUFFERED
+Environment=PYTHONUNBUFFERED=true
+
+#call the SIGINT part in the python script for termination
+KillSignal=SIGINT
+
+[Install]
+WantedBy=multi-user.target

@@ -13,15 +13,14 @@ sudo apt-get update
 sudo apt-get install libopenblas-dev
 
 
-#echo "Copy files"
-#cp "$SCRIPT_DIR/shop-tts.service" /etc/systemd/system/
-#cp "$SCRIPT_DIR/asound.conf" /etc/
+echo "Copy files"
+cp "$SCRIPT_DIR/shop-waveshare-eink-server.service" /etc/systemd/system/
 
-#echo "Update systemctl"
-#systemctl daemon-reload
+echo "Update systemctl"
+systemctl daemon-reload
 
-#echo "Enable and start daemon"
-#systemctl enable shop-tts.service
-#systemctl start shop-tts.service
+echo "Enable and start daemon"
+systemctl enable shop-waveshare-eink-server.service
+systemctl start shop-waveshare-eink-server.service
 
 echo "Done."
