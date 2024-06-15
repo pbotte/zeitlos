@@ -16,6 +16,7 @@ import logging, argparse
 import socket
 import queue, traceback
 import re
+import signal
 
 import sys
 import collections
@@ -55,6 +56,8 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe("homie/"+mqtt_client_name+"/cmd/#")
     client.subscribe("homie/shop_controller/shop_status")
     logger.info("MQTT: Success, subscribed to all topics")
+
+    client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
   else:
     logger.error("Bad connection. Return code="+str(rc))
 
@@ -87,9 +90,21 @@ client.will_set(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
 client.connect(args.mqtt_broker_host)
 client.loop_start() #start loop to process received messages in separate thread
 logger.debug("MQTT loop started.")
-client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
 
 ##############################################################################
+
+##############################################################################
+main_loop_var = True
+def signal_handler(sig, frame):
+    global main_loop_var
+    logger.info(f"Program terminating. Sending correct /state ... (this takes 1 second)")
+
+    main_loop_var = False
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+##############################################################################
+
 
 
 
@@ -169,7 +184,7 @@ cam.setUseCase(curUseCase)
 
 cam.startCapture()
 
-while True: #time.time() < t_end:
+while main_loop_var: #time.time() < t_end:
     while not mqtt_queue.empty():
         message = mqtt_queue.get()
         if message is None:
@@ -241,4 +256,15 @@ while True: #time.time() < t_end:
 
 cam.stopCapture()
 
-client.publish(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
+
+# Terminating everything
+logger.info(f"Terminating. Cleaning up.")
+
+client.publish("homie/"+mqtt_client_name+"/state", '0', qos=1, retain=True)
+
+time.sleep(1) #to allow the published message to be delivered.
+
+client.loop_stop()
+client.disconnect()
+
+logger.info("Program stopped.")

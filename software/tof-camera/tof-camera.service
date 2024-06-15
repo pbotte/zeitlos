@@ -14,5 +14,8 @@ Group=pi
 # See https://docs.python.org/2/using/cmdline.html#envvar-PYTHONUNBUFFERED
 Environment=PYTHONUNBUFFERED=true
 
+#call the SIGINT part in the python script for termination
+KillSignal=SIGINT
+
 [Install]
 WantedBy=multi-user.target
