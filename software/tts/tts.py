@@ -5,6 +5,7 @@ import time
 import logging
 import argparse
 import queue, traceback
+import signal
 import re
 import os
 import socket
@@ -74,7 +75,21 @@ client.connect(args.mqtt_broker_host)
 client.loop_start()
 logger.info("MQTT loop started.")
 
-while True: 
+##############################################################################
+main_loop_var = True
+def signal_handler(sig, frame):
+    global main_loop_var
+    logger.info(f"Program terminating. Sending correct /state ... (this takes 1 second)")
+
+    main_loop_var = False
+#    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+##############################################################################
+
+
+while main_loop_var: 
   while not mqtt_queue.empty():
     message = mqtt_queue.get()
     if message is None:
@@ -97,6 +112,15 @@ while True:
   time.sleep(0.1) #save some power
 #  time.sleep(1-math.modf(time.time())[0])  # make the loop run every 1 second
 
-client.disconnect()
+# Terminating everything
+logger.info(f"Terminating. Cleaning up.")
+
+# send state=0
+client.publish(f"homie/{mqtt_client_name}/state", '0', qos=1, retain=True)
+
+time.sleep(1) #to allow the published message to be delivered.
+
 client.loop_stop()
+client.disconnect()
+
 logger.info("Program stopped.")
