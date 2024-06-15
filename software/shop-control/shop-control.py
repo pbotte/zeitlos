@@ -114,6 +114,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe("homie/public_webpage_supplier/+/cmd/#")
         client.subscribe("homie/door/#")
         client.subscribe("homie/cardreader/#")
+        client.subscribe("homie/+/state") #eg homie/scale-shop-shelf01-0-1.5-1.0/state 1
         client.subscribe("homie/+/scales/+/touched") #zum Waagen auswählen beim Bestückenu und Kalibrieren
         client.subscribe("homie/"+mqtt_client_name+"/last_touched/reset") #um wieder neue Waagen auswählen zu können
         client.subscribe("homie/"+mqtt_client_name+"/last_touched/set_product_id") #Neues Produkt auf Waage setzen
@@ -273,6 +274,9 @@ def signal_handler(sig, frame):
   loop_var = False
 signal.signal(signal.SIGINT, signal_handler)
 
+#to store all last +/+/state messages
+MQTT_last_states = {}
+
 shop_status_last_cycle = shop_status #shop_status_last_cycle is used for stuff which is only done the first time a status is reached
 while loop_var:
     ###########################################################################
@@ -296,6 +300,16 @@ while loop_var:
               set_shop_status(int(m))
             else:
               set_shop_status(0)
+
+        #store last message contents for all +/+/state
+        if len(msplit) == 3 and msplit[2].lower() == "state":
+          m = 0
+          try:
+            m = int(m)
+          except:
+            logger.warning(f"State for {msplit[1]} was not numeric: {m}")
+          MQTT_last_states[msplit[1]] = int(m)
+          logger.info(f"{MQTT_last_states=}")
 
         #Fernsteuerung durch public_wegpage_viewer / supplier.php
         if message.topic.lower() == "homie/public_webpage_viewer/message_input":
@@ -344,8 +358,8 @@ while loop_var:
 
         #request update from db
         if len(msplit) == 3 and msplit[2].lower() == "update_data_from_db":
-           get_all_data_from_db()
-           send_basket_products_scales_to_mqtt()
+          get_all_data_from_db()
+          send_basket_products_scales_to_mqtt()
 
         #eine Waage wurde gedrückt, Empfang von Nachrichten wie: homie/scale-shop-shelf06-0-1.2.5.5-1.0/scales/4930370A3419/touched
         if len(msplit) == 5 and msplit[2].lower() == "scales" and msplit[4].lower() == "touched":
@@ -423,7 +437,7 @@ while loop_var:
               get_all_data_from_db()
               send_basket_products_scales_to_mqtt()
             else:
-               logger.info("Es wurden keine Einträge übermittelt.")
+              logger.info("Es wurden keine Einträge übermittelt.")
             set_shop_status(6) #reset der LED und der Variablen werden in dieser Routine durchgeführt
           else:
             logger.warning(f"Produkte konnten nicht gesetzt werden, weil shop_status nicht 6 oder 18 ist: {shop_status=}")
@@ -452,7 +466,7 @@ while loop_var:
               get_all_data_from_db()
               send_basket_products_scales_to_mqtt()
             else:
-               logger.info("Es wurden keine Einträge übermittelt.")
+              logger.info("Es wurden keine Einträge übermittelt.")
           else:
             logger.warning(f"Neues Produkt konnte nicht eingetragen werden, da der Laden nicht bereit ist: {shop_status=}")
 
@@ -480,7 +494,7 @@ while loop_var:
               get_all_data_from_db()
               send_basket_products_scales_to_mqtt()
             else:
-               logger.info("Es wurden keine Einträge übermittelt.")
+              logger.info("Es wurden keine Einträge übermittelt.")
           else:
             logger.warning(f"Bestehendes Produkt konnte nicht geändert werden, da der Laden nicht bereit ist oder ein Kunde einkäuft: {shop_status=}")
 
@@ -521,7 +535,7 @@ while loop_var:
               else:
                   logger.warning("Konnte nicht gelöscht werden, da noch mind. einer Waage zugeordnet.")
             else:
-               logger.warning("Es wurden keine nummerische ProductID übermittelt.")
+              logger.warning("Es wurden keine nummerische ProductID übermittelt.")
           else:
             logger.warning(f"Produkt konnte nicht gelöscht werden, da der Laden nicht bereit ist: {shop_status=}")
 
@@ -578,8 +592,8 @@ while loop_var:
           cardreader_busy = True if m == "1" else False
           logger.debug(f"cardreader busy variable set to {cardreader_busy}")
           if shop_status == 1 and cardreader_busy == False:
-             # Timeout von Kartenlesegerät passiert, neu anstoßen:
-             set_shop_status(16)
+            # Timeout von Kartenlesegerät passiert, neu anstoßen:
+            set_shop_status(16)
 
         # Receive receipes from Kartenlesegerät
         if message.topic.lower() == "homie/cardreader/text_block":
@@ -714,8 +728,11 @@ while loop_var:
     if shop_status == 0: #"Geräte Initialisierung"
         next_shop_status = 7
     elif shop_status == 1: #Bereit, kein Kunde im Laden
-       pass
-       # Wechsel zu 16 (Falls Kartenleser Timeout), oder 2 (OK) passiert in MQTT-onMessage, Wechsel zu 13 als Standard-Timeout
+      all_values_are_one = all(value == 1 for value in MQTT_last_states.values())
+      if not all_values_are_one:
+        logger.warning("There is minimum one sub system in state=0: {MQTT_last_states=}")
+        next_shop_status = 8 #technischer Fehler!
+      # Wechsel zu 16 (Falls Kartenleser Timeout), oder 2 (OK) passiert in MQTT-onMessage, Wechsel zu 13 als Standard-Timeout
     elif shop_status == 2: #"Kunde authentifiziert / Waagen tara wird ausgeführt
         #Waagen tara ausführen:
         actBasketCorrections = {} #Reset Warenkorb Korrekturen bei neuem Kunden
@@ -762,8 +779,8 @@ while loop_var:
     elif shop_status == 13: # Fehler bei Authentifizierung
         pass # geht über Timeout weiter zu 1
     elif shop_status == 14: # Bitte Laden betreten
-       pass
-        # Tür offen in MQTT-Message: Wechsel zu next_shop_status = 3
+      pass
+      # Tür offen in MQTT-Message: Wechsel zu next_shop_status = 3
     elif shop_status == 15: # Abrechnung wird vorbereitet
         # Abrechnung durchführen
         last_invoiceid_inserted = None
@@ -813,7 +830,7 @@ while loop_var:
     elif shop_status == 17: # Warten auf: Kartenterminal Buchung erfolgreich
       pass # Rückmeldung Kartenlesegerät über MQTT-Message
     elif shop_status == 18: # Einräumen durch Betreiber, Waage ausgewählt
-       pass
+      pass
     else:
       logger.error(f"Unbekannter {shop_status=} Wert.")
 
@@ -831,8 +848,16 @@ while loop_var:
     time.sleep(1-math.modf(time.time())[0])  # make the loop run every second
 
 
+# Terminating everything
+logger.info(f"Terminating. Cleaning up.")
+
 set_shop_status(10) # Laden geschlossen
 
-client.disconnect()
+client.publish("homie/"+mqtt_client_name+"/state", '0', qos=1, retain=True)
+
+time.sleep(1) #to allow the published message to be delivered.
+
 client.loop_stop()
+client.disconnect()
+
 logger.info("Program stopped.")

@@ -105,8 +105,8 @@ last_dev = os.popen(f'udevadm info /{args.serial_device_name} | grep DEVLINKS').
 regex = r"-usb-[0-9:\.]+-port0"
 matches = re.finditer(regex, last_dev, re.MULTILINE)
 for matchnum, match in enumerate(matches): #only one match should be found
-  s=match.group()
-  usb_path_device = s.replace(":","-").replace("-usb-","").replace("-port0","")
+    s=match.group()
+    usb_path_device = s.replace(":","-").replace("-usb-","").replace("-port0","")
 mqtt_client_name = f"scale-{socket.gethostname()}-{usb_path_device}"
 #mqtt_client_name = f"scale-{socket.gethostname()}-{args.serial_device_name.replace('/','-')}"
 
@@ -114,31 +114,31 @@ logger.info(f"This is the MQTT-Client-ID: {mqtt_client_name}")
 #######################################################################
 # MQTT functions
 def on_connect(client, userdata, flags, rc):
-  if rc==0:
-    logger.info("MQTT connected OK. Return code "+str(rc) )
-    client.subscribe("homie/"+mqtt_client_name+"/cmd/#")
-    client.subscribe(f"homie/{mqtt_client_name}/cmd/scales/+/led")
-    client.subscribe("homie/shop_controller/shop_status")
-    logger.info("MQTT: Success, subscribed to all topics")
+    if rc==0:
+        logger.info("MQTT connected OK. Return code "+str(rc) )
+        client.subscribe("homie/"+mqtt_client_name+"/cmd/#")
+        client.subscribe(f"homie/{mqtt_client_name}/cmd/scales/+/led")
+        client.subscribe("homie/shop_controller/shop_status")
+        logger.info("MQTT: Success, subscribed to all topics")
 
-    client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
+        client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
 
-  else:
-    logger.error("Bad connection. Return code="+str(rc))
+    else:
+        logger.error("Bad connection. Return code="+str(rc))
 
 def on_disconnect(client, userdata, rc):
-  if rc != 0:
-    logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
+    if rc != 0:
+        logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
 
 mqtt_queue=queue.Queue()
 def on_message(client, userdata, message):
-  global mqtt_queue
-  try:
-    mqtt_queue.put(message)
-    m = message.payload.decode("utf-8")
-    logger.debug("MQTT message received. Topic: "+message.topic+" Payload: "+m)
-  except Exception as err:
-    traceback.print_tb(err.__traceback__)
+    global mqtt_queue
+    try:
+        mqtt_queue.put(message)
+        m = message.payload.decode("utf-8")
+        logger.debug("MQTT message received. Topic: "+message.topic+" Payload: "+m)
+    except Exception as err:
+        traceback.print_tb(err.__traceback__)
 
 
 #connect to MQTT broker
@@ -256,11 +256,11 @@ def search_waagen():
             #Read out offset from scale: 4 single bytes (address 5..8)
             r=[]
             for i in range(5,8+1):
-              res7 = send_and_recv(f"w{neue_i2c_adresse:02X}060{i}") # prepare to read 1 byte from address 0x07
-              logger.debug(f"Prepare to Read Return {res7=}")
-              res5 = send_and_recv(f"r{neue_i2c_adresse:02X}01") # read 1 byte
-              logger.debug(f"Read this byte from address 0x0{i}: {res5=}")
-              r.append(res5[1][1])
+                res7 = send_and_recv(f"w{neue_i2c_adresse:02X}060{i}") # prepare to read 1 byte from address 0x07
+                logger.debug(f"Prepare to Read Return {res7=}")
+                res5 = send_and_recv(f"r{neue_i2c_adresse:02X}01") # read 1 byte
+                logger.debug(f"Read this byte from address 0x0{i}: {res5=}")
+                r.append(res5[1][1])
             logger.debug(f"Gesamt gelesen: {r=}")
             v=struct.unpack('<f',bytearray(r))[0]  #unpack returns: (-524945,), get the right value with [0]
             waagen[neue_i2c_adresse]['zero'] = v
@@ -270,11 +270,11 @@ def search_waagen():
             #Read out slope from scale: 4 single bytes (address 1..4)
             r=[]
             for i in range(1,4+1):
-              res7 = send_and_recv(f"w{neue_i2c_adresse:02X}060{i}") # prepare to read 1 byte from address 0x07
-              logger.debug(f"Prepare to Read Return {res7=}")
-              res5 = send_and_recv(f"r{neue_i2c_adresse:02X}01") # read 1 byte
-              logger.debug(f"Read this byte from address 0x0{i}: {res5=}")
-              r.append(res5[1][1])
+                res7 = send_and_recv(f"w{neue_i2c_adresse:02X}060{i}") # prepare to read 1 byte from address 0x07
+                logger.debug(f"Prepare to Read Return {res7=}")
+                res5 = send_and_recv(f"r{neue_i2c_adresse:02X}01") # read 1 byte
+                logger.debug(f"Read this byte from address 0x0{i}: {res5=}")
+                r.append(res5[1][1])
             logger.debug(f"Gesamt gelesen: {r=}")
             v=struct.unpack('<f',bytearray(r))[0]  #unpack returns: (-7.092198939062655e-05,), get the right value with [0]
             if math.isnan(v): v=-4.632391446259352e-05 #set to default value for 4*50kg scales if value is not set (==nan)
@@ -293,10 +293,10 @@ def search_waagen():
             #logger.info(f"Rückgabewert Schreiben I2C LED aus: {res3}")
             
             if anzahl_waagen % 8==0: #nicht mehr als 8 LEDS gleichzeitig an, da Strom für Controller zu hoch
-              time.sleep(0.5)
-              #alle LEDs aus
-              send_and_recv("w0004")
-              logger.info(f"Switch off all LEDs to limit the current drawn by the shelf controller. This is repeated for every 8 scales found.")
+                time.sleep(0.5)
+                #alle LEDs aus
+                send_and_recv("w0004")
+                logger.info(f"Switch off all LEDs to limit the current drawn by the shelf controller. This is repeated for every 8 scales found.")
 
     logger.info(f"gefundene Waagen Anzahl: {anzahl_waagen}")
     logger.info(f"gefundene Waagen: {waagen}")
@@ -498,4 +498,4 @@ client.loop_stop()
 client.disconnect()
 
 ser.close()
-logger.info("Programm stopped.")
+logger.info("Program stopped.")
