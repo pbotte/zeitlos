@@ -3,6 +3,7 @@ Description=Shop eink Displys Server
 After=network.target syslog.target
 
 [Service]
+WorkingDirectory=/home/pi/zeitlos/software/waveshare-eink-pico/
 ExecStart=/home/pi/zeitlos/software/waveshare-eink-pico/webserver.py -v
 Restart=always
 RestartSec=15
