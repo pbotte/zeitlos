@@ -21,6 +21,8 @@ import signal #to catch interrupts and exit gracefully
 import queue
 import copy
 
+import combined_scales_support #unterstützung von doppeltbreiten Waagen
+
 logging.basicConfig(level=logging.WARNING, format='%(asctime)-6s %(levelname)-8s  %(message)s')
 logger = logging.getLogger("Shop Controller")
 
@@ -30,6 +32,8 @@ parser.add_argument("-b", "--mqtt-broker-host", help="MQTT broker hostname. defa
 parser.add_argument("-t", "--timeout", help="timeout in seconds. default=1h", default=100*60*60, type=int)
 args = parser.parse_args()
 logger.setLevel(logging.WARNING-(args.verbosity * 10 if args.verbosity <= 2 else 20))
+
+logger.info(f"{combined_scales_support.combined_scales_data_array=}")
 
 mqtt_client_name = "shop_controller"
 
@@ -73,28 +77,29 @@ def get_all_data_from_db():
 # Wenn die Routine mit act_product_id=="" aufgerufen wird, wird die Zuordnung lediglich gelöscht und kein
 # neues Produkt zugeordnet
 def set_product_id_to_scale(act_scale_id, act_product_id=""):
-  #Bisherigen Eintrag löschen
-  try:
-    sql_str = "DELETE FROM `Products_Scales` WHERE `ScaleID` LIKE ?; "
-    logger.info(f"Execute the following SQL Str: {sql_str} with ({act_scale_id})")
-    cur.execute(sql_str, (act_scale_id, )) #the last comma here is super important, if only one elem provided
-    conn.commit()
-  except mariadb.Error as e:
-    logger.warning(f"Error while SQL DELETE: {e}")
-
-  #neue Produktzuordnung eintragen, nur wenn Zahl übergeben ist
-  if act_product_id:
+  for v in combined_scales_support.search_scale_and_convert_to_array(act_scale_id):
+    #Bisherigen Eintrag löschen
     try:
-      sql_str = "INSERT INTO`Products_Scales`(`ProductID`, `ScaleID`) VALUES(?, ? ); "
-      logger.info(f"Execute the following SQL Str: {sql_str} with ({int(act_product_id)}, {act_scale_id})")
-      cur.execute(sql_str, (int(act_product_id), act_scale_id, )) #the last comma here is super important, if only one elem provided
+      sql_str = "DELETE FROM `Products_Scales` WHERE `ScaleID` LIKE ?; "
+      logger.info(f"Execute the following SQL Str: {sql_str} with ({v})")
+      cur.execute(sql_str, (v, )) #the last comma here is super important, if only one elem provided
       conn.commit()
-      last_product_scale_id_inserted = cur.lastrowid
-      logger.info(f"Last Inserted ID into Products_Scales: {last_product_scale_id_inserted}")
     except mariadb.Error as e:
-      logger.warning(f"Error while SQL INSERT: {e}")
-  else:
-      logger.info(f"Waagenzuordnung wurde nur gelöscht und kein neuer Eintrag getätigt.")
+      logger.warning(f"Error while SQL DELETE: {e}")
+
+    #neue Produktzuordnung eintragen, nur wenn Zahl übergeben ist
+    if act_product_id:
+      try:
+        sql_str = "INSERT INTO`Products_Scales`(`ProductID`, `ScaleID`) VALUES(?, ? ); "
+        logger.info(f"Execute the following SQL Str: {sql_str} with ({int(act_product_id)}, {v})")
+        cur.execute(sql_str, (int(act_product_id), v, )) #the last comma here is super important, if only one elem provided
+        conn.commit()
+        last_product_scale_id_inserted = cur.lastrowid
+        logger.info(f"Last Inserted ID into Products_Scales: {last_product_scale_id_inserted}")
+      except mariadb.Error as e:
+        logger.warning(f"Error while SQL INSERT: {e}")
+    else:
+        logger.info(f"Waagenzuordnung wurde nur gelöscht und kein neuer Eintrag getätigt.")
 
 
 get_all_data_from_db()
@@ -212,7 +217,8 @@ def set_shop_status(v):
 
     #Wenn Status gewechelt wird in einen shop_status != 18, dann sollen die Informationen über die ausgewählte Waage gelöscht werden und LED wieder ausgeschaltet
     if shop_status != 18 and status_last_touched_shelf_str and status_last_touched_scale_str: 
-      client.publish(f"homie/{status_last_touched_shelf_str}/cmd/scales/{status_last_touched_scale_str.upper()}/led", "0", qos=1, retain=False)
+      for v in combined_scales_support.search_scale_and_convert_to_array(status_last_touched_scale_str):
+        client.publish(f"homie/{status_last_touched_shelf_str}/cmd/scales/{v.upper()}/led", "0", qos=1, retain=False)
       status_last_touched_shelf_str = ""
       status_last_touched_scale_str = ""
       client.publish("homie/"+mqtt_client_name+"/last_touched/shelf_str", status_last_touched_shelf_str, qos=1, retain=True) #zurücksetzen
@@ -373,8 +379,9 @@ while loop_var:
               client.publish("homie/"+mqtt_client_name+"/last_touched/shelf_str", status_last_touched_shelf_str, qos=1, retain=True)
               client.publish("homie/"+mqtt_client_name+"/last_touched/scale_str", status_last_touched_scale_str, qos=1, retain=True)
 
-              logger.info(f"Regal {status_last_touched_shelf_str} mit Waage {status_last_touched_scale_str} ausgewält und LED wird eingeschaltet.")
-              client.publish(f"homie/{status_last_touched_shelf_str}/cmd/scales/{status_last_touched_scale_str.upper()}/led", "1", qos=1, retain=False)
+              for v in combined_scales_support.search_scale_and_convert_to_array(status_last_touched_scale_str): #falls doppeltbreite Waagen, dann beide LEDs ein
+                logger.info(f"Regal {status_last_touched_shelf_str} mit Waage {v} ausgewält und LED wird eingeschaltet.")
+                client.publish(f"homie/{status_last_touched_shelf_str}/cmd/scales/{v.upper()}/led", "1", qos=1, retain=False)
 
               #produkt-waagen-zuordnung nachschlagen
               if status_last_touched_scale_str in scales_products:
