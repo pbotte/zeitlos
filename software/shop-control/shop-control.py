@@ -55,12 +55,14 @@ def db_close():
 
 products = {}
 scales_products = {}
+products_scales = {} #inverse of scales_products for easier lookup
 scales_mass_reference = {} #masses before client started shopping
 scales_mass_actual = {}
 def get_all_data_from_db():
-    global products, scales_products
+    global products, scales_products, products_scales
     products = {}
     scales_products = {}
+    products_scales = {}
     db_prepare()
     cur.execute("SELECT ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit, VAT, Supplier FROM Products ") 
     for ProductID, ProductName, ProductDescription, PriceType, PricePerUnit, kgPerUnit, VAT, Supplier in cur: 
@@ -69,6 +71,11 @@ def get_all_data_from_db():
     cur.execute("SELECT ProductID, ScaleID FROM Products_Scales GROUP BY ScaleID"); #Group By verhindert, falls in der Datenbank zwei Produkte für eine Waage eingetragen sind.
     for ProductID, ScaleID in cur:
         scales_products[ScaleID.lower()] = ProductID
+        if ProductID in products_scales:
+          products_scales[ProductID].append(ScaleID.lower())
+        else:
+          products_scales[ProductID] = [ScaleID.lower()]
+    
     logger.debug(f"products from db: {products=}")
     logger.debug(f"scales_products from db: {scales_products=}")
     db_close()
@@ -269,9 +276,24 @@ set_shop_status(10) # Laden geschlossen. Sonst kann man den laden eröffnen durc
 last_actBasket = {} #to enable the feature: Send only on change
 def send_basket_products_scales_to_mqtt():
   client.publish("homie/"+mqtt_client_name+"/actualBasket", json.dumps(actBasket), qos=1, retain=True)
+
   client.publish("homie/"+mqtt_client_name+"/shop_overview/products", json.dumps(products), qos=1, retain=True)
+  for k, v in products.items():
+    for k2, v2 in v.items():
+      client.publish(f"homie/{mqtt_client_name}/shop_overview/products/{k}/{k2.lower()}", v2, qos=0, retain=True)
+    s = ''.join(str(v.values()))
+    s = int(hashlib.sha256(s.encode('utf-8')).hexdigest(), 16) % 10**8 #make a 8 digit hash value
+    client.publish(f"homie/{mqtt_client_name}/shop_overview/products/{k}/hash", s, qos=0, retain=True) #to support  refresh only on change
+    if k in products_scales:
+      client.publish(f"homie/{mqtt_client_name}/shop_overview/products/{k}/scales", json.dumps(products_scales[k]), qos=0, retain=True)
+    else:
+      client.publish(f"homie/{mqtt_client_name}/shop_overview/products/{k}/scales", '', qos=0, retain=True)  
+  client.publish("homie/"+mqtt_client_name+"/shop_overview/products_scales", json.dumps(products_scales), qos=1, retain=True)
   client.publish("homie/"+mqtt_client_name+"/shop_overview/scales_products", json.dumps(scales_products), qos=1, retain=True)
+  for k, v in scales_products.items():
+    client.publish(f"homie/{mqtt_client_name}/shop_overview/scales_products/{k}", v, qos=0, retain=True)
 send_basket_products_scales_to_mqtt()
+print(products_scales)
 
 loop_var = True
 def signal_handler(sig, frame):
