@@ -62,7 +62,7 @@ def generate_image(product_name="Produktname", price=0, description="", supplier
     # Multiline Product Name
     multiline_text_x = 2
     multiline_text_y = 2  # Adjust vertical position as needed
-    max_text_width = width - 100-multiline_text_x  # Define the maximum width for the text
+    max_text_width = width - 10-multiline_text_x  # Define the maximum width for the text
     draw_multiline_text(draw, product_name, (multiline_text_x, multiline_text_y), font_b, max_text_width)
 
     # Beschreibung

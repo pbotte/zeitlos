@@ -5,7 +5,7 @@
 # sub calls for image like: http://localhost:8090/getimage?productid=1
 #           for output as file: http://localhost:8090/getfile?productid=1
 
-from flask import Flask, send_file, request, render_template_string
+from flask import Flask, send_file, request, render_template_string, abort
 import threading
 import time
 import numpy as np
@@ -35,6 +35,9 @@ logger.setLevel(logging.WARNING-(args.verbosity * 10 if args.verbosity <= 2 else
 
 debug = True if args.verbosity>1 else False
 
+#will be used for /getconfig
+status_last_touched_scale_str = ""
+
 mqtt_client_name = "shop-eink-server"
 #-----
 
@@ -45,6 +48,7 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe("homie/shop_controller/shop_overview/scales_products")
 #        client.subscribe(f"homie/{mqtt_client_name}/reference/set")
         client.subscribe("homie/shop_controller/shop_status")
+        client.subscribe("homie/+/scales/+/touched") #zum Waagen auswählen beim Bestückenu und Kalibrieren
         logger.debug("MQTT: Subscribed to all topics")
         client.publish(f"homie/{mqtt_client_name}/state", '1', qos=1, retain=True)
 
@@ -118,6 +122,7 @@ def home():
         <p>1: <a href="/getimage">/getimage</a></p>
         <p>2: <a href="/products">/products</a></p>
         <p>3: <a href="/assignment">/assignment</a></p>
+        <p>4: <a href="/getconfig">/getconfig?id=einkID</a></p>
       </body>
     </html>
     """
@@ -142,28 +147,34 @@ def serve_grayscale_image():
     product_id = str(product_id) # of variable is int, make it a string for lookup in product_reference
 
     if not product_id in product_reference: 
-        return "Product ID not provided or product does not exist. Call with GET parameters productid or scaleid"
+        array = generate_img.generate_image("Product ID not found", 
+                                        price=0,
+                                        description=f"Product ID '{product_id}' not provided or product does not exist. Call with GET parameters productid or scaleid",
+                                        supplier="",
+                                        bottom_text="" )
+    #    abort(400, "Product ID not provided or product does not exist. Call with GET parameters productid or scaleid")
+    else:
+        def extract_number_before_g(text):
+            match = re.search(r'(\d+)\s*g', text)
+            if match:
+                return int(match.group(1))/1000
+            match = re.search(r'(\d+)\s*kg', text)
+            if match:
+                return int(match.group(1))
+            return None
+        product_mass_in_kg = extract_number_before_g(product_reference[product_id]['ProductName'])
+        if not product_mass_in_kg: 
+            product_mass_in_kg = extract_number_before_g(product_reference[product_id]['ProductDescription'])
+        logger.info(f"{product_mass_in_kg=} {product_reference[product_id]['kgPerUnit']=}")
+        bottom_text = ""
+        if product_mass_in_kg: 
+           bottom_text= f"{(product_mass_in_kg*1000):.0f}g    {(product_reference[product_id]['PricePerUnit']/product_mass_in_kg):.2f} €/kg".replace(".",",")
 
-    def extract_number_before_g(text):
-        match = re.search(r'(\d+)\s*g', text)
-        if match:
-            return int(match.group(1))/1000
-        match = re.search(r'(\d+)\s*kg', text)
-        if match:
-            return int(match.group(1))
-        return None
-    product_mass_in_kg = extract_number_before_g(product_reference[product_id]['ProductName'])
-    if not product_mass_in_kg: product_mass_in_kg = extract_number_before_g(product_reference[product_id]['ProductDescription'])
-    logger.info(f"{product_mass_in_kg=} {product_reference[product_id]['kgPerUnit']=}")
-    bottom_text = ""
-    if product_mass_in_kg: 
-       bottom_text= f"{(product_mass_in_kg*1000):.0f}g    {(product_reference[product_id]['PricePerUnit']/product_mass_in_kg):.2f} €/kg".replace(".",",")
-
-    array = generate_img.generate_image(product_reference[product_id]['ProductName'], 
-                                        price=product_reference[product_id]['PricePerUnit'],
-                                        description=product_reference[product_id]['ProductDescription'],
-                                        supplier=product_reference[product_id]['Supplier'],
-                                        bottom_text=bottom_text )
+        array = generate_img.generate_image(product_reference[product_id]['ProductName'], 
+                                            price=product_reference[product_id]['PricePerUnit'],
+                                            description=product_reference[product_id]['ProductDescription'],
+                                            supplier=product_reference[product_id]['Supplier'],
+                                            bottom_text=bottom_text )
     #, PriceType, PricePerUnit, kgPerUnit, VAT, 
 
     #output as text for eink display
@@ -196,9 +207,22 @@ def assignment():
         if scale_id in scales_products_assignment:
             return f"{scales_products_assignment[scale_id]}"
         else:
-            return "-"
+            abort(400, 'Scale without product.') 
     else:
         return f"{scales_products_assignment}"
+
+#the eink display requests this, after a button is pressed. the last touched scale will be returned.
+@app.route('/getconfig')
+def getconfig():
+    eink_id = request.args.get('id', '')
+    if eink_id:
+        if status_last_touched_scale_str:
+            return status_last_touched_scale_str
+        else:
+            abort(400, 'No scale touched yet.') 
+    else:
+        return "No eink id as GET parameter id provided."
+
 
 def start_flask():
 #    app.run(host='0.0.0.0', port=80)
@@ -239,6 +263,12 @@ if __name__ == "__main__":
                 if message.topic.lower() == f"homie/{mqtt_client_name}/reference":
                     logger.info("reference received")
                     values_reference = json.loads(m)
+
+                #eine Waage wurde gedrückt, Empfang von Nachrichten wie: homie/scale-shop-shelf06-0-1.2.5.5-1.0/scales/4930370A3419/touched
+                if len(msplit) == 5 and msplit[2].lower() == "scales" and msplit[4].lower() == "touched":
+                    if m == "1":
+                        status_last_touched_scale_str = msplit[3].lower() #4930370A3419
+                        logger.info(f"Auf dem Regal wurde die folgende Waage gedrückt: {status_last_touched_scale_str}")
 
 
 
