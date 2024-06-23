@@ -24,6 +24,7 @@
 from machine import Pin, SPI
 import framebuf
 import utime
+import os
 
 my_wdt = None # watchdog from main.py
 
@@ -591,7 +592,18 @@ class EPD_4in2:
         self.send_data(0xA5)
     
     
+def file_exists(filename):
+    try:
+        with open(filename, 'r'):
+            return True
+    except OSError:
+        return False
+    
 def update_from_file():
+    if not file_exists('img.txt'):
+        print("ERROR: image file does not exist.")
+        return -1
+    
     epd = EPD_4in2()
     
     epd.image1Gray.fill(0xff)

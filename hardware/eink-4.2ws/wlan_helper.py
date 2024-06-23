@@ -4,14 +4,15 @@ import time
 import rp2
 rp2.country('DE')
 
-
-wlan = network.WLAN(network.STA_IF)
-
+wlan = None
 
 def connect(wdt):
+    global wlan
     hostname = "eink"+myconfig.CLIENT_UID
     print(f"{hostname=}")
+    network.country('DE')
     network.hostname(hostname)
+    wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     print("Searching for AP...")
     wlan.config(pm = 0xa11140)  # Disable powersave mode

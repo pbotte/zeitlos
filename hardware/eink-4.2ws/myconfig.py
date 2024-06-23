@@ -5,6 +5,8 @@ mqtt_client_id_base_str = 'eink'
 wlan_SSID = "Hamilton"
 wlan_password = "NeuerNachwuchs2017"
 
+http_server = '192.168.178.242'
+http_server_port = 8090
 
 
 import ubinascii

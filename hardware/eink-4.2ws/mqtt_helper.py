@@ -17,8 +17,10 @@ via_mqtt_received_scaleid = None
 via_mqtt_received_productid = None
 via_mqtt_received_hash = None
 
-def report_status(publish_dict):
-    print(f"{assigned_scaleid=} {assigned_product_id=} {assigned_product_hash=} {via_mqtt_received_productid=} {via_mqtt_received_hash=}")
+def report_status():
+    publish_dict = {'scaleid': assigned_scaleid,
+                    'productid': assigned_product_id,
+                    'product_hash': assigned_product_hash}
     print('report_status(): '+json.dumps(publish_dict))
     if mqtt_connected:
         try:
@@ -34,26 +36,29 @@ def reset_queue():
     mqtt_queue = None
 
 def sub_cb(topic, msg):
-    global servo_angle
     global mqtt_queue
     global via_mqtt_received_productid
     global via_mqtt_received_hash
     global via_mqtt_received_scaleid
     topic = topic.decode('utf-8')
     msg = msg.decode('utf-8')
-    print(f"New MQTT message ({topic}): {msg}")
+    print(f"MQTT message ({topic}): {msg}")
     if topic == myconfig.mqtt_topic_refreshall:
         mqtt_queue = 1 #process this in main loop
-    if topic == myconfig.mqtt_topic_sub_scaleid+assigned_scaleid:
+    elif topic == myconfig.mqtt_topic_sub_scaleid+assigned_scaleid:
         print("productid via mqtt received")
-        try:
-          via_mqtt_received_productid = int(msg)
-        except:
-          via_mqtt_received_productid = None
+        via_mqtt_received_productid = msg
         print(f"     --> {via_mqtt_received_productid=}")
-    if topic == myconfig.mqtt_topic_sub_set_scaleid:
+    elif topic == myconfig.mqtt_topic_sub_set_scaleid:
         print("scaleid via mqtt received")
         via_mqtt_received_scaleid = msg
+        mqtt_queue = 2 #process this in main loop
+    elif topic == f"{myconfig.mqtt_topic_sub_producthash}{assigned_product_id}/hash":
+        print("hash received")
+        via_mqtt_received_hash = msg
+    elif topic == f"{myconfig.mqtt_topic_sub_producthash}{via_mqtt_received_productid}/hash":
+        print("hash received")
+        via_mqtt_received_hash = msg
         
 
 # run this in the main loop
@@ -82,7 +87,7 @@ def mqtt_isconnected():
     #    reconnect()
 
 
-def reconnect_MQTT(scaleid, productid):
+def reconnect_MQTT():
     global mqtt_connected
     if not mqtt_connected:
         try:
@@ -90,13 +95,21 @@ def reconnect_MQTT(scaleid, productid):
             client.set_last_will(myconfig.mqtt_topic_last_will, "0", retain=True)
             client.set_callback(sub_cb)
             client.connect()
-            client.subscribe(myconfig.mqtt_topic_pub_config)
-            client.subscribe(myconfig.mqtt_topic_refreshall)
-            if scaleid:
-              client.subscribe(myconfig.mqtt_topic_sub_scaleid+scaleid)
-            client.subscribe(myconfig.mqtt_topic_sub_set_scaleid)
-            if productid:
-              client.subscribe(f"{myconfig.mqtt_topic_sub_producthash}{productid}/hash")
+            topics = [myconfig.mqtt_topic_pub_config, myconfig.mqtt_topic_refreshall,
+                      myconfig.mqtt_topic_sub_set_scaleid]
+            if assigned_scaleid:
+                topics.append(myconfig.mqtt_topic_sub_scaleid+assigned_scaleid)
+            if via_mqtt_received_productid:
+                print("Connect to MQTT broker with via_mqtt_received_productid")
+                topics.append(f"{myconfig.mqtt_topic_sub_producthash}{via_mqtt_received_productid}/hash")
+            elif assigned_product_id:
+                print("Connect to MQTT broker with assigned_product_id")
+                topics.append(f"{myconfig.mqtt_topic_sub_producthash}{assigned_product_id}/hash")
+              
+            print("  subscribe to these topics:")
+            for v in topics:
+                print(f'  - {v}')
+                client.subscribe(v)
 
             mqtt_connected = True
             print('Connected to ',myconfig.mqtt_server,' MQTT Broker, as client: ', myconfig.mqtt_clientname)
@@ -107,6 +120,13 @@ def reconnect_MQTT(scaleid, productid):
             print("Could not connect to MQTT Broker.")
 
 
+#this is mainly needed to unsubscribe von topics
+def disconnect():
+    global mqtt_connected
+    if mqtt_connected:
+        client.disconnect()
+        print("MQTT disconnected")
+        mqtt_connected = False
 
 
 
