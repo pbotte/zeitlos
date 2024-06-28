@@ -167,7 +167,7 @@ shop_status_descr = {
     }
 shop_status_timeout = {
     0: {'time':10,'next':8}, #Geräte Initialisierung
-    1: {'time':120,'next':8}, #Bereit, Keine Kunde im Laden. Kartenterminal aktiv. Timeout da ein Timeout vom Terminal erwartet wird
+    1: {'time':60*5,'next':8}, #Bereit, Keine Kunde im Laden. Kartenterminal aktiv. Timeout da ein Timeout vom Terminal erwartet wird
     2: {'time':10,'next':8}, #Kunde authentifiziert/Waagen tara wird ausgeführt
     3: {'time':60*10,'next':9}, #Kunde betritt/verlässt gerade den Laden
     4: {'time':2,'next':15}, # Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden
@@ -180,7 +180,7 @@ shop_status_timeout = {
     9: None, # Kunde benötigt Hilfe
     10: None, # Laden geschlossen
     11: {'time': 4,'next':4}, # Kunde möglicherweise im Laden? Falls 4 Sek. kein Kunde im Laden -> Wechsel zu 4
-    12: {'time':60*15,'next':9}, # Kunde sicher im Laden
+    12: {'time':60*30,'next':9}, # Kunde sicher im Laden
     13: {'time': 3,'next':7}, # Fehler bei Kartenterminal
     14: {'time': 15,'next':15}, # Bitte Laden betreten
     15: {'time': 60,'next': 8}, # Sicher: Kunde nicht mehr im Laden. Kartenterminal buchen!
@@ -359,7 +359,7 @@ while loop_var:
         
         #Fernsteuerung durch supplier_full.php
         if len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "open_door":
-          if not shop_status in (8,19,): #Bei technischen Fehler soll diese Funktion nicht gegeben sein. Ebenfalls bei techn. Wartung nicht.
+          if not shop_status in (19,): #Bei bei techn. Wartung soll diese Funktion nicht unterstützt werden
             logger.info(f"Türöffner aktiviert durch supplier_full.php mit MQTT-topic: {message.topic.lower()}")
             client.publish("homie/fsr-control/innen/tuerschliesser/set", '1', qos=2, retain=False)  # send door open impuls
             client.publish("homie/fsr-control/innen/licht/set", '1', qos=1, retain=False)  # Licht an
@@ -371,7 +371,7 @@ while loop_var:
             logger.info(f"Laden wurde geschlossen durch supplier_full.php mit MQTT-topic: {message.topic.lower()}")
             client.publish("homie/fsr-control/innen/licht/set", '0', qos=1, retain=False)  # Licht aus
           else:
-            logger.warning(f"Fehler: Laden schlie0en durch supplier_full.php mit MQTT-topic: {message.topic.lower()}. Kann jedoch nicht durchgeführt werden, da shop_status: {shop_status}")
+            logger.warning(f"Fehler: Laden schließen durch supplier_full.php mit MQTT-topic: {message.topic.lower()}. Kann jedoch nicht durchgeführt werden, da shop_status: {shop_status}")
         if len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "open_shop":
           if shop_status in (6,18,10,9): #nur nach dem Einräumen und wenn Laden geschlossen und Kundenhilfe
             set_shop_status(0)

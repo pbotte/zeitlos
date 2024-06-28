@@ -61,7 +61,7 @@ def send_and_recv(str_to_send, echo_out = False, print_return = False):
             ret_val = ret_val + [decimal_number]
             #print(decimal_number)
     else:
-        logger.warning(f"Invalid data from serial: {out}")
+        logger.warning(f"Invalid data from serial: {out=} when sending {str_to_send=}")
 
     return (command, ret_val)
 
@@ -424,7 +424,10 @@ while main_loop_var:
     for w in waagen.items():
         i2c_address = w[1]['i2c_address']
         res = send_and_recv(f"r{i2c_address:02X}04")
-        state_okay = 1 if res[1][0] == 4 else 0
+        try:
+            state_okay = 1 if res[1][0] == 4 else 0
+        except: #eg if no data in res[1][0] available
+            state_okay = 0
         if state_okay == 1:
             v = struct.unpack('<l',bytes(res[1][1:5]))[0]
             logger.debug(f"Read i2c address 0x{i2c_address:02X}\t raw value: {v}")

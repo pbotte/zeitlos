@@ -40,12 +40,29 @@ def on_disconnect(client, userdata, rc):
     if rc != 0:
         logger.warning("Unexpected MQTT disconnection. Will auto-reconnect")
 
-shop_status_descr = {0: "Geräte Initialisierung", 1: "Bereit, Kein Kunde im Laden", 2: "Kunde authentifiziert/Waagen tara",
-    3: "Kunde betritt/verlässt gerade den Laden", 4: "Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden",
-    5: "Einkauf beendet und abgerechnet", 6: "ungenutzt",
-    7: "Warten auf: Vorbereitung für nächsten Kunden", 8: "Technischer Fehler aufgetreten", 9: "Kunde benötigt Hilfe",
-    10: "Laden geschlossen", 11: "Kunde möglicherweise im Laden", 12:"Kunde sicher im Laden", 13:"Fehler bei Authentifizierung",
-    14: "Bitte Laden betreten", 15: "Kunde nicht mehr im Laden. Abrechnung wird vorbereitet." }
+shop_status_descr = {
+    0: "Geräte Initialisierung", 
+    1: "Bereit, Kein Kunde im Laden. Kartenterminal aktiv ", 
+    2: "Kunde authentifiziert/Waagen tara wird ausgeführt",
+    3: "Kunde betritt/verlässt gerade den Laden", 
+    4: "Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden",
+    5: "Einkauf abgerechnet, Kassenbon-Anzeige", 
+    6: "Einräumen durch Betreiber",
+    7: "Warten auf: Vorbereitung für nächsten Kunden. Kartenterminal bereit?", 
+    8: "Technischer Fehler aufgetreten", 
+    9: "Kunde benötigt Hilfe",
+    10: "Laden geschlossen", 
+    11: "Kunde möglicherweise im Laden", 
+    12: "Kunde sicher im Laden", 
+    13: "Fehler bei Kartenterminal",
+    14: "Bitte Laden betreten", 
+    15: "Sicher: Kunde nicht mehr im Laden. Kartenterminal: buchen!",
+    16: "Timeout Kartenterminal",
+    17: "Warten auf: Kartenterminal Buchung erfolgreich",
+    18: "Einräumen durch Betreiber, Waage ausgewählt",
+    19: "Wartung der Technik"
+    }
+
 
 last_shop_status = None
 def on_message(client, userdata, message):
@@ -59,10 +76,13 @@ def on_message(client, userdata, message):
           if last_shop_status != m:
             logger.debug("shop_status changed")
             temp_str = m
-            if int(m) in shop_status_descr:
-              temp_str = m+": "+shop_status_descr[int(m)]
-            requests.post("https://ntfy.sh/zeitlos-state", data=temp_str.encode(encoding='utf-8'))
-            logger.info("Submitted new zeitlos-state to ntfy: {}".format(m))
+            if int(m) in (2,8,19,13):
+                if int(m) in shop_status_descr:
+                    temp_str = m+": "+shop_status_descr[int(m)]
+                requests.post("https://ntfy.sh/zeitlos-state", data=temp_str.encode(encoding='utf-8'))
+                logger.info("Submitted new zeitlos-state to ntfy: {}".format(m))
+            else:
+                logger.info(f"NOT submitted new zeitlos-state: {m}")
             last_shop_status = m
 
     except Exception as err:
