@@ -282,7 +282,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         setInterval(function () { if (connected_flag == 0) MQTTconnect() }, 5 * 1000);
 
         setInterval(function () {
-          if (shop_status>=0 && shop_status<=19) {
+          if (shop_status>=0 && shop_status<=20) {
             document.getElementById("mytext").innerHTML = "Aktuell: "+shop_status_descr[shop_status];
           } else {
             document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";

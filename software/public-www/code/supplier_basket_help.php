@@ -249,7 +249,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           16: "Timeout Kartenterminal",
           17: "Warten auf: Kartenterminal Buchung erfolgreich",
           18: "Einräumen durch Betreiber, Waage ausgewählt.",
-          19: "Laden in technischer Wartung."
+          19: "Laden in technischer Wartung.",
+          20: "Zuviel im Warenkorb."
         };
 
 
@@ -260,7 +261,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
         setInterval(function () { if (connected_flag == 0) MQTTconnect() }, 5 * 1000);
 
         setInterval(function () {
-          if (shop_status>=0 && shop_status<=19) {
+          if (shop_status>=0 && shop_status<=20) {
             document.getElementById("mytext").innerHTML = "Aktuell: "+shop_status_descr[shop_status];
           } else {
             document.getElementById("mytext").innerHTML = "Technischer Fehler. <br><br>Unbekannter Zustand.";
@@ -321,7 +322,28 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
     </tbody>
     </table>
 
-
+	<p>&nbsp;</p>
+	<h3>Neues Produkt in den Warenkorb legen</h3>
+	<script>
+        function handleSubmit() {
+            const dropdown = document.getElementById('numberDropdown');
+            const selectedValue = dropdown.value;
+            alert('Sie haben die Nummer ' + selectedValue + ' ausgewählt.');
+	    handleSelection(selectedValue, 1);
+        }
+    </script>
+	<form onsubmit="handleSubmit(); return false;">
+        <label for="numberDropdown">Wählen Sie eine Nummer:</label>
+        <select id="numberDropdown" name="numberDropdown">
+            <!-- Dropdown-Optionen werden hier dynamisch generiert -->
+            <script>
+                for (let i = 1; i <= 300; i++) {
+                    document.write('<option value="' + i + '">' + i + '</option>');
+                }
+            </script>
+        </select>
+        <button type="submit">1x in den Warenkorb</button>
+    </form>
     
     
 
