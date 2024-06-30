@@ -270,7 +270,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           16: "Timeout Kartenterminal",
           17: "Warten auf: Kartenterminal Buchung erfolgreich",
           18: "Einräumen durch Betreiber, Waage ausgewählt.",
-          19: "Laden in technischer Wartung."
+          19: "Laden in technischer Wartung.",
+          20: "Zuviel im Warenkorb."
         };
 
 

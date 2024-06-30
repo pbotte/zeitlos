@@ -17,6 +17,7 @@ subgraph Kunde im Laden am Einkaufen
   CC["Kunde möglicherweise im Laden (11)"]
   CCC["Kunde sicher im Laden (12)"]:::StyleHighlight
   D["Möglicherweise: Einkauf finalisiert /\nKunde nicht mehr im Laden (4)"]
+  Z20["Zuviel im Warenkorb (20)"]
 end
 
 subgraph Kunde vor dem Laden: Bezahlvorgang
@@ -58,7 +59,10 @@ end
   CC ==> |Distanzsensoren=im Laden| CCC
   CC ==> |Tür offen| C
   CCC ==> |Tür=offen| C
-  CCC -->|Timeout| Z9
+  CCC -->|Timeout| CC
+  CCC ==>|Distanzsensoren=im Laden| CCC
+  CCC --> |Warenkorbsumme>100€| Z20
+  Z20 --> |Warenkorbsumme<=100€| CCC
   CC --> |Timeout = alle Distanzsensoren=leer| D
   D --> |Timeout: nach 5 Sek.| Z15
   D ==> |Tür=offen| C

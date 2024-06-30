@@ -269,7 +269,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             { message: "Kartenterminal: Zeit abgelaufen.", backgroundColor: "white" }, 
             { message: "Warten auf Kartenterminal.", backgroundColor: "white" },
             { message: "Laden geschlossen. Neue Produkte werden gerade eingelegt.", backgroundColor: "#FF4444" },
-            { message: "Laden geschlossen. Technische Wartung.", backgroundColor: "#FF4444" }
+            { message: "Laden geschlossen. Technische Wartung.", backgroundColor: "#FF4444" },
+            { message: "Laden belegt.<br>Bitte warten.", backgroundColor: "#FF4444" }
         ];
 
         var connected_flag = 0;

@@ -342,7 +342,8 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
           16: "Timeout Kartenterminal",
           17: "Warten auf: Kartenterminal Buchung erfolgreich",
           18: "Einräumen durch Betreiber, Waage ausgewählt.",
-          19: "Laden in technischer Wartung."
+          19: "Laden in technischer Wartung.",
+          20: "Zuviel im Warenkorb."
         };
 
 
@@ -455,7 +456,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 	    <p>&nbsp;</p>
 	    <p>&nbsp;</p>
             <p>
-	      Nur im Fall eines Fehlers nutzen:: 
+	      Nur im Fall eines Fehlers nutzen: Die Zustände werden ohne vorherige Überprüfung gesetzt.
 	      <select id="setStatusDropdown">
 	        <option value="-" selected>(neuen Zustand auswählen)</option>
 	        <option value="0">(0): Laden eröffnen</option>
@@ -470,7 +471,7 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 	        <option value="19">(19): Wartung der Technik</option>
               </select>
 	      
-              <button type="button" class="block_green" onClick="sendMQTTMessage_set_shop_status( document.getElementById('setStatusDropdown').value );">Shop-Status setzen</button>
+              <button type="button" class="block_red" onClick="sendMQTTMessage_set_shop_status( document.getElementById('setStatusDropdown').value );">Shop-Status setzen</button>
             </p>
 	    
           </td>
