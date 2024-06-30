@@ -296,6 +296,17 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
 	  mqtt.send(message);
 	  console.log("Message successfully sent.")
 	}
+
+
+	function sendMQTTMessage_set_shop_status(new_shop_status) {
+          console.log("new_shop_status: "+new_shop_status);
+	  i = convertStringToInteger(new_shop_status)
+	  message = new Paho.MQTT.Message(new_shop_status);
+	  message.destinationName = "homie/public_webpage_supplier/"+mqtt_user_name+"/cmd/set_shop_status";
+	  console.log("Prepare Public Submit Message from Supplier: sendMQTTMessage_set_shop_status "+message.destinationName+" with parameter: "+new_shop_status)
+	  mqtt.send(message);
+	  console.log("Message successfully sent.")
+	}
     </script>
 
 </head>
@@ -438,6 +449,28 @@ see: https://superuser.com/questions/530317/how-to-prevent-chrome-from-blurring-
             </p>
             <p>
               <button type="button" class="block_green" onClick="sendMQTTMessage_close_shop();">Laden schließen</button>
+            </p>
+
+
+	    <p>&nbsp;</p>
+	    <p>&nbsp;</p>
+            <p>
+	      Nur im Fall eines Fehlers nutzen:: 
+	      <select id="setStatusDropdown">
+	        <option value="-" selected>(neuen Zustand auswählen)</option>
+	        <option value="0">(0): Laden eröffnen</option>
+	        <option value="2">(2): Kunde authentifiziert/Waagen tara wird ausgeführt</option>
+		<option value="11">(11): Kunde möglicherweise im Laden</option>
+	        <option value="12">(12): Kunde sicher im Laden</option>
+	        <option value="4">(4): Möglicherweise: Einkauf finalisiert & Kunde nicht mehr im Laden</option>
+	        <option value="15">(15): Sicher: Kunde nicht mehr im Laden. Kartenterminal: buchen! </option>
+	        <option value="5">(5): Einkauf abgerechnet, Kassenbon-Anzeige</option>
+	        <option value="10">(10): Laden schließen</option>
+	        <option value="6">(6): Einräumen durch Betreiber</option>
+	        <option value="19">(19): Wartung der Technik</option>
+              </select>
+	      
+              <button type="button" class="block_green" onClick="sendMQTTMessage_set_shop_status( document.getElementById('setStatusDropdown').value );">Shop-Status setzen</button>
             </p>
 	    
           </td>
