@@ -167,7 +167,7 @@ shop_status_descr = {
     19: "Wartung der Technik",
     20: "Gesamtsumme zu hoch", # wenn der Kunde mehr als vorauthorisiert wurde, entnommen hat
     }
-shop_status_timeout = {
+shop_status_timeout = { #Zeit in Sekunden
     0: {'time':10,'next':8}, #Geräte Initialisierung
     1: {'time':60*5,'next':8}, #Bereit, Keine Kunde im Laden. Kartenterminal aktiv. Timeout da ein Timeout vom Terminal erwartet wird
     2: {'time':10,'next':8}, #Kunde authentifiziert/Waagen tara wird ausgeführt
@@ -219,7 +219,7 @@ def set_shop_status(v):
       client.publish("homie/tts-shop-shelf02/say", "Die Warenkorbsumme liegt nun wieder unterhalb des Maximalbetrags. Vielen Dank! Sie können nun den Laden verlassen und ihn anschließend gleich wieder betreten.", qos=1, retain=False)
     if v == 20:
       client.publish("homie/tts-shop-shelf02/say", f"Sehr geehrte Kundin, sehr geehrter Kunde. Sie haben für mehr als {max_money_preauth:.2f}€ Waren entnommen. Es freut uns sehr, dass unser Angebot Ihnen zusagt.", qos=1, retain=False)
-      client.publish("homie/tts-shop-shelf02/say", f"Leider müssen wir Sie darum bitten uns, Produkte wieder zurück zulegen, da wir Ihre Karte nur bis zu {max_money_preauth:.2f}€ belasten können. ", qos=1, retain=False)
+      client.publish("homie/tts-shop-shelf02/say", f"Leider müssen wir Sie darum bitten, Produkte wieder zurück zulegen, da wir Ihre Karte nur bis zu {max_money_preauth:.2f}€ belasten können. ", qos=1, retain=False)
       client.publish("homie/tts-shop-shelf02/say", "Erst dann kann der Einkauf beendet werden. Betreten Sie gerne anschließend gleich wieder unseren Laden!", qos=1, retain=False)
       client.publish("homie/tts-shop-shelf02/say", "Sollten Sie noch Fragen haben, so klingeln Sie bitte oder schreiben uns.", qos=1, retain=False)
     if v == 0:
@@ -845,16 +845,18 @@ while loop_var:
     elif shop_status == 12: # Kunde sicher im Laden
         if shop_status_last_cycle != shop_status: # Damit es nur 1x ausgeführt wird.
           client.publish("homie/tts-shop-shelf02/say", "Sie können nun einkaufen.", qos=1, retain=False)
-        if actSumTotal>max_money_preauth:
-            set_shop_status(20) #Zustand: Zuviel im Warenkorb
         if status_no_person_in_shop == False: #Eine Person ist innen gefunden worden. 
             confirm_shop_status() # Diesen Zustand bestätigen, damit kein Timeout auftritt.
                                   # Diese Zeilen zusammen mit dem Timeout bewirken, dass falls ein Kunde den Laden bereits verlassen hat und die Elektronik
                                   # fehlerhafterweise DOCH eine Person detektiert hat, dass dies irgendwann (nach Ablauf des Timeouts) wieder korrigiert wird.
+        if actSumTotal>max_money_preauth:
+            logger.warning(f"Zu viel im Warenkorb: {actSumTotal=} {max_money_preauth=}")
+            next_shop_status=20 #Zustand: Zuviel im Warenkorb
         #pass # Tür==offen: Wechsel zu 3 über MQTT-Message
     elif shop_status == 20: # Zuviel im Warenkorb
         if actSumTotal<=max_money_preauth:
-            set_shop_status(12) #Zustand: Zuviel im Warenkorb
+            logger.info(f"Einkaufen kann weiter gehen: {actSumTotal=} {max_money_preauth=}")
+            next_shop_status=12 #Zustand: Zuviel im Warenkorb
     elif shop_status == 13: # Fehler bei Authentifizierung
         pass # geht über Timeout weiter zu 1
     elif shop_status == 14: # Bitte Laden betreten
