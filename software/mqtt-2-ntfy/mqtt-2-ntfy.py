@@ -60,7 +60,8 @@ shop_status_descr = {
     16: "Timeout Kartenterminal",
     17: "Warten auf: Kartenterminal Buchung erfolgreich",
     18: "Einräumen durch Betreiber, Waage ausgewählt",
-    19: "Wartung der Technik"
+    19: "Wartung der Technik",
+    20: "Zuviel im Warenkorb",
     }
 
 
@@ -76,7 +77,7 @@ def on_message(client, userdata, message):
           if last_shop_status != m:
             logger.debug("shop_status changed")
             temp_str = m
-            if int(m) in (0,2,4,5,8,9,10,12,13,19,):
+            if int(m) in (0,2,4,5,8,9,10,12,13,19,20,):
                 if int(m) in shop_status_descr:
                     temp_str = m+": "+shop_status_descr[int(m)]
                 requests.post("https://ntfy.sh/zeitlos-state", data=temp_str.encode(encoding='utf-8'))

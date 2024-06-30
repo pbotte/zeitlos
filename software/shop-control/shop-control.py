@@ -36,6 +36,7 @@ logger.setLevel(logging.WARNING-(args.verbosity * 10 if args.verbosity <= 2 else
 logger.info(f"{combined_scales_support.combined_scales_data_array=}")
 
 mqtt_client_name = "shop_controller"
+max_money_preauth = 100.00 #in Euros
 
 conn = None
 cur = None
@@ -163,7 +164,8 @@ shop_status_descr = {
     16: "Timeout Kartenterminal",
     17: "Warten auf: Kartenterminal Buchung erfolgreich",
     18: "Einräumen durch Betreiber, Waage ausgewählt",
-    19: "Wartung der Technik"
+    19: "Wartung der Technik",
+    20: "Gesamtsumme zu hoch", # wenn der Kunde mehr als vorauthorisiert wurde, entnommen hat
     }
 shop_status_timeout = {
     0: {'time':10,'next':8}, #Geräte Initialisierung
@@ -180,7 +182,7 @@ shop_status_timeout = {
     9: None, # Kunde benötigt Hilfe
     10: None, # Laden geschlossen
     11: {'time': 4,'next':4}, # Kunde möglicherweise im Laden? Falls 4 Sek. kein Kunde im Laden -> Wechsel zu 4
-    12: {'time':60*30,'next':9}, # Kunde sicher im Laden
+    12: {'time':60,'next':11}, # Kunde sicher im Laden. Zustand wird verlängert, sofern Kunde im Laden detektiert wird. Timeout, falls doch kein Kunde im Laden.
     13: {'time': 3,'next':7}, # Fehler bei Kartenterminal
     14: {'time': 15,'next':15}, # Bitte Laden betreten
     15: {'time': 60,'next': 8}, # Sicher: Kunde nicht mehr im Laden. Kartenterminal buchen!
@@ -188,8 +190,16 @@ shop_status_timeout = {
     17: {'time': 30,'next': 8}, # Warten auf: Kartenterminal Buchung erfolgreich
     18: None, # Einräumen durch Betreiber, Waage ausgewählt
     19: None, # Wartung der Technik
+    20: {'time': 60*5,'next': 9}, #Kunde hat mehr entnommen als vorauthorisiert
     }
 shop_status_last_change_timestamp = time.time()
+
+def confirm_shop_status():
+    global shop_status_last_change_timestamp
+    shop_status_last_change_timestamp = time.time()
+    # Do not update this variable via MQTT to save ressources as it is not needed elsewhere
+    # client.publish("homie/"+mqtt_client_name+"/shop_status_last_change_timestamp", shop_status_last_change_timestamp, qos=1, retain=True)
+    logger.debug(f"Shop Status confirmed")
 
 def set_shop_status(v):
     global shop_status
@@ -204,10 +214,17 @@ def set_shop_status(v):
     if v == 6 and shop_status!=18:
       #nur 1x beim Wechsel in diesen Modus abspielen
       client.publish("homie/tts-shop-shelf02/say", "Laden im Wartungsmodus.", qos=1, retain=False)
+    if v == 20:
+      client.publish("homie/tts-shop-shelf02/say", f"Sehr geehrte Kundin, sehr geehrter Kunde. Sie haben für mehr als {max_money_preauth:.2f}€ Waren entnommen. Es freut uns sehr, dass unser Angebot Ihnen zusagt.", qos=1, retain=False)
+      client.publish("homie/tts-shop-shelf02/say", f"Leider müssen wir Sie darum bitten uns, Produkte wieder zurück zulegen, da wir Ihre Karte nur bis zu {max_money_preauth:.2f}€ belasten können. ", qos=1, retain=False)
+      client.publish("homie/tts-shop-shelf02/say", "Erst dann kann der Einkauf beendet werden. Betreten Sie gerne anschließend gleich wieder unseren Laden!", qos=1, retain=False)
+      client.publish("homie/tts-shop-shelf02/say", "Sollten Sie noch Fragen haben, so klingeln Sie bitte oder schreiben uns.", qos=1, retain=False)
     if v == 0:
       client.publish("homie/tts-shop-shelf02/say", "Laden wird vorbereitet.", qos=1, retain=False)
-    if v == 0:
+    if v == 7:
       client.publish("homie/tts-shop-shelf02/say", "Laden ist bereit und wartet auf Kunden.", qos=1, retain=False)
+    if v == 8:
+      client.publish("homie/tts-shop-shelf02/say", "Ein technischer Fehler ist aufgetreten. Bitte kontaktieren Sie den Betreiber.", qos=1, retain=False)
     if v == 10:
       client.publish("homie/tts-shop-shelf02/say", "Laden geschlossen.", qos=1, retain=False)
 
@@ -824,7 +841,16 @@ while loop_var:
     elif shop_status == 12: # Kunde sicher im Laden
         if shop_status_last_cycle != shop_status: # Damit es nur 1x ausgeführt wird.
           client.publish("homie/tts-shop-shelf02/say", "Sie können nun einkaufen.", qos=1, retain=False)
+        if actSumTotal>max_money_preauth:
+            set_shop_status(20) #Zustand: Zuviel im Warenkorb
+        if status_no_person_in_shop == False: #Eine Person ist innen gefunden worden. 
+            confirm_shop_status() # Diesen Zustand bestätigen, damit kein Timeout auftritt.
+                                  # Diese Zeilen zusammen mit dem Timeout bewirken, dass falls ein Kunde den Laden bereits verlassen hat und die Elektronik
+                                  # fehlerhafterweise DOCH eine Person detektiert hat, dass dies irgendwann (nach Ablauf des Timeouts) wieder korrigiert wird.
         #pass # Tür==offen: Wechsel zu 3 über MQTT-Message
+    elif shop_status == 20: # Zuviel im Warenkorb
+        if actSumTotal<=max_money_preauth:
+            set_shop_status(12) #Zustand: Zuviel im Warenkorb
     elif shop_status == 13: # Fehler bei Authentifizierung
         pass # geht über Timeout weiter zu 1
     elif shop_status == 14: # Bitte Laden betreten
@@ -872,7 +898,7 @@ while loop_var:
     elif shop_status == 16: # Timeout Kartenterminal
       if cardreader_busy == False:
         logger.info(f"Kartenlesegerät erhält wieder den Anstoß, eine Preauth durchzuführen.")
-        client.publish("homie/cardreader/cmd/pre", "5000", qos=1, retain=False)
+        client.publish("homie/cardreader/cmd/pre", f"{max_money_preauth*100:.0f}", qos=1, retain=False) #money in cents
         next_shop_status = 1
       else:
         logger.warning(f"Kein Pre-Auth an Kartenlesegerät gesendet, da {cardreader_busy=}. Warten.")
