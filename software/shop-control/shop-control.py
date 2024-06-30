@@ -214,6 +214,9 @@ def set_shop_status(v):
     if v == 6 and shop_status!=18:
       #nur 1x beim Wechsel in diesen Modus abspielen
       client.publish("homie/tts-shop-shelf02/say", "Laden im Wartungsmodus.", qos=1, retain=False)
+    if v == 12 and shop_status==20:
+      #nur 1x beim Wechsel in diesen Modus von Zustand 20 kommend abspielen
+      client.publish("homie/tts-shop-shelf02/say", "Die Warenkorbsumme liegt nun wieder unterhalb des Maximalbetrags. Vielen Dank! Sie können nun den Laden verlassen und ihn anschließend gleich wieder betreten.", qos=1, retain=False)
     if v == 20:
       client.publish("homie/tts-shop-shelf02/say", f"Sehr geehrte Kundin, sehr geehrter Kunde. Sie haben für mehr als {max_money_preauth:.2f}€ Waren entnommen. Es freut uns sehr, dass unser Angebot Ihnen zusagt.", qos=1, retain=False)
       client.publish("homie/tts-shop-shelf02/say", f"Leider müssen wir Sie darum bitten uns, Produkte wieder zurück zulegen, da wir Ihre Karte nur bis zu {max_money_preauth:.2f}€ belasten können. ", qos=1, retain=False)
@@ -407,11 +410,12 @@ while loop_var:
           else:
             logger.warning(f"Fehler: Laden öffnen durch supplier_full.php mit MQTT-topic: {message.topic.lower()}. Kann jedoch nicht durchgeführt werden, da shop_status: {shop_status}")
         if len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "start_assign":
-          if not shop_status in (8,19): #Bei technischen Fehler soll diese Funktion nicht gegeben sein. Ebenfalls bei techn. Wartung nicht
+          if shop_status in (1, 10): #Nur, wenn Laden bereit/geschlossen ist und kein Kunde im Laden
             set_shop_status(6)
             logger.info(f"Produktzuordnung durch supplier_full.php mit MQTT-topic: {message.topic.lower()}")
           else:
             logger.warning(f"Fehler: Produktzuordnung durch supplier_full.php mit MQTT-topic: {message.topic.lower()}. Kann jedoch nicht durchgeführt werden, da shop_status: {shop_status}")
+            client.publish("homie/tts-shop-shelf02/say", f"Fehler: Für das Zuweisen eines Produkts darf kein Einkauf aktuell laufen.", qos=1, retain=False)
 
         #request update from db
         if len(msplit) == 3 and msplit[2].lower() == "update_data_from_db":
