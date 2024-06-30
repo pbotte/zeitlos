@@ -358,6 +358,16 @@ while loop_var:
                 client.publish("homie/fsr-control/innen/licht/set", '0', qos=1, retain=False)  # Licht aus
         
         #Fernsteuerung durch supplier_full.php
+        if len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "set_shop_status":
+#          if not shop_status in (19,): #Bei bei techn. Wartung soll diese Funktion nicht unterstützt werden
+            logger.info(f"set_shop_status supplier_full.php mit MQTT-topic und Parameter: {message.topic.lower()} {m}")
+            try:
+              v = int(m)
+              set_shop_status(v)
+            except:
+              logger.warning(f"Fehler: Parameter {m} konnte nicht in integer umsetzt werden. Shop_Status nicht geändert.")
+#          else:
+#            logger.warning(f"Fehler: set_shop_status durch supplier_full.php mit MQTT-topic: {message.topic.lower()}. Kann jedoch nicht durchgeführt werden, da shop_status: {shop_status}")
         if len(msplit) == 5 and msplit[1].lower() == "public_webpage_supplier" and msplit[3].lower() == "cmd" and msplit[4].lower() == "open_door":
           if not shop_status in (19,): #Bei bei techn. Wartung soll diese Funktion nicht unterstützt werden
             logger.info(f"Türöffner aktiviert durch supplier_full.php mit MQTT-topic: {message.topic.lower()}")
